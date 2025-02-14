@@ -114,8 +114,8 @@ return [
 
         'oracle' => [
             'driver'         => 'oracle',
-            'tns'            => env('DB_TNS_ORACLE', '(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(Host=rusabyte)(Port = 1521)))(CONNECT_DATA = (SID = hclab)))'),
-            'host'           => env('DB_HOST_ORACLE', 'rusabyte'),
+            'tns'            => env('DB_TNS_ORACLE', '(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(Host=192.168.234.115)(Port = 1521)))(CONNECT_DATA = (SID = hclab)))'),
+            'host'           => env('DB_HOST_ORACLE', '192.168.234.115'),
             'port'           => env('DB_PORT_ORACLE', '1521'),
             'database'       => env('DB_DATABASE_ORACLE', 'hclab'),
             'username'       => env('DB_USERNAME_ORACLE', 'hclab'),
