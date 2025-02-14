@@ -80,12 +80,12 @@
                                 <tr class="align-top">
                                     <td class="px-2 py-0 font-medium whitespace-nowrap">Tanggal Pelaporan</td>
                                     <td class="px-2 py-0">:</td>
-                                    <td class="px-2 py-0 text-gray-800">{{ $orderHeader->complete_date }}</td>
+                                    <td class="px-2 py-0 text-gray-800">{{ $orderHeader->validate_on }}</td>
                                 </tr>
                                 <tr class="align-top">
                                     <td class="px-2 py-0 font-medium whitespace-nowrap">Keterangan Klinis</td>
                                     <td class="px-2 py-0">:</td>
-                                    <td class="px-2 py-0 text-gray-800"></td>
+                                    <td class="px-2 py-0 text-gray-800">{{ $orderHeader->diag1 }}</td>
                                 </tr>
                             </tbody>
                         </table>
