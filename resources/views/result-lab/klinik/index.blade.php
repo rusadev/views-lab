@@ -50,21 +50,15 @@
                             <!-- Tanggal Mulai & Tanggal Selesai -->
                             <div id="date_range_section" class="hidden flex w-1/4 gap-2">
                                 <div class="w-1/2">
-                                    <label for="tanggal_mulai" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
-                                    <input type="date" id="tanggal_mulai" class="w-full p-2 border rounded text-sm">
+                                    <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
+                                    <input type="date" id="start_date" class="w-full p-2 border rounded text-sm">
                                 </div>
                                 <div class="w-1/2">
-                                    <label for="tanggal_selesai" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Selesai</label>
-                                    <input type="date" id="tanggal_selesai" class="w-full p-2 border rounded text-sm">
+                                    <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Selesai</label>
+                                    <input type="date" id="end_date" class="w-full p-2 border rounded text-sm">
                                 </div>
                             </div>
                         </div>
-
-                        <!-- <div>
-                            <button class="bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold px-3 py-2 rounded">
-                                <i class="fas fa-search"></i> Cari Hasil Pemeriksaan
-                            </button>
-                        </div> -->
 
                         <div>
                             <button id="search-button" class="bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold px-3 py-2 rounded flex items-center gap-2">
@@ -73,7 +67,6 @@
                             </button>
                         </div>
                     </form>
-
                 </div>
             </div>
 
@@ -86,18 +79,20 @@
                             <span class="text-gray-700 font-semibold">Memuat Data...</span>
                         </div>
                     </div>
+
                     <div class="overflow-x-auto"> <!-- Tambahkan wrapper ini -->
+
                         <table id="orderTable" class="w-full border text-sm relative z-0 min-w-max">
                             <thead>
                                 <tr class="bg-gray-100">
                                     <th class="border px-2 py-1">Tanggal Permintaan</th>
                                     <th class="border px-2 py-1">Nomor SIMRS</th>
-                                    <th class="border px-2 py-1">Nomor Laboratorium</th>
+                                    <th class="border px-2 py-1">Nomor LAB</th>
                                     <th class="border px-2 py-1">Nomor RM</th>
                                     <th class="border px-2 py-1">Nama Pasien</th>
                                     <th class="border px-2 py-1">Ruangan</th>
                                     <th class="border px-2 py-1">Dokter Pengirim</th>
-                                    <th class="border px-2 py-1">Status</th>
+                                    <th class="border px-2 py-1">Status </th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -117,11 +112,17 @@
 <!-- DataTables JS -->
 <script src="https://cdn.datatables.net/2.2.2/js/dataTables.js"></script>
 <script src="https://cdn.datatables.net/2.2.2/js/dataTables.tailwindcss.js"></script>
-<script src="https://cdn.tailwindcss.com/"></script>
 
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+
+        const now = new Date();
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(now.getMonth() - 1);
+        document.getElementById("start_date").valueAsDate = oneMonthAgo;
+        document.getElementById("end_date").valueAsDate = now;
+
         const searchTypeRadios = document.querySelectorAll("input[name='search_type']");
         const rmSection = document.getElementById("rm_section");
         const ruanganSection = document.getElementById("ruangan_section");
@@ -153,7 +154,6 @@
                 data: function(d) {
                     d.search_type = $("input[name='search_type']:checked").val();
                     d.rm_number = $("#rm_number").val();
-                    console.log(d.rm_number);
                     d.ruangan = $("#ruangan").val();
                     d.start_date = $("#start_date").val();
                     d.end_date = $("#end_date").val();
@@ -203,7 +203,7 @@
             lengthChange: false,
             searching: true,
             paging: true,
-            info: true,
+            // info: true,
             deferLoading: 0,
         });
 
@@ -213,26 +213,22 @@
             let text = $("#search-text");
             let overlay = $("#loading-overlay");
 
-            // Tampilkan overlay hanya di tabel
             overlay.removeClass("hidden").fadeIn(200);
 
-            // Tampilkan efek loading pada tombol
             icon.removeClass("fa-search").addClass("fa-spinner fa-spin");
             text.text("Mencari...");
             button.prop("disabled", true).addClass("opacity-50 cursor-not-allowed");
 
-            // Panggil ulang DataTable dengan parameter baru
-            table.ajax.reload(null, false);
+            table.ajax.reload();
 
-            // Setelah data selesai dimuat, sembunyikan efek loading
-            setTimeout(() => {
+            table.on('xhr', function() {
                 icon.removeClass("fa-spinner fa-spin").addClass("fa-search");
                 text.text("Cari Hasil Pemeriksaan");
                 button.prop("disabled", false).removeClass("opacity-50 cursor-not-allowed");
 
-                // Hilangkan overlay loading
                 overlay.fadeOut(200);
-            }, 1500);
+            });
         });
+
     });
 </script>

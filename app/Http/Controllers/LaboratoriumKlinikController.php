@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Vinkla\Hashids\Facades\Hashids;
 use Yajra\DataTables\DataTables;
 
 class LaboratoriumKlinikController extends Controller
@@ -28,6 +29,10 @@ class LaboratoriumKlinikController extends Controller
         $query = DB::connection('oracle')
             ->table('ord_hdr as a')
             ->leftJoin('hfclinic as b', 'a.oh_clinic_code', '=', 'b.clinic_code')
+            ->leftJoin('ord_dtl as c', function ($join) {
+                $join->on('a.oh_tno', '=', 'c.od_tno')
+                    ->where('c.od_order_item', '=', 'Y');
+            })
             ->select(
                 'a.oh_trx_dt',
                 'a.oh_tno',
@@ -38,11 +43,12 @@ class LaboratoriumKlinikController extends Controller
                 'b.clinic_code',
                 'b.clinic_desc',
                 'a.oh_ord_status',
-                'a.oh_completed_dt'
+                'a.oh_completed_dt',
+                'c.od_testcode',
+                'c.od_validate_on'
             )
             ->orderBy('a.oh_trx_dt', 'desc');
 
-        // Filter berdasarkan jenis pencarian
         if ($searchType === 'rm' && !empty($rmNumber)) {
             $query->where('a.oh_pid', $rmNumber);
         } else {
@@ -54,44 +60,91 @@ class LaboratoriumKlinikController extends Controller
             }
         }
 
-        return DataTables::of($query)
+        $results = $query->get();
+
+        $groupedData = [];
+        foreach ($results as $row) {
+            $tno = $row->oh_tno;
+            if (!isset($groupedData[$tno])) {
+                $groupedData[$tno] = [
+                    'oh_trx_dt'      => $row->oh_trx_dt,
+                    'oh_tno'         => $tno,
+                    'oh_ono'         => $row->oh_ono,
+                    'oh_pid'         => $row->oh_pid,
+                    'oh_last_name'   => $row->oh_last_name,
+                    'oh_dname'       => $row->oh_dname,
+                    'clinic_code'    => $row->clinic_code,
+                    'clinic_desc'    => $row->clinic_desc,
+                    'oh_ord_status'  => $row->oh_ord_status,
+                    'oh_completed_dt' => $row->oh_completed_dt,
+                    'details'        => [],
+                    'final_status'   => 'Belum tersedia'
+                ];
+            }
+
+            if (!empty($row->od_testcode)) {
+                $groupedData[$tno]['details'][] = [
+                    'od_testcode'   => $row->od_testcode,
+                    'od_validate_on' => $row->od_validate_on
+                ];
+            }
+        }
+
+        foreach ($groupedData as &$data) {
+            $details = $data['details'];
+
+            if (!empty($details)) {
+                $validatedCount = count(array_filter($details, fn($detail) => !empty($detail['od_validate_on'])));
+                $totalDetails = count($details);
+
+                if ($validatedCount === 0) {
+                    $data['final_status'] = 'Belum tersedia';
+                } elseif ($validatedCount < $totalDetails) {
+                    $data['final_status'] = 'Hasil Sebagian';
+                } else {
+                    $data['final_status'] = 'Selesai';
+                }
+            }
+        }
+
+        return DataTables::of(collect(array_values($groupedData)))
             ->addColumn('oh_ord_status', function ($row) {
-                switch ($row->oh_ord_status) {
-                    case 1:
+                switch ($row['final_status']) {
+                    case 'Belum tersedia':
                         return '<button class="px-3 py-1 bg-gray-500 text-xs text-white rounded-md shadow-sm opacity-50 cursor-not-allowed" disabled>
-                                <i class="fas fa-times-circle mr-1"></i> Belum Tersedia
-                            </button>';
-                    case 5:
-                        return '<a href="' . route('klinik.detail', ['labno' => $row->oh_tno]) . '" target="_blank"
-                                class="px-3 py-1 bg-yellow-500 text-xs text-white rounded-md shadow-sm hover:bg-yellow-600">
-                                <i class="fas fa-hourglass-half mr-1"></i> Hasil Sebagian
-                            </a>';
-                    case 9:
-                        return '<a href="' . route('klinik.detail', ['labno' => $row->oh_tno]) . '" target="_blank"
-                                class="px-3 py-1 bg-green-500 text-xs text-white rounded-md shadow-sm hover:bg-green-600">
-                                <i class="fas fa-check-circle mr-1"></i> Selesai
-                            </a>';
+                            <i class="fas fa-times-circle mr-1"></i> Belum Tersedia
+                        </button>';
+                    case 'Hasil Sebagian':
+                        return '<a href="' . route('klinik.detail', ['labno' => Hashids::encode($row['oh_tno'])]) . '" target="_blank"
+                            class="px-3 py-1 bg-yellow-500 text-xs text-white rounded-md shadow-sm hover:bg-yellow-600">
+                            <i class="fas fa-hourglass-half mr-1"></i> Hasil Sebagian
+                        </a>';
+                    case 'Selesai':
+                        return '<a href="' . route('klinik.detail', ['labno' => Hashids::encode($row['oh_tno'])]) . '" target="_blank"
+                            class="px-3 py-1 bg-green-500 text-xs text-white rounded-md shadow-sm hover:bg-green-600">
+                            <i class="fas fa-check-circle mr-1"></i> Selesai
+                        </a>';
                     default:
                         return '<span class="text-sm px-3 py-1 bg-gray-200 text-gray-700 rounded-md shadow-sm">
-                                Tidak Diketahui
-                            </span>';
+                            Tidak Diketahui
+                        </span>';
                 }
             })
             ->rawColumns(['oh_ord_status'])
-            ->filterColumn('clinic_desc', function ($query, $keyword) {
-                $query->where('b.clinic_desc', 'like', "%{$keyword}%");
-            })
             ->make(true);
     }
 
+
     public function detailResult($laborder)
     {
-        // Query untuk order header
+        $tno = Hashids::decode($laborder)[0] ?? null;
+
         $orderHeader = DB::connection('oracle')
             ->table('ord_hdr as oh')
             ->leftJoin('hfclinic as hc', 'hc.clinic_code', '=', 'oh.oh_clinic_code')
             ->leftJoin('ord_spl as os', 'os.os_tno', '=', 'oh.oh_tno')
-            ->where('oh.oh_tno', $laborder)
+            ->leftJoin('ord_dtl as od', 'oh.oh_tno', '=', 'od.od_tno')
+            ->where('oh.oh_tno', $tno)
             ->selectRaw('
                 oh.oh_trx_dt as order_date,
                 oh.oh_ono as ono,
@@ -112,8 +165,11 @@ class LaboratoriumKlinikController extends Controller
                 oh.oh_pataddr3 as addr3,
                 oh.oh_pataddr4 as addr4,
                 oh.oh_dname as clinician,
+                oh.oh_diag1 as diag1,
                 hc.clinic_desc as room_desc,
-                COALESCE(MIN(os.os_spl_rcvdt), NULL) as spl_rcvdt
+                COALESCE(MAX(os.os_spl_rcvdt), NULL) as spl_rcvdt,
+                COALESCE(MAX(od.od_validate_on), NULL) as validate_on
+
             ')
             ->groupBy([
                 'oh.oh_trx_dt',
@@ -135,28 +191,31 @@ class LaboratoriumKlinikController extends Controller
                 'oh.oh_pataddr3',
                 'oh.oh_pataddr4',
                 'oh.oh_dname',
-                'hc.clinic_desc'
+                'hc.clinic_desc',
+                'oh.oh_diag1'
             ])
             ->first();
 
-        $orderHeader->gender = match ($orderHeader->gender) {
-            '1' => 'Laki-laki',
-            '2' => 'Perempuan',
-            default => 'Unknown',
-        };
-        $orderHeader->bod = $orderHeader->bod
-            ? Carbon::parse($orderHeader->bod)->format('d-m-Y')
-            : 'Unknown';
-
-        $orderHeader->calculated_age = ($orderHeader->age_year !== null ? $orderHeader->age_year . ' tahun' : '') .
-            ($orderHeader->age_month !== null ? ', ' . $orderHeader->age_month . ' bulan' : '') .
-            ($orderHeader->age_day !== null ? ', ' . $orderHeader->age_day . ' hari' : '');
-
-        if (empty(trim($orderHeader->calculated_age))) {
-            $orderHeader->calculated_age = 'Unknown';
+        if ($orderHeader) {
+            $orderHeader->gender = match ($orderHeader->gender ?? '') {
+                '1' => 'Laki-laki',
+                '2' => 'Perempuan',
+                default => 'Unknown',
+            };
+            
+            $orderHeader->bod = $orderHeader->bod
+                ? Carbon::parse($orderHeader->bod)->format('d-m-Y')
+                : 'Unknown';
+        
+            $orderHeader->calculated_age = ($orderHeader->age_year !== null ? $orderHeader->age_year . ' tahun' : '') .
+                ($orderHeader->age_month !== null ? ', ' . $orderHeader->age_month . ' bulan' : '') .
+                ($orderHeader->age_day !== null ? ', ' . $orderHeader->age_day . ' hari' : '');
+        
+            if (empty(trim($orderHeader->calculated_age))) {
+                $orderHeader->calculated_age = 'Unknown';
+            }
         }
-
-
+            
         // Query untuk order details
         $orderDetails = DB::connection('oracle')
             ->table('ord_hdr as a')
@@ -235,22 +294,27 @@ class LaboratoriumKlinikController extends Controller
                 'b.od_data_type',
                 'n.os_spl_rcvdt'
             ])
-            ->where('a.oh_tno', $laborder)
+            ->where('a.oh_tno', $tno)
             ->orderBy('seq', 'asc')
             ->get();
 
-        $orderDetails = $orderDetails->map(function ($item) {
-            $comments = explode('~', $item->test_comment);
-            $item->test_comment = $comments[0] ?? null;
-            $item->attached_comment = $comments[1] ?? null;
-            return $item;
-        });
-
-
+        if ($orderDetails->isNotEmpty()) {
+            $orderDetails = $orderDetails->map(function ($item) {
+                $comments = explode('~', $item->test_comment);
+                $item->test_comment = $comments[0] ?? null;
+                $item->attached_comment = $comments[1] ?? null;
+                return $item;
+            });
+        }
+        
         // Grouping order details by test group name
         $groupedOrderDetails = $orderDetails->groupBy('tg_name')->map(function ($group) {
             return $group->sortBy('seq')->values();
         });
+
+        if (!$orderHeader) {
+            abort(404, 'Data order tidak ditemukan.');
+        }
 
         return view('result-lab.klinik.detail', compact('orderHeader', 'groupedOrderDetails'));
 
