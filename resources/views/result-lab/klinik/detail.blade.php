@@ -3,10 +3,14 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-lg font-semibold text-gray-800">
+        <h2 class="text-lg font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-700 px-4 py-3 rounded-md shadow-md flex items-center gap-2 transition-all duration-300 hover:shadow-lg hover:brightness-110">
+            <svg class="w-6 h-6 text-white animate-pulse" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-6-8h6m4 12H5a2 2 0 01-2-2V5a2 2 0 012-2h9l5 5v12a2 2 0 01-2 2z" />
+            </svg>
             {{ __('Hasil Pemeriksaan Laboratorium Patologi Klinik') }}
         </h2>
     </x-slot>
+
 
     <div class="py-2">
         <div class="max-w-7xl mx-auto px-2">
@@ -127,9 +131,9 @@
 
                             <td class="px-2 py-1 {{ $detail->abnormal_flag !== 'N' ? 'font-bold text-red-600' : 'text-gray-700' }}">
                                 @if ($detail->test_value !== 'Belum Tersedia')
-                                    @if ($detail->abnormal_flag !== 'N')
-                                    {{ $detail->abnormal_flag }}
-                                    @endif
+                                @if ($detail->abnormal_flag !== 'N')
+                                {{ $detail->abnormal_flag }}
+                                @endif
                                 @endif
                             </td>
 
@@ -155,22 +159,22 @@
 
                             <td class="px-3 py-1 text-gray-700">
                                 @if ($detail->ref_range !== 'MRR' && !empty($detail->ref_range))
-                                    {!! nl2br(e($detail->ref_range)) !!}
+                                {!! nl2br(e($detail->ref_range)) !!}
                                 @endif
                             </td>
                             @endif
 
 
                             <td class="px-3 py-1 text-gray-700 font-semibold italic">
-                               @if ($detail->test_value !== 'Belum Tersedia')
-                                    @if ($detail->test_comment)
-                                        {!! nl2br(e($detail->test_comment)) !!}
-                                    @endif
-                                    @if ($detail->attached_comment)
-                                        {!! nl2br(e($detail->attached_comment)) !!}
-                                    @endif
+                                @if ($detail->test_value !== 'Belum Tersedia')
+                                @if ($detail->test_comment)
+                                {!! nl2br(e($detail->test_comment)) !!}
                                 @endif
-                                   
+                                @if ($detail->attached_comment)
+                                {!! nl2br(e($detail->attached_comment)) !!}
+                                @endif
+                                @endif
+
                             </td>
 
                         </tr>

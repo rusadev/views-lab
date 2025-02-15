@@ -2,7 +2,10 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-lg font-semibold text-gray-800">
+        <h2 class="text-lg font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-500 px-4 py-3 rounded-md shadow-md flex items-center gap-2 transition-all duration-300 hover:shadow-lg hover:brightness-110">
+            <svg class="w-6 h-6 text-white animate-pulse" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-6-8h6m4 12H5a2 2 0 01-2-2V5a2 2 0 012-2h9l5 5v12a2 2 0 01-2 2z" />
+            </svg>
             {{ __('Hasil Pemeriksaan Laboratorium Mikrobiologi Klinik') }}
         </h2>
     </x-slot>
