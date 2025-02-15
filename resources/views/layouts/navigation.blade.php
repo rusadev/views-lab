@@ -12,7 +12,7 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('klinik.index')" :active="request()->routeIs('klinik.index')">
+                    <x-nav-link :href="route('klinik.index')" :active="request()->routeIs('klinik.*')">
                         {{ __('Laboratorium Patologi Klinik') }}
                     </x-nav-link>
                 </div>

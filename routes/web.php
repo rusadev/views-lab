@@ -24,12 +24,12 @@ Route::middleware('auth')->group(function () {
     Route::prefix('laboratorium')->group(function () {
         Route::get('/patologi-klinik', [LaboratoriumKlinikController::class, 'index'])->name('klinik.index');
         Route::get('/patologi-klinik/get-order', [LaboratoriumKlinikController::class, 'getOrder'])->name('klinik.order');
+        Route::get('/patologi-klinik/get-order/flag', [LaboratoriumKlinikController::class, 'getOrderFlag'])->name('klinik.order.flag');
         Route::get('/patologi-klinik/detail/{labno}', [LaboratoriumKlinikController::class, 'detailResult'])->name('klinik.detail');
 
         Route::get('/mikrobiologi-klinik', [LaboratoriumMikrobiologiKlinikController::class, 'index'])->name('mikro.index');
         Route::get('/patologi-anatomi', [LaboratoriumPatologiAnatomiController::class, 'index'])->name('pa.index');
     });
-
 
 });
 

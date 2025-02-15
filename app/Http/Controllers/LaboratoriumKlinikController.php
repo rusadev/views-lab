@@ -111,28 +111,113 @@ class LaboratoriumKlinikController extends Controller
             ->addColumn('oh_ord_status', function ($row) {
                 switch ($row['final_status']) {
                     case 'Belum tersedia':
-                        return '<button class="px-3 py-1 bg-gray-500 text-xs text-white rounded-md shadow-sm opacity-50 cursor-not-allowed" disabled>
+                        return '<button class="px-3 font-medium py-1 bg-gradient-to-r from-gray-400 to-gray-600 text-xs text-white rounded-md shadow-sm opacity-50 cursor-not-allowed" disabled>
                             <i class="fas fa-times-circle mr-1"></i> Belum Tersedia
                         </button>';
                     case 'Hasil Sebagian':
                         return '<a href="' . route('klinik.detail', ['labno' => Hashids::encode($row['oh_tno'])]) . '" target="_blank"
-                            class="px-3 py-1 bg-yellow-500 text-xs text-white rounded-md shadow-sm hover:bg-yellow-600">
+                            class="px-3 font-medium py-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-xs text-white rounded-md shadow-sm hover:from-yellow-500 hover:to-yellow-700 transition-all duration-300">
                             <i class="fas fa-hourglass-half mr-1"></i> Hasil Sebagian
                         </a>';
                     case 'Selesai':
                         return '<a href="' . route('klinik.detail', ['labno' => Hashids::encode($row['oh_tno'])]) . '" target="_blank"
-                            class="px-3 py-1 bg-green-500 text-xs text-white rounded-md shadow-sm hover:bg-green-600">
+                            class="px-3 font-medium py-1 bg-gradient-to-r from-green-500 to-green-700 text-xs text-white rounded-md shadow-sm hover:from-green-600 hover:to-green-800 transition-all duration-300">
                             <i class="fas fa-check-circle mr-1"></i> Selesai
                         </a>';
                     default:
-                        return '<span class="text-sm px-3 py-1 bg-gray-200 text-gray-700 rounded-md shadow-sm">
+                        return '<span class="px-3 font-medium py-1 bg-gradient-to-r from-gray-200 to-gray-400 text-gray-700 text-sm rounded-md shadow-sm">
                             Tidak Diketahui
                         </span>';
                 }
             })
+            
             ->rawColumns(['oh_ord_status'])
             ->make(true);
     }
+
+    public function getOrderFlag(Request $request)
+    {
+        $searchType = $request->input('search_type');
+        $rmNumber = $request->input('rm_number');
+        $ruangan = $request->input('ruangan');
+        $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date'))->startOfDay() : null;
+        $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date'))->endOfDay() : null;
+
+        $query = DB::connection('oracle')
+            ->table('ord_dtl as c')
+            ->join('ord_hdr as a', 'c.od_tno', '=', 'a.oh_tno')
+            ->leftJoin('hfclinic as b', 'a.oh_clinic_code', '=', 'b.clinic_code')
+            ->leftJoin('test_item as d', 'c.od_testcode', '=', 'd.ti_code')
+            ->select(
+                'a.oh_tno',
+                'a.oh_pid',
+                'a.oh_last_name',
+                'c.od_testcode',
+                'c.od_tr_val',
+                'c.od_validate_on',
+                'c.od_tr_flag',
+                'c.od_action_flag',
+                'd.ti_name'
+            )
+            ->whereNotNull('c.od_validate_on')
+            ->whereIn('c.od_tr_flag', ['LL', 'HH'])
+            ->where('c.od_action_flag', '!=', 'N')
+            ->orderBy('a.oh_trx_dt', 'desc');
+
+        if ($searchType === 'rm' && !empty($rmNumber)) {
+            $query->where('a.oh_pid', $rmNumber);
+        } else {
+            if (!empty($ruangan)) {
+                $query->where('b.clinic_code', 'LIKE', $ruangan);
+            }
+            if (!empty($startDate) && !empty($endDate)) {
+                $query->whereBetween('a.oh_trx_dt', [$startDate, $endDate]);
+            }
+        }
+
+        $results = $query->get();
+
+        $groupedData = [];
+        foreach ($results as $row) {
+            $tno = $row->oh_tno;
+            if (!isset($groupedData[$tno])) {
+                $groupedData[$tno] = [
+                    'oh_tno'         => $tno,
+                    'oh_pid'         => $row->oh_pid,
+                    'oh_last_name'   => $row->oh_last_name,
+                    'details'        => [],
+                ];
+            }
+
+            $groupedData[$tno]['details'][] = [
+                'od_testcode'   => $row->od_testcode,
+                'od_validate_on' => $row->od_validate_on,
+                'od_tr_flag' => $row->od_tr_flag,
+                'od_tr_val' => $row->od_tr_val,
+                'od_action_flag' => $row->od_action_flag,
+                'ti_name' => $row->ti_name
+            ];
+        }
+
+        return DataTables::of(collect(array_values($groupedData)))
+            ->addColumn('patient_info', function ($row) {
+                return '<a href="' . route('klinik.detail', ['labno' => Hashids::encode($row['oh_tno'])]) . '" target="_blank" class="font-medium text-black no-underline">'
+                        . $row['oh_last_name'] . 
+                        '</a>';
+            })
+            ->addColumn('test_name', function ($row) {
+                return implode(' ', array_map(fn($d) => '<span class="block">' . $d['ti_name'] . '</span>', $row['details']));
+            })
+            ->addColumn('result', function ($row) {
+                return implode(' ', array_map(fn($d) => '<span class="block">' . $d['od_tr_val'] . '</span>', $row['details']));
+            })
+            ->addColumn('critical_status', function ($row) {
+                return implode(' ', array_map(fn($d) => '<span class="block font-bold text-red-500">' . $d['od_tr_flag'] . '</span>', $row['details']));
+            })
+            ->rawColumns(['test_name', 'result', 'critical_status', 'patient_info'])
+            ->make(true);
+    }
+
 
 
     public function detailResult($laborder)
@@ -202,20 +287,20 @@ class LaboratoriumKlinikController extends Controller
                 '2' => 'Perempuan',
                 default => 'Unknown',
             };
-            
+
             $orderHeader->bod = $orderHeader->bod
                 ? Carbon::parse($orderHeader->bod)->format('d-m-Y')
                 : 'Unknown';
-        
+
             $orderHeader->calculated_age = ($orderHeader->age_year !== null ? $orderHeader->age_year . ' tahun' : '') .
                 ($orderHeader->age_month !== null ? ', ' . $orderHeader->age_month . ' bulan' : '') .
                 ($orderHeader->age_day !== null ? ', ' . $orderHeader->age_day . ' hari' : '');
-        
+
             if (empty(trim($orderHeader->calculated_age))) {
                 $orderHeader->calculated_age = 'Unknown';
             }
         }
-            
+
         // Query untuk order details
         $orderDetails = DB::connection('oracle')
             ->table('ord_hdr as a')
@@ -306,7 +391,7 @@ class LaboratoriumKlinikController extends Controller
                 return $item;
             });
         }
-        
+
         // Grouping order details by test group name
         $groupedOrderDetails = $orderDetails->groupBy('tg_name')->map(function ($group) {
             return $group->sortBy('seq')->values();

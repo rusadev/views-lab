@@ -19,14 +19,15 @@
     <!-- Scripts -->
     <link rel="stylesheet" href="https://cdn.datatables.net/2.2.2/css/dataTables.tailwindcss.css">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
-    
+
+
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com/"></script>
 
 
 
     <style>
+
         .table-container {
             width: 100%;
             overflow-x: auto;
@@ -34,6 +35,43 @@
 
         .dt-info {
             font-size: 12px;
+        }
+
+        #orderTable th,
+        #orderTable td {
+            font-size: 0.75rem !important;
+        }
+
+        #criticalTable {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        #criticalTable th:first-child,
+        #criticalTable td:first-child {
+            width: 30%;
+            word-wrap: break-word;
+            white-space: normal;
+
+        }
+
+        #criticalTable th:nth-child(2),
+        #criticalTable td:nth-child(2) {
+            width: 20%;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        #criticalTable td,
+        th {
+            font-size: 0.75rem !important;
+        }
+
+        .dt-search input {
+            width: 150px !important;
+            height: 30px;
+            font-size: 14px;
+            padding: 4px;
         }
 
         .select2-container {
@@ -46,8 +84,50 @@
             align-items: center !important;
             border: 1px solid black !important;
             border-radius: 0.3rem !important;
+            color: black !important;
+            font-weight: 600;
+        }
+        .select2-container--default .select2-results__option {
+            padding: 8px;
+            font-size: 14px;
+            color: #1E3A8A; /* Warna teks biru tua */
+            font-weight: 500;
         }
 
+        /* Efek hover */
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background: linear-gradient(135deg, #3B82F6, #2563EB); /* Gradasi lebih gelap saat hover */
+            color: white;
+            font-weight: 600;
+            border-radius: 5px;
+        }
+
+        input[type="text"],
+        input[type="date"] {
+            color: black !important;
+            font-size: 14px;
+            font-weight: 600; 
+        }
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+        }
+        input:focus {
+            background: white !important;
+            color: black !important;
+            font-weight: 600;
+            border: 2px solid #3B82F6;
+        }
+
+        /* Label styling */
+        label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1E3A8A;
+        }
+
+
+    
         .animate-pulse {
             animation: pulse 1.5s infinite;
         }
@@ -65,6 +145,8 @@
                 background-color: #E5E7EB;
             }
         }
+
+        
     </style>
 </head>
 
