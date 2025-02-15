@@ -9,7 +9,7 @@
     <title>@yield('title', 'Views Laboratory')</title>
 
     <link rel="icon" type="image/ico" href="{{ asset('img/logo.ico') }}">
-    <link rel="shortcut icon" href="{{ asset('img/logo.icon') }}">
+    <link rel="shortcut icon" href="{{ asset('img/logo.ico') }}">
 
 
     <!-- Fonts -->
