@@ -104,9 +104,9 @@
                         <tr>
                             <th class="px-3 py-2 text-left font-bold w-1/4">Nama Pemeriksaan</th>
                             <th class="px-2 py-2 text-left font-bold w-8"></th>
-                            <th class="px-3 py-2 text-left font-bold">Hasil</th>
-                            <th class="px-3 py-2 text-left font-bold">Satuan</th>
-                            <th class="px-3 py-2 text-left font-bold">Nilai Referensi</th>
+                            <th class="px-3 py-2 text-left font-bold w-1/6">Hasil</th>
+                            <th class="px-3 py-2 text-left font-bold w-1/6">Satuan</th>
+                            <th class="px-3 py-2 text-left font-bold w-1/6">Nilai Referensi</th>
                             <th class="px-3 py-2 text-left font-bold w-3/10">Catatan</th>
                         </tr>
                     </thead>
