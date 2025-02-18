@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LaboratoriumKlinikController;
 use App\Http\Controllers\LaboratoriumMikrobiologiKlinikController;
 use App\Http\Controllers\LaboratoriumPatologiAnatomiController;
+use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +24,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::prefix('laboratorium')->group(function () {
+
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+        Route::get('/dashboard/data', [DashboardController::class, 'dashboardData'])->name('dashboard.data');
         Route::get('/patologi-klinik', [LaboratoriumKlinikController::class, 'index'])->name('klinik.index');
         Route::get('/patologi-klinik/get-order', [LaboratoriumKlinikController::class, 'getOrder'])->name('klinik.order');
         Route::get('/patologi-klinik/get-order/flag', [LaboratoriumKlinikController::class, 'getOrderFlag'])->name('klinik.order.flag');
@@ -29,6 +34,13 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/mikrobiologi-klinik', [LaboratoriumMikrobiologiKlinikController::class, 'index'])->name('mikro.index');
         Route::get('/patologi-anatomi', [LaboratoriumPatologiAnatomiController::class, 'index'])->name('pa.index');
+
+        Route::prefix('laporan')->group(function() {
+            Route::get('/', [LaporanController::class, 'index'])->name('laporan.index');
+            Route::get('/jumlah-pasien', [LaporanController::class, 'indexJumlahPasien'])->name('laporan.jumlah-pasien.index');
+            Route::get('/jumlah-pasien/data', [LaporanController::class, 'getJumlahPasien'])->name('laporan.jumlah-pasien.data');
+        });
+
     });
 
 });
