@@ -23,11 +23,14 @@
 
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com/"></script>
-
-
-
     <style>
 
+        .overflow-y-auto {
+            max-height: 200px; /* Set a fixed height */
+            overflow-y: auto;  /* Enable vertical scrolling */
+        }
+
+        
         .table-container {
             width: 100%;
             overflow-x: auto;
@@ -145,6 +148,34 @@
                 background-color: #E5E7EB;
             }
         }
+
+        @keyframes pulse-fast {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .animate-pulse-fast {
+            animation: pulse-fast 0.5s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        
 
         
     </style>
