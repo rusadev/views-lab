@@ -13,21 +13,38 @@
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('klinik.index')" :active="request()->routeIs('klinik.*')">
-                        {{ __('Laboratorium Patologi Klinik') }}
+                        {{ __('Patologi Klinik') }}
                     </x-nav-link>
                 </div>
 
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('mikro.index')" :active="request()->routeIs('mikro.index')">
-                        {{ __('Laboratorium Mikrobioliogi Klinik') }}
+                        {{ __('Mikrobioliogi Klinik') }}
                     </x-nav-link>
                 </div>
 
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('pa.index')" :active="request()->routeIs('pa.index')">
-                        {{ __('Laboratorium Patologi Anatomi') }}
+                        {{ __('Patologi Anatomi') }}
                     </x-nav-link>
                 </div>
+
+                
+                @if(auth()->user()->id == 2)
+                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                        <x-nav-link :href="route('dashboard.index')" :active="request()->routeIs('dashboard.*')">
+                            {{ __('Dashboard') }}
+                        </x-nav-link>
+                    </div>
+
+                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                        <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
+                            {{ __('Laporan Laboratorium') }}
+                        </x-nav-link>
+                    </div>
+                @endif
+
+
             </div>
 
             <!-- Settings Dropdown -->

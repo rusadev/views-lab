@@ -127,6 +127,48 @@ return [
             'server_version' => env('DB_SERVER_VERSION_ORACLE', '11g'),
         ],
 
+        'padb' => [
+            'driver' => 'mysql',
+            'url' => env('DB_URL'),
+            'host' => env('DB_PADB_HOST', '127.0.0.1'),
+            'port' => env('DB_PADB_PORT', '3306'),
+            'database' => env('DB_PADB_DATABASE', 'patologi_anatomi'),
+            'username' => env('DB_PADB_USERNAME', 'root'),
+            'password' => env('DB_PADB_PASSWORD', ''),
+            'unix_socket' => env('DB_PADB_SOCKET', ''),
+            'charset' => env('DB_PADB_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_PADB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        'mikro' => [
+            'driver' => 'mysql',
+            'url' => env('DB_URL'),
+            'host' => env('DB_MIKRODB_HOST', '127.0.0.1'),
+            'port' => env('DB_MIKRODB_PORT', '3306'),
+            'database' => env('DB_MIKRODB_DATABASE', 'mikrolab14'),
+            'username' => env('DB_MIKRODB_USERNAME', 'root'),
+            'password' => env('DB_MIKRODB_PASSWORD', ''),
+            'unix_socket' => env('DB_MIKRODB_SOCKET', ''),
+            'charset' => env('DB_MIKRODB_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_MIKRODB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        
+
     ],
 
     /*
