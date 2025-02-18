@@ -218,8 +218,6 @@ class LaboratoriumKlinikController extends Controller
             ->make(true);
     }
 
-
-
     public function detailResult($laborder)
     {
         $tno = Hashids::decode($laborder)[0] ?? null;
@@ -300,8 +298,7 @@ class LaboratoriumKlinikController extends Controller
                 $orderHeader->calculated_age = 'Unknown';
             }
         }
-
-        // Query untuk order details
+        
         $orderDetails = DB::connection('oracle')
             ->table('ord_hdr as a')
             ->leftJoin('ord_dtl as b', 'a.oh_tno', '=', 'b.od_tno')
