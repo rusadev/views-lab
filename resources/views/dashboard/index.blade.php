@@ -59,10 +59,11 @@
                         <p class="text-5xl font-bold text-white" id="pemeriksaanSelesai">...</p>
                     </div>
 
-                    <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#FF7043] to-[#FF1744] w-full flex flex-col">
-                        <h3 class="text-lg font-bold mb-2 text-white">Pending</h3>
-                        <p class="text-5xl font-bold text-white" id="pemeriksaanPending">...</p>
+                    <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#B0BEC5] to-[#78909C] w-full flex flex-col">
+                        <h3 class="text-lg font-bold mb-2 text-white">Menunggu</h3>
+                        <p class="text-5xl font-bold text-white" id="pemeriksaanBelumDikerjakan">...</p>
                     </div>
+
 
                     <!-- Card sesuai status dengan gradasi biru -->
                     <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#607D8B] to-[#455A64] w-full flex flex-col">
@@ -72,21 +73,25 @@
 
 
                     <!-- Belum Dikerjakan - Warna Grey -->
-                    <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#B0BEC5] to-[#78909C] w-full flex flex-col">
-                        <h3 class="text-lg font-bold mb-2 text-white">Menunggu</h3>
-                        <p class="text-5xl font-bold text-white" id="pemeriksaanBelumDikerjakan">...</p>
+
+                    
+
+                    <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#FF7043] to-[#FF1744] w-full flex flex-col">
+                        <h3 class="text-lg font-bold mb-2 text-white">Pending</h3>
+                        <p class="text-5xl font-bold text-white" id="pemeriksaanPending">...</p>
                     </div>
+                    
 
                     <!-- Sedang Diproses - Warna Kuning Cerah -->
                     <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#F57F17] to-[#FF9800] w-full flex flex-col">
-                        <h3 class="text-lg font-bold mb-2 text-white">Di Proses</h3>
+                        <h3 class="text-lg font-bold mb-2 text-white">Diproses</h3>
                         <p class="text-5xl font-bold text-white" id="pemeriksaanSedangDiproses">...</p>
                     </div>
 
 
                     <!-- Selesai - Warna Hijau Cerah -->
                     <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#66BB6A] to-[#43A047] w-full flex flex-col">
-                        <h3 class="text-lg font-bold mb-2 text-white">Selesai</h3>
+                        <h3 class="text-lg font-bold mb-2 text-white">Validasi</h3>
                         <p class="text-5xl font-bold text-white" id="pemeriksaanSelesaiDikerjakan">...</p>
                     </div>
                 </div>
@@ -427,7 +432,7 @@
                     labels: labels,
                     datasets: [{
                         data: data,
-                        backgroundColor: ['#60a5fa', '#3b82f6', '#1e40af', '#1e3a8a'],
+                        backgroundColor: ['#2A2AE5', '#2A88E5', '#882AE5', '#49DBE3'],
                         borderColor: '#ffffff',
                         borderWidth: 2
                     }]
@@ -489,15 +494,16 @@
                     datasets: [{
                         data: data,
                         backgroundColor: [
-                            'rgba(59, 130, 246, 1)',
-                            'rgba(37, 99, 235, 1)',
-                            'rgba(30, 58, 138, 1)',
-                            'rgba(99, 102, 241, 1)',
-                            'rgba(30, 64, 175, 1)',
-                            'rgba(6, 182, 212, 1)',
-                            'rgba(56, 189, 248, 1)',
-                            'rgba(14, 165, 233, 1)',
+                            'rgb(25, 92, 177)',  // Royal Blue
+                            'rgba(37, 99, 235, 1)',  // Blue
+                            'rgba(59, 130, 246, 1)', // Dodger Blue
+                            'rgba(6, 182, 212, 1)',  // Cyan
+                            'rgba(14, 165, 233, 1)', // Sky Blue
+                            'rgba(99, 102, 241, 1)', // Soft Indigo
+                            'rgba(120, 94, 240, 1)', // Violet Blue
+                            'rgba(88, 80, 236, 1)'   // Deep Periwinkle
                         ],
+
                         borderColor: '#ffffff',
                         borderWidth: 2
                     }]

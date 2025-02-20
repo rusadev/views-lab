@@ -17,6 +17,7 @@
                     </x-nav-link>
                 </div>
 
+                @if (auth()->user()->id == 1)
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('mikro.index')" :active="request()->routeIs('mikro.index')">
                         {{ __('Mikrobioliogi Klinik') }}
@@ -28,7 +29,7 @@
                         {{ __('Patologi Anatomi') }}
                     </x-nav-link>
                 </div>
-
+                @endif
                 
                 @if(auth()->user()->id == 2)
                     <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
