@@ -36,11 +36,11 @@
                                     <h3 class="text-xl font-semibold text-white">Jumlah Pemeriksaan</h3>
                                 </div>
                             </div>
-                            <a href="#" class="mt-4 inline-block text-white font-medium hover:text-teal-200">Lihat Laporan</a>
+                            <a href="{{route('laporan.jumlah-pemeriksaan.index')}}" class="mt-4 inline-block text-white font-medium hover:text-teal-200">Lihat Laporan</a>
                         </div>
 
                         <!-- Card for Laporan Hasil Histopatologi -->
-                        <div class="bg-gradient-to-r from-yellow-600 to-yellow-400 p-6 rounded-xl shadow-2xl transform hover:scale-105 transition duration-300 ease-in-out">
+                        <!-- <div class="bg-gradient-to-r from-yellow-600 to-yellow-400 p-6 rounded-xl shadow-2xl transform hover:scale-105 transition duration-300 ease-in-out">
                             <div class="flex items-center space-x-4">
                                 
                                 <i class="fas fa-flask text-white text-4xl"></i>
@@ -48,8 +48,8 @@
                                     <h3 class="text-xl font-semibold text-white">Detail Pemeriksaan</h3>
                                 </div>
                             </div>
-                            <a href="#" class="mt-4 inline-block text-white font-medium hover:text-yellow-200">Lihat Laporan</a>
-                        </div>
+                            <a href="{{route('laporan.detail-pemeriksaan.index')}}" class="mt-4 inline-block text-white font-medium hover:text-yellow-200">Lihat Laporan</a>
+                        </div> -->
 
                         <!-- Card for Laporan Mikrobiologi -->
                         <div class="bg-gradient-to-r from-purple-600 to-purple-400 p-6 rounded-xl shadow-2xl transform hover:scale-105 transition duration-300 ease-in-out">
@@ -59,7 +59,7 @@
                                     <h3 class="text-xl font-semibold text-white">Penggunaan Tabung</h3>
                                 </div>
                             </div>
-                            <a href="#" class="mt-4 inline-block text-white font-medium hover:text-purple-200">Lihat Laporan</a>
+                            <a href="{{route('laporan.penggunaan-tabung.index')}}" class="mt-4 inline-block text-white font-medium hover:text-purple-200">Lihat Laporan</a>
                         </div>
 
                         <!-- Card for Laporan Imunohistokimia -->
@@ -70,7 +70,7 @@
                                     <h3 class="text-xl font-semibold text-white">Laporan Nilai Kritis</h3>
                                 </div>
                             </div>
-                            <a href="#" class="mt-4 inline-block text-white font-medium hover:text-pink-200">Lihat Laporan</a>
+                            <a href="{{route('laporan.nilai-kritis.index')}}" class="mt-4 inline-block text-white font-medium hover:text-pink-200">Lihat Laporan</a>
                         </div>
 
                         <!-- Card for Laporan Genetik -->
@@ -81,7 +81,7 @@
                                     <h3 class="text-xl font-semibold text-white">Laporan TAT</h3>
                                 </div>
                             </div>
-                            <a href="#" class="mt-4 inline-block text-white font-medium hover:text-teal-200">Lihat Laporan</a>
+                            <a href="{{route('laporan.tat.index')}}" class="mt-4 inline-block text-white font-medium hover:text-teal-200">Lihat Laporan</a>
                         </div>
 
                     </div>
