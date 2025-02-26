@@ -203,7 +203,7 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: "{{ route('klinik.order') }}",
+                url: "/laboratorium/patologi-klinik/get-order",
                 data: function(d) {
                     d.search_type = $("input[name='search_type']:checked").val();
                     d.rm_number = $("#rm_number").val();
@@ -275,7 +275,7 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: "{{ route('klinik.order.flag') }}",
+                url: "/laboratorium/patologi-klinik/get-order/flag",
                 data: function(d) {
                     d.search_type = $("input[name='search_type']:checked").val();
                     d.rm_number = $("#rm_number").val();

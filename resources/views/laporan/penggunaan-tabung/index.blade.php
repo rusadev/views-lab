@@ -103,7 +103,7 @@
                 `;
 
                 try {
-                    const response = await fetch(`${BASE_URL}/laboratorium/laporan/penggunaan-tabung/data?start_date=${startDate}&end_date=${endDate}`);
+                    const response = await fetch(`/laboratorium/laporan/penggunaan-tabung/data?start_date=${startDate}&end_date=${endDate}`);
                     const {
                         data,
                         samples

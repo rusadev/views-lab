@@ -91,7 +91,7 @@
                 `;
 
                 try {
-                    const response = await fetch(`${BASE_URL}/laboratorium/laporan/nilai-kritis/data?start_date=${startDate}&end_date=${endDate}`);
+                    const response = await fetch(`/laboratorium/laporan/nilai-kritis/data?start_date=${startDate}&end_date=${endDate}`);
                     const data = await response.json();
 
                     if (data.length > 0) {

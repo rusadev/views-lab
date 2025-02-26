@@ -62,7 +62,7 @@
 
                 const startDate = document.getElementById("start_date").value;
                 const endDate = document.getElementById("end_date").value;
-                const url = `${BASE_URL}/laboratorium/laporan/jumlah-pemeriksaan/data?start_date=${startDate}&end_date=${endDate}`;
+                const url = `/laboratorium/laporan/jumlah-pemeriksaan/data?start_date=${startDate}&end_date=${endDate}`;
 
                 if (startDate > endDate) {
                     alert("Tanggal mulai tidak boleh lebih besar dari tanggal akhir!");

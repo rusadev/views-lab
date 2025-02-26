@@ -104,7 +104,7 @@
 
 
                 try {
-                    const response = await fetch(`${BASE_URL}/laboratorium/laporan/tat/data?start_date=${startDate}&end_date=${endDate}`);
+                    const response = await fetch(`/laboratorium/laporan/tat/data?start_date=${startDate}&end_date=${endDate}`);
                     const data = await response.json();
 
                     const updateTable = (elementId, records, columns) => {

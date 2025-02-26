@@ -125,6 +125,8 @@
             startDateInput.value = today;
             endDateInput.value = today;
 
+            fetchData();
+
             async function fetchData() {
                 const startDate = startDateInput.value;
                 const endDate = endDateInput.value;
@@ -169,7 +171,7 @@
         async function fetchDataAndRenderKunjunganPasien(startDate, endDate) {
             const BASE_URL = "{{ config('app.url') }}";
             try {
-                const response = await fetch(`${BASE_URL}/laboratorium/laporan/jumlah-pasien/data?start_date=${startDate}&end_date=${endDate}`);
+                const response = await fetch(`/laboratorium/laporan/jumlah-pasien/data?start_date=${startDate}&end_date=${endDate}`);
                 if (!response.ok) throw new Error("HTTP error " + response.status);
 
                 const res = await response.json();
@@ -190,7 +192,7 @@
         async function fetchDataDistribusiPerRuangan(startDate, endDate) {
             const BASE_URL = "{{ config('app.url') }}";
             try {
-                const response = await fetch(`${BASE_URL}/laboratorium/laporan/jumlah-pasien/data?start_date=${startDate}&end_date=${endDate}`);
+                const response = await fetch(`/laboratorium/laporan/jumlah-pasien/data?start_date=${startDate}&end_date=${endDate}`);
                 if (!response.ok) {
                     throw new Error("Gagal mengambil data");
                 }
