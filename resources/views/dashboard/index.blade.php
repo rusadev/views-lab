@@ -926,40 +926,40 @@
         }
 
         function renderTableNilaiKritis(data) {
-    const monitoringTable = document.getElementById("nilai-kritis");
-    const tableContainer = document.querySelector('.overflow-y-auto');
+            const monitoringTable = document.getElementById("nilai-kritis");
+            const tableContainer = document.querySelector('.overflow-y-auto');
 
-    if (!monitoringTable || !tableContainer) {
-        return;
-    }
+            if (!monitoringTable || !tableContainer) {
+                return;
+            }
 
-    monitoringTable.innerHTML = "";
+            monitoringTable.innerHTML = "";
 
-    data.forEach((item) => {
-        const rowClass = item.od_tr_flag === 'HH' ? 'bg-red-50 border-l-4 border-red-500 animate-pulse' : 'bg-yellow-50 border-l-4 border-yellow-500 animate-pulse';
-        const row = `<tr class="border-b ${rowClass}">
-            <td class="p-2">${item.oh_pid}</td>
-            <td class="p-2">${item.oh_last_name}</td>
-            <td class="p-2">${item.ti_name}</td>
-            <td class="p-2 font-bold">${item.od_tr_val}</td>
-            <td class="p-2"><span class="text-red-600 font-bold">${item.od_tr_flag}</span></td>
-        </tr>`;
-        monitoringTable.innerHTML += row;
-    });
+            data.forEach((item) => {
+                const rowClass = item.od_tr_flag === 'HH' ? 'bg-red-50 border-l-4 border-red-500 animate-pulse' : 'bg-yellow-50 border-l-4 border-yellow-500 animate-pulse';
+                const row = `<tr class="border-b ${rowClass}">
+                    <td class="p-2">${item.oh_pid}</td>
+                    <td class="p-2">${item.oh_last_name}</td>
+                    <td class="p-2">${item.ti_name}</td>
+                    <td class="p-2 font-bold">${item.od_tr_val}</td>
+                    <td class="p-2"><span class="text-red-600 font-bold">${item.od_tr_flag}</span></td>
+                </tr>`;
+                monitoringTable.innerHTML += row;
+            });
 
-    // Setelah data diupdate, scroll ke atas (awal) sebelum melakukan scrolling otomatis ke bawah
-    tableContainer.scrollTop = 0;
+            // Setelah data diupdate, scroll ke atas (awal) sebelum melakukan scrolling otomatis ke bawah
+            tableContainer.scrollTop = 0;
 
-    const scrollDown = () => {
-        if (tableContainer.scrollTop + tableContainer.clientHeight < tableContainer.scrollHeight) {
-            tableContainer.scrollTop += 2;
-        } else {
-            tableContainer.scrollTop = 0; // Kembali ke awal jika sudah mencapai bawah
+            const scrollDown = () => {
+                if (tableContainer.scrollTop + tableContainer.clientHeight < tableContainer.scrollHeight) {
+                    tableContainer.scrollTop += 2;
+                } else {
+                    tableContainer.scrollTop = 0; // Kembali ke awal jika sudah mencapai bawah
+                }
+            };
+
+            const scrollInterval = setInterval(scrollDown, 350);
         }
-    };
-
-    const scrollInterval = setInterval(scrollDown, 350);
-}
 
 
         document.addEventListener("DOMContentLoaded", function() {
