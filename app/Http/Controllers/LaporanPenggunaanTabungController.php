@@ -77,7 +77,4 @@ class LaporanPenggunaanTabungController extends Controller
             'samples' => $samples, // Untuk header tabel
         ]);
     }
-
-    
-
 }
