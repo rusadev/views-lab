@@ -197,6 +197,8 @@
             width: '100%',
         });
 
+        
+
         let table = $('#orderTable').DataTable({
             processing: true,
             serverSide: true,

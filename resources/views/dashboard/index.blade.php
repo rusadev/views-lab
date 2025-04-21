@@ -41,59 +41,63 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <!-- Left Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-4 gap-3 items-stretch text-center w-full">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 items-stretch text-center w-full">
                     <!-- Card dengan nuansa biru (gradasi baru) -->
                     <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#0D47A1] to-[#1976D2] w-full flex flex-col">
-                        <h3 class="text-xl font-bold mb-2 text-white">Kunjungan</h3>
+                        <h3 class="text-xl font-bold mb-2 text-white">Kunjungan Pasien</h3>
                         <p class="text-5xl font-bold text-white text-center" id="kunjunganPasien">...</p>
                     </div>
                     <!-- Permintaan - Warna Biru Gelap ke Biru Terang -->
                     <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#0D47A1] to-[#1976D2] w-full flex flex-col">
-                        <h3 class="text-lg font-bold mb-2 text-white">Permintaan</h3>
+                        <h3 class="text-lg font-bold mb-2 text-white">Permintaan Pemeriksaan</h3>
                         <p class="text-5xl font-bold text-white" id="permintaanPemeriksaan">...</p>
                     </div>
 
                     <!-- Diselesaikan - Warna Biru Terang ke Biru Laut -->
-                    <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#42A5F5] to-[#1E88E5] w-full flex flex-col">
-                        <h3 class="text-lg font-bold mb-2 text-white">Diselesaikan</h3>
-                        <p class="text-5xl font-bold text-white" id="pemeriksaanSelesai">...</p>
-                    </div>
 
-                    <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#B0BEC5] to-[#78909C] w-full flex flex-col">
+                    <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#F57F17] to-[#FF9800] w-full flex flex-col">
                         <h3 class="text-lg font-bold mb-2 text-white">Menunggu</h3>
                         <p class="text-5xl font-bold text-white" id="pemeriksaanBelumDikerjakan">...</p>
                     </div>
 
 
+                    <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#66BB6A] to-[#43A047] w-full flex flex-col">
+                        <h3 class="text-lg font-bold mb-2 text-white">Diselesaikan</h3>
+                        <p class="text-5xl font-bold text-white" id="pemeriksaanSelesai">...</p>
+                    </div>
+
+
+
+
                     <!-- Card sesuai status dengan gradasi biru -->
-                    <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#607D8B] to-[#455A64] w-full flex flex-col">
+                    <!-- <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#607D8B] to-[#455A64] w-full flex flex-col">
                         <h3 class="text-lg font-bold mb-2 text-white">Pemeriksaan</h3>
                         <p class="text-5xl font-bold text-white" id="pemeriksaanKeseluruhan">...</p>
-                    </div>
+                    </div> -->
 
 
                     <!-- Belum Dikerjakan - Warna Grey -->
 
                     
 
-                    <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#FF7043] to-[#FF1744] w-full flex flex-col">
+                    <!-- <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#FF7043] to-[#FF1744] w-full flex flex-col">
                         <h3 class="text-lg font-bold mb-2 text-white">Pending</h3>
                         <p class="text-5xl font-bold text-white" id="pemeriksaanPending">...</p>
-                    </div>
+                    </div> -->
                     
 
                     <!-- Sedang Diproses - Warna Kuning Cerah -->
-                    <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#F57F17] to-[#FF9800] w-full flex flex-col">
+                    <!-- <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#F57F17] to-[#FF9800] w-full flex flex-col">
                         <h3 class="text-lg font-bold mb-2 text-white">Diproses</h3>
                         <p class="text-5xl font-bold text-white" id="pemeriksaanSedangDiproses">...</p>
-                    </div>
+                    </div> -->
 
 
                     <!-- Selesai - Warna Hijau Cerah -->
-                    <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#66BB6A] to-[#43A047] w-full flex flex-col">
+                    <!-- <div class="p-4 rounded-2xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 duration-300 ease-in-out bg-gradient-to-r from-[#66BB6A] to-[#43A047] w-full flex flex-col">
                         <h3 class="text-lg font-bold mb-2 text-white">Validasi</h3>
                         <p class="text-5xl font-bold text-white" id="pemeriksaanSelesaiDikerjakan">...</p>
-                    </div>
+                    </div> -->
                 </div>
 
                 <!-- Center Grid -->
@@ -205,12 +209,18 @@
             let startDate = startDateInput.value;
             let endDate = endDateInput.value;
 
+            const BASE_URL = "{{ config('app.url') }}";
+
+            // const response = await fetch(`${BASE_URL}/laboratorium/laporan/tat/data?start_date=${startDate}&end_date=${endDate}`);
+
+
+
             // Pastikan tidak mengubah input tanggal user secara tidak sengaja
             console.log(`Fetching data with startDate: ${startDate} and endDate: ${endDate}`);
             if (startDate && endDate) {
                 console.log([startDate, endDate]);
                 $.ajax({
-                    url: "{{ route('dashboard.data') }}",
+                    url: `${BASE_URL}/laboratorium/dashboard/data`,
                     type: "GET",
                     data: {
                         start_date: startDate,
@@ -432,10 +442,22 @@
                     labels: labels,
                     datasets: [{
                         data: data,
-                        backgroundColor: ['#2A2AE5', '#2A88E5', '#882AE5', '#49DBE3'],
-                        borderColor: '#ffffff',
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 1)',    // Red
+                            'rgba(54, 162, 235, 1)',    // Blue
+                            'rgba(255, 159, 64, 1)',    // Orange
+                            'rgba(75, 192, 192, 1)',    // Teal
+                            'rgba(153, 102, 255, 1)',   // Purple
+                            'rgba(255, 205, 86, 1)',    // Yellow
+                            'rgba(39, 174, 96, 1)',     // Green
+                            'rgba(52, 152, 219, 1)',    // Sky Blue
+                            'rgba(244, 67, 54, 1)',     // Dark Red
+                            'rgba(231, 233, 237, 1)'    // Light Gray
+                        ],
+                        borderColor: '#ffffff',         // White border for contrast
                         borderWidth: 2
                     }]
+
                 },
                 options: {
                     responsive: false,
@@ -494,15 +516,26 @@
                     datasets: [{
                         data: data,
                         backgroundColor: [
-                            'rgb(25, 92, 177)',  // Royal Blue
-                            'rgba(37, 99, 235, 1)',  // Blue
-                            'rgba(59, 130, 246, 1)', // Dodger Blue
-                            'rgba(6, 182, 212, 1)',  // Cyan
-                            'rgba(14, 165, 233, 1)', // Sky Blue
-                            'rgba(99, 102, 241, 1)', // Soft Indigo
-                            'rgba(120, 94, 240, 1)', // Violet Blue
-                            'rgba(88, 80, 236, 1)'   // Deep Periwinkle
+                            'rgba(255, 99, 132, 1)',  // Red
+                            'rgba(54, 162, 235, 1)',  // Blue
+                            'rgba(255, 159, 64, 1)',  // Orange
+                            'rgba(75, 192, 192, 1)',  // Teal
+                            'rgba(153, 102, 255, 1)', // Purple
+                            'rgba(255, 159, 64, 1)',  // Orange
+                            'rgba(255, 99, 132, 1)',  // Red
+                            'rgba(54, 162, 235, 1)'   // Blue
                         ],
+                        borderColor: [
+                            '#ff6384',  // Red
+                            '#36a2eb',  // Blue
+                            '#ff9f40',  // Orange
+                            '#4bc0c0',  // Teal
+                            '#9966ff',  // Purple
+                            '#ff9f40',  // Orange
+                            '#ff6384',  // Red
+                            '#36a2eb'   // Blue
+                        ],
+
 
                         borderColor: '#ffffff',
                         borderWidth: 2
@@ -563,23 +596,29 @@
                     datasets: [{
                         label: '',
                         data: data,
+
+                        
                         backgroundColor: [
-                            'rgba(56, 189, 248, 1)',
-                            'rgba(14, 165, 233, 1)',
-                            'rgba(99, 102, 241, 1)',
-                            'rgba(30, 64, 175, 1)',
-                            'rgba(6, 182, 212, 1)',
-                            'rgba(56, 189, 248, 1)',
-                            'rgba(14, 165, 233, 1)',
-                            'rgba(99, 102, 241, 1)'
+                            'rgba(255, 99, 132, 1)',  // Red
+                            'rgba(54, 162, 235, 1)',  // Blue
+                            'rgba(255, 159, 64, 1)',  // Orange
+                            'rgba(75, 192, 192, 1)',  // Teal
+                            'rgba(153, 102, 255, 1)', // Purple
+                            'rgba(255, 159, 64, 1)',  // Orange
+                            'rgba(255, 99, 132, 1)',  // Red
+                            'rgba(54, 162, 235, 1)'   // Blue
                         ],
                         borderColor: [
-                            '#38bdf8',
-                            '#0ea5e9',
-                            '#6366f1',
-                            '#1e40af',
-                            '#06b6d4'
+                            '#ff6384',  // Red
+                            '#36a2eb',  // Blue
+                            '#ff9f40',  // Orange
+                            '#4bc0c0',  // Teal
+                            '#9966ff',  // Purple
+                            '#ff9f40',  // Orange
+                            '#ff6384',  // Red
+                            '#36a2eb'   // Blue
                         ],
+
                         borderRadius: 5,
                         borderWidth: 2
                     }]
@@ -647,22 +686,26 @@
                         label: 'TAT dalam menit',
                         data: data,
                         backgroundColor: [
-                            'rgba(56, 189, 248, 1)',
-                            'rgba(14, 165, 233, 1)',
-                            'rgba(99, 102, 241, 1)',
-                            'rgba(30, 64, 175, 1)',
-                            'rgba(6, 182, 212, 1)',
-                            'rgba(56, 189, 248, 1)',
-                            'rgba(14, 165, 233, 1)',
-                            'rgba(99, 102, 241, 1)'
+                            'rgba(255, 99, 132, 1)',  // Red
+                            'rgba(54, 162, 235, 1)',  // Blue
+                            'rgba(255, 159, 64, 1)',  // Orange
+                            'rgba(75, 192, 192, 1)',  // Teal
+                            'rgba(153, 102, 255, 1)', // Purple
+                            'rgba(255, 159, 64, 1)',  // Orange
+                            'rgba(255, 99, 132, 1)',  // Red
+                            'rgba(54, 162, 235, 1)'   // Blue
                         ],
                         borderColor: [
-                            '#38bdf8',
-                            '#0ea5e9',
-                            '#6366f1',
-                            '#1e40af',
-                            '#06b6d4'
+                            '#ff6384',  // Red
+                            '#36a2eb',  // Blue
+                            '#ff9f40',  // Orange
+                            '#4bc0c0',  // Teal
+                            '#9966ff',  // Purple
+                            '#ff9f40',  // Orange
+                            '#ff6384',  // Red
+                            '#36a2eb'   // Blue
                         ],
+
                         borderRadius: 5,
                         borderWidth: 2
                     }]
@@ -727,23 +770,37 @@
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [{
+                    datasets: [
+                        {
                             label: 'Selesai',
                             data: dataSelesai,
                             backgroundColor: [
-                                'rgba(59, 130, 246, 1)', 'rgba(14, 165, 233, 1)', 'rgba(99, 102, 241, 1)',
-                                'rgba(38, 198, 218, 1)', 'rgba(59, 130, 246, 1)',
-                                'rgba(14, 165, 233, 1)', 'rgba(99, 102, 241, 1)', 'rgba(38, 198, 218, 1)',
+                                'rgba(255, 99, 132, 1)',    // Red
+                                'rgba(54, 162, 235, 1)',    // Blue
+                                'rgba(255, 159, 64, 1)',    // Orange
+                                'rgba(75, 192, 192, 1)',    // Teal
+                                'rgba(153, 102, 255, 1)',   // Purple
+                                'rgba(255, 205, 86, 1)',    // Yellow
+                                'rgba(231, 233, 237, 1)',   // Light Gray
+                                'rgba(244, 67, 54, 1)',     // Dark Red
+                                'rgba(39, 174, 96, 1)',     // Green
+                                'rgba(52, 152, 219, 1)'     // Sky Blue
                             ],
                         },
                         {
                             label: 'Belum',
                             data: dataBelum,
                             backgroundColor: [
-                                'rgba(0, 112, 189, 1)', 'rgba(5, 95, 162, 1)', 'rgba(66, 73, 167, 1)',
-                                'rgba(18, 129, 137, 1)', 'rgba(0, 112, 189, 1)',
-                                'rgba(5, 95, 162, 1)', 'rgba(66, 73, 167, 1)', 'rgba(18, 129, 137, 1)',
-
+                                'rgba(204, 51, 99, 1)',     // Dark Red
+                                'rgba(33, 92, 162, 1)',     // Dark Blue
+                                'rgba(204, 102, 51, 1)',    // Dark Orange
+                                'rgba(33, 132, 132, 1)',    // Dark Teal
+                                'rgba(102, 51, 204, 1)',    // Dark Purple
+                                'rgba(204, 153, 0, 1)',     // Dark Yellow
+                                'rgba(169, 169, 169, 1)',   // Dark Gray
+                                'rgba(204, 0, 0, 1)',       // Burgundy
+                                'rgba(25, 120, 0, 1)',      // Forest Green
+                                'rgba(44, 62, 80, 1)'       // Charcoal Blue
                             ],
                         }
                     ]
@@ -833,37 +890,38 @@
                 type: tipe,
                 data: {
                     labels: labels,
-                    datasets: [{
+                    datasets: [
+                        {
                             label: 'Jumlah Permintaan',
                             data: dataTotal,
-                            borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderColor: '#d32f2f', // Red for contrast
+                            backgroundColor: 'rgba(211, 47, 47, 0.1)', // Lighter red
                             fill: true,
                             pointRadius: 4,
-                            pointBackgroundColor: '#60a5fa',
-                            pointBorderColor: '#3b82f6',
+                            pointBackgroundColor: '#e57373', // Light red for points
+                            pointBorderColor: '#d32f2f', // Red for points
                             tension: 0.3
                         },
                         {
                             label: 'Rawat Jalan',
                             data: dataRajal,
-                            borderColor: '#0ea5e9',
-                            backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                            borderColor: '#0288d1', // Blue for contrast
+                            backgroundColor: 'rgba(2, 136, 209, 0.1)', // Light blue
                             fill: true,
                             pointRadius: 4,
-                            pointBackgroundColor: '#38bdf8',
-                            pointBorderColor: '#0ea5e9',
+                            pointBackgroundColor: '#4fa3d1', // Light blue for points
+                            pointBorderColor: '#0288d1', // Blue for points
                             tension: 0.3
                         },
                         {
                             label: 'Rawat Inap',
                             data: dataRanap,
-                            borderColor: '#6366f1',
-                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            borderColor: '#7b1fa2', // Purple for contrast
+                            backgroundColor: 'rgba(123, 31, 162, 0.1)', // Light purple
                             fill: true,
                             pointRadius: 4,
-                            pointBackgroundColor: '#a5b4fc',
-                            pointBorderColor: '#6366f1',
+                            pointBackgroundColor: '#9c4dcc', // Light purple for points
+                            pointBorderColor: '#7b1fa2', // Purple for points
                             tension: 0.3
                         }
                     ]
@@ -925,41 +983,42 @@
             });
         }
 
+
         function renderTableNilaiKritis(data) {
-    const monitoringTable = document.getElementById("nilai-kritis");
-    const tableContainer = document.querySelector('.overflow-y-auto');
+            const monitoringTable = document.getElementById("nilai-kritis");
+            const tableContainer = document.querySelector('.overflow-y-auto');
 
-    if (!monitoringTable || !tableContainer) {
-        return;
-    }
+            if (!monitoringTable || !tableContainer) {
+                return;
+            }
 
-    monitoringTable.innerHTML = "";
+            monitoringTable.innerHTML = "";
 
-    data.forEach((item) => {
-        const rowClass = item.od_tr_flag === 'HH' ? 'bg-red-50 border-l-4 border-red-500 animate-pulse' : 'bg-yellow-50 border-l-4 border-yellow-500 animate-pulse';
-        const row = `<tr class="border-b ${rowClass}">
-            <td class="p-2">${item.oh_pid}</td>
-            <td class="p-2">${item.oh_last_name}</td>
-            <td class="p-2">${item.ti_name}</td>
-            <td class="p-2 font-bold">${item.od_tr_val}</td>
-            <td class="p-2"><span class="text-red-600 font-bold">${item.od_tr_flag}</span></td>
-        </tr>`;
-        monitoringTable.innerHTML += row;
-    });
+            data.forEach((item) => {
+                const rowClass = item.od_tr_flag === 'HH' ? 'bg-red-50 border-l-4 border-red-500 animate-pulse' : 'bg-yellow-50 border-l-4 border-yellow-500 animate-pulse';
+                const row = `<tr class="border-b ${rowClass}">
+                    <td class="p-2">${item.oh_pid}</td>
+                    <td class="p-2">${item.oh_last_name}</td>
+                    <td class="p-2">${item.ti_name}</td>
+                    <td class="p-2 font-bold">${item.od_tr_val}</td>
+                    <td class="p-2"><span class="text-red-600 font-bold">${item.od_tr_flag}</span></td>
+                </tr>`;
+                monitoringTable.innerHTML += row;
+            });
 
-    // Setelah data diupdate, scroll ke atas (awal) sebelum melakukan scrolling otomatis ke bawah
-    tableContainer.scrollTop = 0;
+            // Setelah data diupdate, scroll ke atas (awal) sebelum melakukan scrolling otomatis ke bawah
+            tableContainer.scrollTop = 0;
 
-    const scrollDown = () => {
-        if (tableContainer.scrollTop + tableContainer.clientHeight < tableContainer.scrollHeight) {
-            tableContainer.scrollTop += 2;
-        } else {
-            tableContainer.scrollTop = 0; // Kembali ke awal jika sudah mencapai bawah
+            const scrollDown = () => {
+                if (tableContainer.scrollTop + tableContainer.clientHeight < tableContainer.scrollHeight) {
+                    tableContainer.scrollTop += 2;
+                } else {
+                    tableContainer.scrollTop = 0; // Kembali ke awal jika sudah mencapai bawah
+                }
+            };
+
+            const scrollInterval = setInterval(scrollDown, 350);
         }
-    };
-
-    const scrollInterval = setInterval(scrollDown, 350);
-}
 
 
         document.addEventListener("DOMContentLoaded", function() {
@@ -971,7 +1030,7 @@
             chartRawatJalan = renderChartRawatJalanInap('donutChartRawatJalan', [0, 0], true);
             chartRawatInap = renderChartRawatJalanInap('donutChartRawatInap', [0, 0], true);
 
-            chartDistribusiPemeriksaan = renderChartDistribusiPemeriksaan(document.getElementById('distribusiPemeriksaanChart').getContext('2d'), [], [], 'doughnut');
+            chartDistribusiPemeriksaan = renderChartDistribusiPemeriksaan(document.getElementById('distribusiPemeriksaanChart').getContext('2d'), [], [], 'pie');
             chartDistribusiRanapRajal = renderChartDistribusiRanapRajal(document.getElementById('distribusiRanapRajalChart').getContext('2d'), [], [], 'pie');
 
             chartDistribusiSpesimen = renderChartDistribusiSpesimen(document.getElementById('distribusiSpesimenChart').getContext('2d'), [], [], 'bar');
