@@ -19,17 +19,42 @@ class LaporanTAT extends Controller
         $startDate = $request->input('start_date')
             ? Carbon::parse($request->input('start_date'))->startOfDay()
             : Carbon::create(2024, 1, 1, 0, 0, 0);
-        
+    
         $endDate = $request->input('end_date')
             ? Carbon::parse($request->input('end_date'))->endOfDay()
             : Carbon::create(2024, 1, 10, 23, 59, 59);
-        
-        $oracleConnection = DB::connection('oracle');
-        
-        // Helper function to create query per status and care type
-        $queryByStatusAndCareType = function ($status) use ($oracleConnection, $startDate, $endDate) {
-            // Query by Group with Care Type (Rawat Inap / Rawat Jalan)
-            $byGroup = $oracleConnection
+    
+        $oracle = DB::connection('oracle');
+    
+        $buildQuery = function ($status, $type) use ($oracle, $startDate, $endDate) {
+            $select = [
+                'a.oh_pri as priority',
+                'a.oh_ptype as jenis_rawat',
+                DB::raw("CASE 
+                    WHEN a.oh_ptype = 'IN' THEN 'Rawat Inap' 
+                    WHEN a.oh_ptype = 'OP' THEN 'Rawat Jalan' 
+                    ELSE 'Lainnya' 
+                END as jenis_rawat_nama"),
+                DB::raw("ROUND(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440), 0) as avg_tat_minutes"),
+                DB::raw("CASE 
+                    WHEN FLOOR(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440) / 60) > 0 
+                    THEN FLOOR(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440) / 60) || ' jam ' || MOD(ROUND(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440)), 60) || ' menit'
+                    ELSE MOD(ROUND(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440)), 60) || ' menit'
+                END as avg_tat_time"),
+                DB::raw("COUNT(*) as total_tests")
+            ];
+    
+            if ($type === 'group') {
+                $select[] = 'b.od_test_grp as code';
+                $select[] = 'd.tg_name as name';
+                $groupBy = ['a.oh_pri', 'a.oh_ptype', 'b.od_test_grp', 'd.tg_name'];
+            } else {
+                $select[] = 'b.od_testcode as code';
+                $select[] = 'e.ti_name as name';
+                $groupBy = ['a.oh_pri', 'a.oh_ptype', 'b.od_testcode', 'e.ti_name'];
+            }
+    
+            $query = $oracle
                 ->table('ord_hdr as a')
                 ->leftJoin('ord_dtl as b', function ($join) {
                     $join->on('a.oh_tno', '=', 'b.od_tno')
@@ -38,126 +63,91 @@ class LaporanTAT extends Controller
                 ->leftJoin('ord_spl as c', function ($join) {
                     $join->on('b.od_tno', '=', 'c.os_tno')
                         ->on('b.od_spl_type', '=', 'c.os_spl_type');
-                })
-                ->leftJoin('test_group as d', 'b.od_test_grp', '=', 'd.tg_code')
-                ->select(
-                    'a.oh_pri as priority',
-                    'b.od_test_grp',
-                    'd.tg_name as test_group_name',
-                    DB::raw("COUNT(*) as total_tests"),
-                    DB::raw("CASE 
-                        WHEN FLOOR(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440) / 60) > 0 
-                        THEN FLOOR(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440) / 60) || ' jam ' || MOD(ROUND(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440)), 60) || ' menit'
-                        ELSE MOD(ROUND(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440)), 60) || ' menit'
-                    END as avg_tat_time"),
-                    DB::raw("ROUND(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440), 0) as avg_tat_minutes"),
-                    DB::raw("CASE 
-                        WHEN a.oh_ptype = 'IN' THEN 'Rawat Inap' 
-                        WHEN a.oh_ptype = 'OP' THEN 'Rawat Jalan' 
-                        ELSE 'Lainnya' 
-                    END AS jenis_rawat")
-                )
-                ->whereBetween('a.oh_trx_dt', [$startDate, $endDate])
-                ->where('a.oh_pri', $status)
-                ->whereNotNull('b.od_test_grp')
-                ->whereNotNull('b.od_validate_on')
-                ->whereNotNull('c.os_spl_rcvdt')
-                ->groupBy('a.oh_pri', 'b.od_test_grp', 'd.tg_name', 'a.oh_ptype')
-                ->orderBy('d.tg_name')
-                ->get();
-        
-            // Query by Test with Care Type (Rawat Inap / Rawat Jalan)
-            $byTest = $oracleConnection
-                ->table('ord_hdr as a')
-                ->leftJoin('ord_dtl as b', function ($join) {
-                    $join->on('a.oh_tno', '=', 'b.od_tno')
-                        ->where('b.od_order_item', '=', 'Y');
-                })
-                ->leftJoin('ord_spl as c', function ($join) {
-                    $join->on('b.od_tno', '=', 'c.os_tno')
-                        ->on('b.od_spl_type', '=', 'c.os_spl_type');
-                })
-                ->leftJoin('test_group as d', 'b.od_test_grp', '=', 'd.tg_code')
-                ->leftJoin('test_item as e', 'b.od_testcode', '=', 'e.ti_code')
-                ->select(
-                    'a.oh_pri as priority',
-                    'b.od_testcode',
-                    'e.ti_name as test_name',
-                    'b.od_test_grp',
-                    'd.tg_name as test_group_name',
-                    DB::raw("COUNT(*) as total_tests"),
-                    DB::raw("CASE 
-                        WHEN FLOOR(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440) / 60) > 0 
-                        THEN FLOOR(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440) / 60) || ' jam ' || MOD(ROUND(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440)), 60) || ' menit'
-                        ELSE MOD(ROUND(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440)), 60) || ' menit'
-                    END as avg_tat_time"),
-                    DB::raw("ROUND(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440), 0) as avg_tat_minutes"),
-                    DB::raw("CASE 
-                        WHEN a.oh_ptype = 'IN' THEN 'Rawat Inap' 
-                        WHEN a.oh_ptype = 'OP' THEN 'Rawat Jalan' 
-                        ELSE 'Lainnya' 
-                    END AS jenis_rawat")
-                )
-                ->whereBetween('a.oh_trx_dt', [$startDate, $endDate])
-                ->where('a.oh_pri', $status)
-                ->whereNotNull('b.od_testcode')
-                ->whereNotNull('b.od_validate_on')
-                ->whereNotNull('c.os_spl_rcvdt')
-                ->groupBy('a.oh_pri', 'b.od_testcode', 'e.ti_name', 'b.od_test_grp', 'd.tg_name', 'a.oh_ptype')
-                ->orderBy('e.ti_name')
-                ->get();
-        
-            return [
-                'by_group' => $byGroup,
-                'by_test' => $byTest
-            ];
-        };
-        
-        // Query for Cito (Urgent) and Non-Cito (Routine) statuses
-        $citoData = $queryByStatusAndCareType('U'); // Cito/Urgent
-        $nonCitoData = $queryByStatusAndCareType('R'); // Non-Cito/Routine
-        
-        // Group by Care Type for Cito and Non-Cito
-        $groupByCareType = function ($data) {
-            $groupedData = [
-                'rawat_inap' => [
-                    'by_group' => [],
-                    'by_test' => []
-                ],
-                'rawat_jalan' => [
-                    'by_group' => [],
-                    'by_test' => []
-                ]
-            ];
+                });
     
-            foreach ($data['by_group'] as $item) {
-                if ($item->jenis_rawat === 'Rawat Inap') {
-                    $groupedData['rawat_inap']['by_group'][] = $item;
-                } else {
-                    $groupedData['rawat_jalan']['by_group'][] = $item;
+            if ($type === 'group') {
+                $query->leftJoin('test_group as d', 'b.od_test_grp', '=', 'd.tg_code');
+            } else {
+                $query->leftJoin('test_group as d', 'b.od_test_grp', '=', 'd.tg_code');
+                $query->leftJoin('test_item as e', 'b.od_testcode', '=', 'e.ti_code');
+            }
+    
+            return $query
+                ->select($select)
+                ->whereBetween('a.oh_trx_dt', [$startDate, $endDate])
+                ->where('a.oh_pri', $status)
+                ->whereNotNull($type === 'group' ? 'b.od_test_grp' : 'b.od_testcode')
+                ->whereNotNull('b.od_validate_on')
+                ->whereNotNull('c.os_spl_rcvdt')
+                ->groupBy($groupBy)
+                ->get();
+        };
+    
+        // Ambil data Cito dan Non-Cito
+        $data = [
+            'cito' => [
+                'by_group' => $buildQuery('U', 'group'),
+                'by_test' => $buildQuery('U', 'test'),
+            ],
+            'non_cito' => [
+                'by_group' => $buildQuery('R', 'group'),
+                'by_test' => $buildQuery('R', 'test'),
+            ]
+        ];
+    
+        // Fungsi untuk menggabungkan data dan menghindari duplikasi nama
+        $pivotData = function ($dataset) {
+            $pivot = [];
+    
+            foreach ($dataset as $row) {
+                $key = $row->code;
+    
+                if (!isset($pivot[$key])) {
+                    $pivot[$key] = [
+                        'code' => $row->code,
+                        'name' => $row->name,
+                        'rawat_inap' => null,
+                        'rawat_jalan' => null,
+                    ];
+                }
+    
+                // Pastikan nama konsisten untuk setiap kode
+                if ($pivot[$key]['name'] !== $row->name) {
+                    // Jika tidak konsisten, overwrite untuk menjaga akurasi
+                    $pivot[$key]['name'] = $row->name;
+                }
+    
+                if ($row->jenis_rawat === 'IN') {
+                    $pivot[$key]['rawat_inap'] = [
+                        'tat_minutes' => (int)$row->avg_tat_minutes,
+                        'tat_formatted' => $row->avg_tat_time,
+                        'total_tests' => $row->total_tests,
+                    ];
+                } elseif ($row->jenis_rawat === 'OP') {
+                    $pivot[$key]['rawat_jalan'] = [
+                        'tat_minutes' => (int)$row->avg_tat_minutes,
+                        'tat_formatted' => $row->avg_tat_time,
+                        'total_tests' => $row->total_tests,
+                    ];
                 }
             }
     
-            foreach ($data['by_test'] as $item) {
-                if ($item->jenis_rawat === 'Rawat Inap') {
-                    $groupedData['rawat_inap']['by_test'][] = $item;
-                } else {
-                    $groupedData['rawat_jalan']['by_test'][] = $item;
-                }
-            }
-    
-            return $groupedData;
+            return array_values($pivot); // reset index
         };
-    
-        // Group data by care type
-        $groupedCitoData = $groupByCareType($citoData);
-        $groupedNonCitoData = $groupByCareType($nonCitoData);
     
         return response()->json([
-            'cito' => $groupedCitoData,
-            'non_cito' => $groupedNonCitoData
+            'cito' => [
+                'by_group' => $pivotData($data['cito']['by_group']),
+                'by_test' => $pivotData($data['cito']['by_test']),
+            ],
+            'non_cito' => [
+                'by_group' => $pivotData($data['non_cito']['by_group']),
+                'by_test' => $pivotData($data['non_cito']['by_test']),
+            ]
         ]);
     }
+    
+    
     
     
 }
