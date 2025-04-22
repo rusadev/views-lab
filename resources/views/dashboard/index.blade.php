@@ -220,7 +220,7 @@
             if (startDate && endDate) {
                 console.log([startDate, endDate]);
                 $.ajax({
-                    url: `${BASE_URL}/laboratorium/dashboard/data`,
+                    url: `/laboratorium/dashboard/data`,
                     type: "GET",
                     data: {
                         start_date: startDate,

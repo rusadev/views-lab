@@ -64,7 +64,7 @@
                     return;
                 }
 
-                const url = `${BASE_URL}/laboratorium/laporan/jumlah-pemeriksaan/data?start_date=${startDate}&end_date=${endDate}`;
+                const url = `/laboratorium/laporan/jumlah-pemeriksaan/data?start_date=${startDate}&end_date=${endDate}`;
                 toggleLoading(true);
 
                 try {

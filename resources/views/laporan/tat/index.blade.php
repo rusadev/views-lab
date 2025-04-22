@@ -231,7 +231,7 @@
                 searchButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memuat...`;
 
                 try {
-                    const response = await fetch(`${BASE_URL}/laboratorium/laporan/tat/data?start_date=${startDate}&end_date=${endDate}`);
+                    const response = await fetch(`/laboratorium/laporan/tat/data?start_date=${startDate}&end_date=${endDate}`);
                     const json = await response.json();
 
                     // Cito Data for Chart
