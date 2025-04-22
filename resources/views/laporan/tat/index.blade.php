@@ -31,363 +31,224 @@
                     </form>
                 </div>
             </div>
-
-            <!-- CITO Section -->
+            
+            <!-- Report Section -->
             <div class="bg-white shadow-sm rounded-lg mt-5 p-4">
-                <div id="cito-ranap">
-                    <h2 class="text-xl font-bold text-red-600 mb-4">TAT - Laporan CITO Rawat Inap</h2>
-                    <!-- Chart for Cito by Group -->
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Chart Berdasarkan Kelompok Pemeriksaan (CITO Rawat Inap)</h3>
-                        <canvas id="citoRanapChart"></canvas>
-                    </div>
+               
+                <h2 class="text-lg font-bold mb-2">TAT CITO - Berdasarkan Nama Pemeriksaan</h2>
+                <div id="export-container-cito"></div>
+                <table id="table-cito-test" class="w-full table-auto border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 text-center">
+                            <th class="border p-2" rowspan="2">Kode</th>
+                            <th class="border p-2" rowspan="2">Nama Test</th>
+                            <th class="border p-2 text-center" colspan="2">Rawat Jalan</th>
+                            <th class="border p-2 text-center" colspan="2">Rawat Inap</th>
+                        </tr>
+                        <tr class="bg-gray-100 text-center">
+                            <th class="border p-2 text-center">TAT</th>
+                            <th class="border p-2 text-center">Total</th>
+                            <th class="border p-2 text-center">TAT</th>
+                            <th class="border p-2 text-center">Total</th>
+                        </tr>
+                    </thead>
 
-                    <!-- TAT by Group Table -->
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">TAT Berdasarkan Kelompok Pemeriksaan (CITO Rawat Inap)</h3>
-                        <table class="w-full text-sm text-left border rounded-lg shadow-md">
-                            <thead class="text-gray-700 bg-gray-200">
-                                <tr>
-                                    <th class="px-4 py-2 border">Kelompok Pemeriksaan</th>
-                                    <th class="px-4 py-2 border">Total Tes</th>
-                                    <th class="px-4 py-2 border">Rata-rata TAT</th>
-                                </tr>
-                            </thead>
-                            <tbody id="cito-ranap-group-table-body"></tbody>
-                        </table>
-                    </div>
-
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">TAT Berdasarkan Test Pemeriksaan (CITO Rawat Inap)</h3>
-                        <table class="w-full text-sm text-left border rounded-lg shadow-md">
-                            <thead class="text-gray-700 bg-gray-200">
-                                <tr>
-                                    <th class="px-4 py-2 border">Nama Pemeriksaan</th>
-                                    <th class="px-4 py-2 border">Total Tes</th>
-                                    <th class="px-4 py-2 border">Rata-rata TAT</th>
-                                </tr>
-                            </thead>
-                            <tbody id="cito-ranap-test-table-body"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="cito-rajal">
-                    <h2 class="text-xl font-bold text-red-600 mb-4">TAT - Laporan CITO Rawat Jalan</h2>
-                    <!-- Chart for Cito by Group -->
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Chart Berdasarkan Kelompok Pemeriksaan (CITO Rawat Jalan)</h3>
-                        <canvas id="citoRajalChart"></canvas>
-                    </div>
-
-                    <!-- TAT by Group Table -->
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">TAT Berdasarkan Kelompok Pemeriksaan (CITO Rawat Jalan)</h3>
-                        <table class="w-full text-sm text-left border rounded-lg shadow-md">
-                            <thead class="text-gray-700 bg-gray-200">
-                                <tr>
-                                    <th class="px-4 py-2 border">Kelompok Pemeriksaan</th>
-                                    <th class="px-4 py-2 border">Total Tes</th>
-                                    <th class="px-4 py-2 border">Rata-rata TAT</th>
-                                </tr>
-                            </thead>
-                            <tbody id="cito-rajal-group-table-body"></tbody>
-                        </table>
-                    </div>
-
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">TAT Berdasarkan Test Pemeriksaan (CITO Rawat Jalan)</h3>
-                        <table class="w-full text-sm text-left border rounded-lg shadow-md">
-                            <thead class="text-gray-700 bg-gray-200">
-                                <tr>
-                                    <th class="px-4 py-2 border">Nama Pemeriksaan</th>
-                                    <th class="px-4 py-2 border">Total Tes</th>
-                                    <th class="px-4 py-2 border">Rata-rata TAT</th>
-                                </tr>
-                            </thead>
-                            <tbody id="cito-rajal-test-table-body"></tbody>
-                        </table>
-                    </div>
-                </div>
+                    <tbody></tbody>
+                </table>
             </div>
 
-            <!-- NON-CITO Section -->
             <div class="bg-white shadow-sm rounded-lg mt-5 p-4">
-                <div id="non-cito-ranap">
-                    <h2 class="text-xl font-bold text-indigo-600 mb-4">TAT - Laporan Non-CITO Rawat Inap</h2>
+                <h2 class="text-lg font-bold mb-2">TAT NON-CITO - Berdasarkan Nama Pemeriksaan    </h2>
+                <div id="export-container-noncito"></div>
+                <table id="table-noncito-test" class="w-full table-auto border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 text-center">
+                            <th class="border p-2" rowspan="2">Kode</th>
+                            <th class="border p-2" rowspan="2">Nama Test</th>
+                            <th class="border p-2 text-center" colspan="2">Rawat Jalan</th>
+                            <th class="border p-2 text-center" colspan="2">Rawat Inap</th>
+                        </tr>
+                        <tr class="bg-gray-100 text-center">
+                            <th class="border p-2 text-center">TAT</th>
+                            <th class="border p-2 text-center">Total</th>
+                            <th class="border p-2 text-center">TAT</th>
+                            <th class="border p-2 text-center">Total</th>
+                        </tr>
+                    </thead>
 
-                    <!-- Chart for Non-Cito by Group -->
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Chart Berdasarkan Kelompok Pemeriksaan (Non-Cito)</h3>
-                        <canvas id="noncitoRanapChart"></canvas>
-                    </div>
-
-                    <!-- TAT by Group Table -->
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">TAT Berdasarkan Kelompok Pemeriksaan (Non-Cito) - Rawat Inap</h3>
-                        <table class="w-full text-sm text-left border rounded-lg shadow-md">
-                            <thead class="text-gray-700 bg-gray-200">
-                                <tr>
-                                    <th class="px-4 py-2 border">Kelompok Pemeriksaan</th>
-                                    <th class="px-4 py-2 border">Total Tes</th>
-                                    <th class="px-4 py-2 border">Rata-rata TAT</th>
-                                </tr>
-                            </thead>
-                            <tbody id="noncito-ranap-group-table-body"></tbody>
-                        </table>
-                    </div>
-
-                    <!-- TAT by test Table -->
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">TAT Berdasarkan Test Pemeriksaan (Non-Cito) - Rawat Inap</h3>
-                        <table class="w-full text-sm text-left border rounded-lg shadow-md">
-                            <thead class="text-gray-700 bg-gray-200">
-                                <tr>
-                                    <th class="px-4 py-2 border">Nama Pemeriksaan</th>
-                                    <th class="px-4 py-2 border">Total Tes</th>
-                                    <th class="px-4 py-2 border">Rata-rata TAT</th>
-                                </tr>
-                            </thead>
-                            <tbody id="noncito-ranap-test-table-body"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="non-cito-rajal">
-                    <h2 class="text-xl font-bold text-indigo-600 mb-4">TAT - Laporan Non-CITO Rawat Jalan</h2>
-
-                    <!-- Chart for Non-Cito by Group -->
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Chart Berdasarkan Kelompok Pemeriksaan (Non-CITO Rawat Jalan)</h3>
-                        <canvas id="noncitoRajalChart"></canvas>
-                    </div>
-
-                    <!-- TAT by Group Table -->
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">TAT Berdasarkan Kelompok Pemeriksaan (Non-Cito) - Rawat Jalan</h3>
-                        <table class="w-full text-sm text-left border rounded-lg shadow-md">
-                            <thead class="text-gray-700 bg-gray-200">
-                                <tr>
-                                    <th class="px-4 py-2 border">Kelompok Pemeriksaan</th>
-                                    <th class="px-4 py-2 border">Total Tes</th>
-                                    <th class="px-4 py-2 border">Rata-rata TAT</th>
-                                </tr>
-                            </thead>
-                            <tbody id="noncito-rajal-group-table-body"></tbody>
-                        </table>
-                    </div>
-
-                    <!-- TAT by test Table -->
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">TAT Berdasarkan Test Pemeriksaan (Non-CITO Rawat Jalan)</h3>
-                        <table class="w-full text-sm text-left border rounded-lg shadow-md">
-                            <thead class="text-gray-700 bg-gray-200">
-                                <tr>
-                                    <th class="px-4 py-2 border">Nama Pemeriksaan</th>
-                                    <th class="px-4 py-2 border">Total Tes</th>
-                                    <th class="px-4 py-2 border">Rata-rata TAT</th>
-                                </tr>
-                            </thead>
-                            <tbody id="noncito-rajal-test-table-body"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
+                    <tbody></tbody>
+                </table>
+           </div>      
         </div>
     </div>
+</x-app-layout>
+<!-- DataTables JS -->
+<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+<script src="https://cdn.datatables.net/2.2.2/js/dataTables.js"></script>
+<script src="https://cdn.datatables.net/2.2.2/js/dataTables.tailwindcss.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const startDateInput = document.getElementById("start_date");
-            const endDateInput = document.getElementById("end_date");
-            const searchButton = document.getElementById("search-button");
+<!-- DataTables Buttons JS -->
+<script src="https://cdn.datatables.net/buttons/2.3.2/js/dataTables.buttons.min.js"></script>
+<!-- JSZip for Excel export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<!-- DataTables Buttons extensions (to enable CSV, Excel, PDF, etc.) -->
+<script src="https://cdn.datatables.net/buttons/2.3.2/js/buttons.html5.min.js"></script>
 
-            const today = new Date().toISOString().split("T")[0];
-            startDateInput.value = today;
-            endDateInput.value = today;
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const startDateInput = document.getElementById("start_date");
+        const endDateInput = document.getElementById("end_date");
+        const searchButton = document.getElementById("search-button");
 
-            const BASE_URL = "{{ config('app.url') }}";
+        const today = new Date().toISOString().split("T")[0];
+        startDateInput.value = today;
+        endDateInput.value = today;
 
-            let citoRanapChartInstance = null;
-            let citoRajalChartInstance = null;
-            let noncitoRanapChartInstance = null;
-            let noncitoRajalChartInstance = null;
+        const BASE_URL = "{{ config('app.url') }}";
 
+        document.getElementById('report-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
 
-            document.getElementById('report-form').addEventListener('submit', async function(event) {
-                event.preventDefault();
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
 
-                const startDate = startDateInput.value;
-                const endDate = endDateInput.value;
+            if (startDate > endDate) {
+                alert("Tanggal mulai tidak boleh lebih besar dari tanggal akhir!");
+                return;
+            }
 
-                if (startDate > endDate) {
-                    alert("Tanggal mulai tidak boleh lebih besar dari tanggal akhir!");
-                    return;
-                }
+            searchButton.disabled = true;
+            searchButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memuat...`;
 
-                searchButton.disabled = true;
-                searchButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memuat...`;
+            try {
+                const response = await fetch(`${BASE_URL}/laboratorium/laporan/tat/data?start_date=${startDate}&end_date=${endDate}`);
+                const json = await response.json();
 
-                try {
-                    const response = await fetch(`${BASE_URL}/laboratorium/laporan/tat/data?start_date=${startDate}&end_date=${endDate}`);
-                    const json = await response.json();
+                const populateTable = (selector, data) => {
+                    const tbody = document.querySelector(`${selector} tbody`);
+                    tbody.innerHTML = "";
 
-                    // Cito Data for Chart
-                    const citoRanapData = json.cito.rawat_inap.by_group.map(item => ({
-                        label: item.test_group_name,
-                        data: item.total_tests,
-                    }));
+                    data.forEach(item => {
+                        const rawatJalan = item.rawat_jalan ?? { tat_formatted: "-", total_tests: 0 };
+                        const rawatInap = item.rawat_inap ?? { tat_formatted: "-", total_tests: 0 };
 
-                    const citoRajalData = json.cito.rawat_jalan.by_group.map(item => ({
-                        label: item.test_group_name,
-                        data: item.total_tests,
-                    }));
+                        const row = `
+                            <tr>
+                                <td class="border p-2">${item.code}</td>
+                                <td class="border p-2">${item.name}</td>
+                                <td class="border p-2 text-center">${rawatJalan.tat_formatted}</td>
+                                <td class="border p-2 text-center text-center">${rawatJalan.total_tests}</td>
+                                <td class="border p-2 text-center">${rawatInap.tat_formatted}</td>
+                                <td class="border p-2 text-center text-center">${rawatInap.total_tests}</td>
+                            </tr>
+                        `;
+                        tbody.insertAdjacentHTML("beforeend", row);
+                    });
 
-                    // Non-Cito Data for Chart
-                    const nonCitoRanapData = json.non_cito.rawat_inap.by_group.map(item => ({
-                        label: item.test_group_name,
-                        data: item.total_tests,
-                    }));
-
-                    const nonCitoRajalData = json.non_cito.rawat_jalan.by_group.map(item => ({
-                        label: item.test_group_name,
-                        data: item.total_tests,
-                    }));
-
-                    // Fungsi Helper Buat Buat Chart
-                    function renderBarChart(canvasId, chartInstance, labels, data, labelText, color) {
-                        const ctx = document.getElementById(canvasId);
-                        ctx.height = 150;
-                        if (chartInstance) chartInstance.destroy();
-                        return new Chart(ctx, {
-                            type: "bar",
-                            data: {
-                                labels: labels,
-                                datasets: [{
-                                    label: labelText,
-                                    data: data,
-                                    backgroundColor: color,
-                                }],
-                            },
-                        });
+                    if ($.fn.DataTable.isDataTable(selector)) {
+                        $(selector).DataTable().clear().destroy();
                     }
 
-                    // Update Charts
-                    const citoColor = "#f87171";
-                    const nonCitoColor = "#60a5fa";
+                    $(selector).DataTable({
+                        dom: 'Bfrtip',
+                        buttons: [{
+                        extend: 'excelHtml5',
+                        text: 'Download Excel',
+                        exportOptions: {
+                            orthogonal: 'export',
+                            columns: ':visible',
+                            modifier: {
+                                page: 'all' // Include all rows, not just the ones visible on the current page
+                            }
+                        },
+                        filename: function () {
+                            if (selector === "#table-cito-test") {
+                                return 'Laporan TAT Cito';
+                            } else if (selector === "#table-noncito-test") {
+                                return 'Laporan TAT Non-Cito';
+                            } else {
+                                return 'Laporan TAT'; // Default filename
+                            }
+                        }, 
+                        customize: function (xlsx) {
+                            var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                            var rows = $('row', sheet);
 
-                    // Cito Ranap
-                    const citoRanapLabels = citoRanapData.map(item => item.label);
-                    const citoRanapDataValues = citoRanapData.map(item => item.data);
-                    citoRanapChartInstance = renderBarChart("citoRanapChart", citoRanapChartInstance, citoRanapLabels, citoRanapDataValues, "Total Tes Cito", citoColor);
+                            // Apply bold style to the first two header rows (thead)
+                            rows.each(function (i) {
+                                if (i === 0 || i === 1) {  // You can adjust this to target specific rows
+                                    $(this).attr('customHeight', '1');
+                                    $('c', this).attr('s', '51'); // Apply bold style (default Excel style)
+                                }
+                            });
 
-                    // Cito Rajal
-                    const citoRajalLabels = citoRajalData.map(item => item.label);
-                    const citoRajalDataValues = citoRajalData.map(item => item.data);
-                    citoRajalChartInstance = renderBarChart("citoRajalChart", citoRajalChartInstance, citoRajalLabels, citoRajalDataValues, "Total Tes Cito", citoColor);
+                            // Set first two columns as header in the exported Excel file
+                            var headerRow = $(sheet).find('row').first();  // Get the first row (header row)
+                            var firstTwoCells = headerRow.find('c').slice(0, 2); // Get first two cells (columns)
 
-                    // Non-Cito Ranap
-                    const nonCitoRanapLabels = nonCitoRanapData.map(item => item.label);
-                    const nonCitoRanapDataValues = nonCitoRanapData.map(item => item.data);
-                    noncitoRanapChartInstance = renderBarChart("noncitoRanapChart", noncitoRanapChartInstance, nonCitoRanapLabels, nonCitoRanapDataValues, "Total Tes Non-Cito", nonCitoColor);
+                            // Customize them to be the headers
+                            firstTwoCells.each(function () {
+                                $(this).attr('s', '51'); // Apply bold style (Excel's bold style)
+                            });
 
-                    // Non-Cito Rajal
-                    const nonCitoRajalLabels = nonCitoRajalData.map(item => item.label);
-                    const nonCitoRajalDataValues = nonCitoRajalData.map(item => item.data);
-                    noncitoRajalChartInstance = renderBarChart("noncitoRajalChart", noncitoRajalChartInstance, nonCitoRajalLabels, nonCitoRajalDataValues, "Total Tes Non-Cito", nonCitoColor);
+                            // Add custom styles (optional)
+                            var styles = xlsx.xl['styles.xml'];
+                            var newStyle = `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>`;
+                            $(styles).find('cellXfs').append(newStyle);
+                        }
+                    }],
 
+                        searching: true,
+                        paging: false,
+                        ordering: false,
+                        scrollX: true,
+                        initComplete: function (settings, json) {
+                            const api = new $.fn.dataTable.Api(settings);
+                            const tableContainer = $(api.table().container());
 
-                    // Update Cito Group Table
-                    const groupCitoRanapTable = document.getElementById("cito-ranap-group-table-body");
-                    groupCitoRanapTable.innerHTML = json.cito.rawat_inap.by_group.map(item => `
-                        <tr>
-                            <td class="px-4 py-2 border">${item.test_group_name}</td>
-                            <td class="px-4 py-2 border">${item.total_tests}</td>
-                            <td class="px-4 py-2 border">${item.avg_tat_time}</td>
-                        </tr>
-                    `).join('');
+                            const exportButtons = tableContainer.find(".dt-buttons");
+                            const searchBox = tableContainer.find(".dataTables_filter");
 
-                    const groupCitoRajalTable = document.getElementById("cito-rajal-group-table-body");
-                    groupCitoRajalTable.innerHTML = json.cito.rawat_jalan.by_group.map(item => `
-                        <tr>
-                            <td class="px-4 py-2 border">${item.test_group_name}</td>
-                            <td class="px-4 py-2 border">${item.total_tests}</td>
-                            <td class="px-4 py-2 border">${item.avg_tat_time}</td>
-                        </tr>
-                    `).join('');
+                            let containerId = "";
+                            if (selector === "#table-cito-test") {
+                                containerId = "#export-container-cito";
+                            } else if (selector === "#table-noncito-test") {
+                                containerId = "#export-container-noncito";
+                            }
 
-                    // Update Non-Cito Group Table
-                    const nonCitoRanapGroupTable = document.getElementById("noncito-ranap-group-table-body");
-                    nonCitoRanapGroupTable.innerHTML = json.non_cito.rawat_inap.by_group.map(item => `
-                        <tr>
-                            <td class="px-4 py-2 border">${item.test_group_name}</td>
-                            <td class="px-4 py-2 border">${item.total_tests}</td>
-                            <td class="px-4 py-2 border">${item.avg_tat_time}</td>
-                        </tr>
-                    `).join('');
+                            // Buat flex container yang responsif dan sejajar
+                            const flexContainer = $(`
+                                <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                                    <div class="search-area w-full md:w-auto"></div>
+                                    <div class="button-area w-full md:w-auto flex justify-end"></div>
+                                </div>
+                            `);
 
-                    const nonCitoRajalGroupTable = document.getElementById("noncito-rajal-group-table-body");
-                    nonCitoRajalGroupTable.innerHTML = json.non_cito.rawat_jalan.by_group.map(item => `
-                        <tr>
-                            <td class="px-4 py-2 border">${item.test_group_name}</td>
-                            <td class="px-4 py-2 border">${item.total_tests}</td>
-                            <td class="px-4 py-2 border">${item.avg_tat_time}</td>
-                        </tr>
-                    `).join('');
+                            // Tambahkan search dan export ke dalam area yang sesuai
+                            flexContainer.find(".search-area").append(searchBox);
+                            flexContainer.find(".button-area").append(exportButtons);
 
+                            // Masukkan container ke tempat yang diinginkan
+                            $(containerId).empty().append(flexContainer);
 
-
-                    // Update Cito Test Table
-                    const citoTestRanapTable = document.getElementById("cito-ranap-test-table-body");
-                    citoTestRanapTable.innerHTML = json.cito.rawat_inap.by_test.map(item => `
-                        <tr>
-                            <td class="px-4 py-2 border">${item.test_name}</td>
-                            <td class="px-4 py-2 border">${item.total_tests}</td>
-                            <td class="px-4 py-2 border">${item.avg_tat_time}</td>
-                        </tr>
-                    `).join('');
-
-                    const citoTestRajalTable = document.getElementById("cito-rajal-test-table-body");
-                    citoTestRajalTable.innerHTML = json.cito.rawat_jalan.by_test.map(item => `
-                        <tr>
-                            <td class="px-4 py-2 border">${item.test_name}</td>
-                            <td class="px-4 py-2 border">${item.total_tests}</td>
-                            <td class="px-4 py-2 border">${item.avg_tat_time}</td>
-                        </tr>
-                    `).join('');
+                            // Hapus margin bawah bawaan dari DataTables
+                            exportButtons.addClass("mb-0");
+                            searchBox.addClass("mb-0");
+                        }
 
 
+                    });
+                };
+                populateTable('#table-cito-test', json.cito.by_test);
+                populateTable('#table-noncito-test', json.non_cito.by_test);
 
-                    // Update Non-Cito Group Table
-                    const nonCitoTestRanapTable = document.getElementById("noncito-ranap-test-table-body");
-                    nonCitoTestRanapTable.innerHTML = json.non_cito.rawat_inap.by_test.map(item => `
-                        <tr>
-                            <td class="px-4 py-2 border">${item.test_name}</td>
-                            <td class="px-4 py-2 border">${item.total_tests}</td>
-                            <td class="px-4 py-2 border">${item.avg_tat_time}</td>
-                        </tr>
-                    `).join('');
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                alert("Gagal mengambil data laporan!");
+            }
 
-                    const nonCitoTestRajalTable = document.getElementById("noncito-rajal-test-table-body");
-                    nonCitoTestRajalTable.innerHTML = json.non_cito.rawat_jalan.by_test.map(item => `
-                        <tr>
-                            <td class="px-4 py-2 border">${item.test_name}</td>
-                            <td class="px-4 py-2 border">${item.total_tests}</td>
-                            <td class="px-4 py-2 border">${item.avg_tat_time}</td>
-                        </tr>
-                    `).join('');
-
-                    searchButton.disabled = false;
-                    searchButton.innerHTML = `<i class="fas fa-search"></i> Generate Laporan`;
-
-                } catch (error) {
-                    console.error("Error fetching data:", error);
-                    searchButton.disabled = false;
-                    searchButton.innerHTML = `<i class="fas fa-search"></i> Generate Laporan`;
-                }
-            });
+            searchButton.disabled = false;
+            searchButton.innerHTML = `<i class="fas fa-search"></i> Generate Laporan`;
         });
-    </script>
-</x-app-layout>
+    });
+</script>

@@ -21,14 +21,14 @@ class LaporanJumlahPemeriksaanController extends Controller
         $startDate = $request->input('start_date')
             ? Carbon::parse($request->input('start_date'))->startOfDay()
             : Carbon::create(2024, 1, 1, 0, 0, 0);
-
+    
         $endDate = $request->input('end_date')
             ? Carbon::parse($request->input('end_date'))->endOfDay()
             : Carbon::create(2024, 3, 31, 23, 59, 59);
-
+    
         // Menghubungkan ke database Oracle
         $oracleConnection = DB::connection('oracle');
-
+    
         // Query untuk mengambil data
         $rawData = $oracleConnection
             ->table('ord_hdr as a')
@@ -69,111 +69,72 @@ class LaporanJumlahPemeriksaanController extends Controller
             ->orderBy(DB::raw("COALESCE(c.tg_name, 'Tidak Diketahui')"), 'ASC')
             ->orderBy(DB::raw("COALESCE(d.ti_name, 'Tidak Diketahui')"), 'ASC')
             ->get();
-
+    
         // Ambil bulan unik
         $months = collect($rawData)->pluck('year_month')->unique()->sort()->values();
-
-        // Inisialisasi array data
-        $tableData = [];
-        $grandTotal = array_fill_keys($months->toArray(), 0);
-        $grandTotal['total'] = 0;
-
+    
+        // Inisialisasi struktur pivot
+        $pivotData = [];
+        $allJenisRawat = ['Rawat Jalan', 'Rawat Inap', 'Lainnya'];
+    
         foreach ($rawData as $item) {
-            $jenisRawat = $item->jenis_rawat ?? 'Lainnya';
-            $yearMonth = $item->year_month;
             $groupName = $item->test_group_name ?? 'Tidak Diketahui';
             $testName = $item->test_name ?? 'Tidak Diketahui';
-
-            // Inisialisasi jenis_rawat jika belum ada
-            if (!isset($tableData[$jenisRawat])) {
-                $tableData[$jenisRawat] = [
-                    'name' => $jenisRawat,
-                    'totals' => array_fill_keys($months->toArray(), 0),
-                    'groups' => [],
-                    'total_group' => 0 // Total untuk semua grup di dalam jenis rawat
+            $yearMonth = $item->year_month;
+            $jenisRawat = $item->jenis_rawat ?? 'Lainnya';
+    
+            // Unique key untuk kombinasi group + test
+            $key = md5($groupName . '||' . $testName);
+    
+            if (!isset($pivotData[$key])) {
+                $pivotData[$key] = [
+                    'group_name' => $groupName,
+                    'test_name' => $testName,
+                    'data' => []
                 ];
-                $tableData[$jenisRawat]['totals']['total'] = 0;
-            }
-
-            // Inisialisasi grup jika belum ada
-            if (!isset($tableData[$jenisRawat]['groups'][$groupName])) {
-                $tableData[$jenisRawat]['groups'][$groupName] = [
-                    'name' => $groupName,
-                    'totals' => array_fill_keys($months->toArray(), 0),
-                    'tests' => [],
-                    'total_group' => 0 // Total untuk grup ini
-                ];
-                $tableData[$jenisRawat]['groups'][$groupName]['totals']['total'] = 0;
-            }
-
-            // Inisialisasi pemeriksaan dalam grup jika belum ada
-            if (!isset($tableData[$jenisRawat]['groups'][$groupName]['tests'][$testName])) {
-                $tableData[$jenisRawat]['groups'][$groupName]['tests'][$testName] = [
-                    'name' => $testName,
-                    'totals' => array_fill_keys($months->toArray(), 0)
-                ];
-                $tableData[$jenisRawat]['groups'][$groupName]['tests'][$testName]['totals']['total'] = 0;
-            }
-
-            // Tambahkan jumlah per bulan
-            $tableData[$jenisRawat]['totals'][$yearMonth] += $item->total;
-            $tableData[$jenisRawat]['groups'][$groupName]['totals'][$yearMonth] += $item->total;
-            $tableData[$jenisRawat]['groups'][$groupName]['tests'][$testName]['totals'][$yearMonth] += $item->total;
-
-            // Hitung total keseluruhan
-            $tableData[$jenisRawat]['totals']['total'] += $item->total;
-            $tableData[$jenisRawat]['groups'][$groupName]['totals']['total'] += $item->total;
-            $tableData[$jenisRawat]['groups'][$groupName]['tests'][$testName]['totals']['total'] += $item->total;
-
-            // Hitung total keseluruhan per bulan
-            $grandTotal[$yearMonth] += $item->total;
-            $grandTotal['total'] += $item->total;
-
-            // Calculate total of groups (adding all group totals) into each jenis_rawat's total_group
-            $tableData[$jenisRawat]['total_group'] += $item->total;
-            $tableData[$jenisRawat]['groups'][$groupName]['total_group'] += $item->total;
-        }
-
-        // Susunan manual untuk jenis rawat
-        $customOrder = ['Rawat Jalan', 'Rawat Inap', 'Lainnya'];
-        $tableData = collect($tableData)->sortBy(function ($value, $key) use ($customOrder) {
-            return array_search($key, $customOrder);
-        })->toArray();
-
-        // Struktur output dengan sorting
-        foreach ($tableData as $jenisRawat => &$jenisData) {
-            if (!isset($jenisData['groups']) || empty($jenisData['groups'])) {
-                Log::warning("Jenis Rawat $jenisRawat tidak memiliki grup data.");
-                continue;
-            }
-
-            uksort($jenisData['groups'], function ($a, $b) {
-                return strcmp($a, $b);
-            });
-
-            foreach ($jenisData['groups'] as $groupName => &$groupData) {
-                if (!isset($groupData['tests']) || empty($groupData['tests'])) {
-                    Log::warning("Grup $groupName pada jenis rawat $jenisRawat tidak memiliki data pemeriksaan.");
-                    continue;
+    
+                foreach ($months as $month) {
+                    $pivotData[$key]['data'][$month] = array_fill_keys($allJenisRawat, 0);
                 }
-
-                uksort($groupData['tests'], function ($a, $b) {
-                    return strcmp($a, $b);
-                });
+    
+                $pivotData[$key]['data']['total'] = array_fill_keys($allJenisRawat, 0);
+            }
+    
+            // Tambahkan nilai
+            $pivotData[$key]['data'][$yearMonth][$jenisRawat] += $item->total;
+            $pivotData[$key]['data']['total'][$jenisRawat] += $item->total;
+        }
+    
+        // Sortir berdasarkan nama group dan test
+        $pivotData = collect($pivotData)->sortBy([
+            ['group_name', 'asc'],
+            ['test_name', 'asc']
+        ])->values()->toArray();
+    
+        // Hitung grand total
+        $grandTotal = [];
+        foreach ($months as $month) {
+            $grandTotal[$month] = array_fill_keys($allJenisRawat, 0);
+        }
+        $grandTotal['total'] = array_fill_keys($allJenisRawat, 0);
+    
+        foreach ($pivotData as $data) {
+            foreach ($months as $month) {
+                foreach ($allJenisRawat as $jenis) {
+                    $grandTotal[$month][$jenis] += $data['data'][$month][$jenis];
+                    $grandTotal['total'][$jenis] += $data['data'][$month][$jenis];
+                }
             }
         }
-
+    
         // Buat response JSON
         $response = [
             'months' => $months,
-            'table' => $tableData,
+            'pivot' => $pivotData,
             'grand_total' => $grandTotal
         ];
-
+    
         return response()->json($response);
     }
-
-    
-    
     
 }
