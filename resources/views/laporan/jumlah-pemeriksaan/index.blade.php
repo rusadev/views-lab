@@ -5,7 +5,6 @@
             {{ __('Laporan Jumlah Pemeriksaan') }}
         </h2>
     </x-slot>
-
     <div class="py-4">
         <div class="max-w-7xl mx-auto px-4">
             <div class="bg-white shadow-sm rounded-lg">
@@ -35,29 +34,45 @@
                 </div>
             </div>
 
-            <!-- <div id="summary-section" class="mt-3"></div> -->
-            <div id="test-group-section" class="mt-3"></div>
+            <div class="bg-white shadow-sm rounded-lg mt-3">
+                <div class="p-4 text-gray-900">
+                    <!-- Container tombol export DataTables dan search -->
+                    <div id="export-container" class="flex justify-between items-center mb-4 flex-wrap gap-2"></div>
+                    <div id="test-group-section"></div>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const startDateInput = document.getElementById("start_date");
-            const endDateInput = document.getElementById("end_date");
-            const searchButton = document.getElementById("search-button");
-            const BASE_URL = "{{ config('app.url') }}";
-            const testGroupSection = document.getElementById("test-group-section");
-            const summarySection = document.getElementById("summary-section");
+</x-app-layout>
+<!-- DataTables JS -->
+<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+<script src="https://cdn.datatables.net/2.2.2/js/dataTables.js"></script>
+<script src="https://cdn.datatables.net/2.2.2/js/dataTables.tailwindcss.js"></script>
 
-            // Set default date to today
-            const today = new Date().toISOString().split("T")[0];
-            startDateInput.value = today;
-            endDateInput.value = today;
+<!-- DataTables Buttons JS -->
+<script src="https://cdn.datatables.net/buttons/2.3.2/js/dataTables.buttons.min.js"></script>
+<!-- JSZip for Excel export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<!-- DataTables Buttons extensions (to enable CSV, Excel, PDF, etc.) -->
+<script src="https://cdn.datatables.net/buttons/2.3.2/js/buttons.html5.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const startDateInput = document.getElementById("start_date");
+        const endDateInput = document.getElementById("end_date");
+        const searchButton = document.getElementById("search-button");
+        const BASE_URL = "{{ config('app.url') }}";
+        const testGroupSection = document.getElementById("test-group-section");
 
-            searchButton.addEventListener("click", async (e) => {
-                e.preventDefault();
-                const startDate = startDateInput.value;
-                const endDate = endDateInput.value;
+        const today = new Date().toISOString().split("T")[0];
+        startDateInput.value = today;
+        endDateInput.value = today;
+
+        searchButton.addEventListener("click", async (e) => {
+            e.preventDefault();
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
 
                 if (startDate > endDate) {
                     alert("Tanggal mulai tidak boleh lebih besar dari tanggal akhir!");
@@ -91,129 +106,173 @@
                     : `<i class="fas fa-search"></i><span>Generate Laporan</span>`;
             }
 
-            function renderData({ months, table, group_totals }) {
-                // summarySection.innerHTML = renderSummaryTable(months, group_totals);
-                testGroupSection.innerHTML = renderGroupedTables(months, table);
-            }
+            const url = `${BASE_URL}/laboratorium/laporan/jumlah-pemeriksaan/data?start_date=${startDate}&end_date=${endDate}`;
+            toggleLoading(true);
 
-            function renderSummaryTable(months, groupTotals) {
-                if (!Array.isArray(groupTotals) || groupTotals.length === 0) {
-                    return `<p class="text-sm text-gray-500 italic mt-2">Tidak ada data rekapitulasi kelompok pemeriksaan.</p>`;
-                }
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
 
-                return `
-                    <div class="bg-white shadow-lg rounded-lg p-6 overflow-x-auto">
-                        <h3 class="font-bold text-xl text-gray-700 mb-2">📊 Rekapitulasi Pemeriksaan</h3>
-                        <p class="text-sm text-gray-600 mb-4">
-                            Tabel berikut menampilkan jumlah pemeriksaan berdasarkan kelompok pemeriksaan dalam periode yang dipilih.
-                        </p>
-                        <table class="w-full text-left border-collapse border border-gray-300 min-w-max text-sm">
-                            <thead class="bg-gray-200 text-gray-700 font-semibold">
+                const months = result.months || [];
+                const pivotData = result.pivot || [];
+
+                testGroupSection.innerHTML = "";
+
+                let tableHtml = `
+                    <div class="overflow-x-auto mt-4">
+                        <table id="pivotTable" class="table-auto w-full border-collapse border border-gray-300 text-sm">
+                            <thead>
                                 <tr>
-                                    <th class="border p-3">Kelompok Pemeriksaan</th>
-                                    ${months.map(m => `<th class="border p-3 text-center">${m}</th>`).join('')}
-                                    <th class="border p-3 text-center">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${groupTotals.map(group => `
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="border p-3 font-medium capitalize">${group.name || '-'}</td>
-                                        ${months.map(m => `<td class="border p-3 text-center">${group.totals?.[m] ?? 0}</td>`).join('')}
-                                        <td class="border p-3 text-center font-bold bg-indigo-50">${group.totals?.total ?? 0}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            }
+                                    <th class="px-4 py-2 border text-center" rowspan="2">Nama Pemeriksaan</th>`;
 
-            function renderGroupedTables(months, rawatData) {
-                if (!rawatData || Object.keys(rawatData).length === 0) {
-                    return `<p class="text-sm text-gray-500 italic mt-2">Tidak ada data detail pemeriksaan per jenis rawat.</p>`;
-                }
+                months.forEach(month => {
+                    tableHtml += ` 
+                        <th class="px-4 py-2 border text-center" colspan="3">${month}</th>
+                    `;
+                });
 
-                return Object.entries(rawatData).map(([jenisRawat, rawatContent]) => {
-                    const groupEntries = rawatContent.groups ? Object.entries(rawatContent.groups) : [];
+                tableHtml += `
+                    <th class="px-4 py-2 border text-center" colspan="3">Total</th>
+                </tr><tr>`;
 
-                    // Hitung total pemeriksaan untuk setiap grup per bulan
-                    const groupTotals = groupEntries.map(([groupName, groupData]) => {
-                        return { 
-                            groupName, 
-                            totals: groupData.totals || {} 
-                        };
+                months.forEach(() => {
+                    tableHtml += `
+                        <th class="px-4 py-2 border text-center">Rawat Inap</th>
+                        <th class="px-4 py-2 border text-center">Rawat Jalan</th>
+                        <th class="px-4 py-2 border text-center">Lainnya</th>
+                    `;
+                });
+
+                tableHtml += `
+                    <th class="px-4 py-2 border text-center">Rawat Inap</th>
+                    <th class="px-4 py-2 border text-center">Rawat Jalan</th>
+                    <th class="px-4 py-2 border text-center">Lainnya</th>
+                </tr></thead><tbody>`;
+
+                pivotData.forEach(item => {
+                    let row = `<tr><td class="px-4 py-2 border text-center">${item.test_name}</td>`;
+
+                    let totalRawatInap = 0;
+                    let totalRawatJalan = 0;
+                    let totalLainnya = 0;
+
+                    months.forEach(month => {
+                        const rawatInap = item.data[month]?.["Rawat Inap"] || 0;
+                        const rawatJalan = item.data[month]?.["Rawat Jalan"] || 0;
+                        const lainnya = item.data[month]?.["Lainnya"] || 0;
+
+                        totalRawatInap += rawatInap;
+                        totalRawatJalan += rawatJalan;
+                        totalLainnya += lainnya;
+
+                        row += `
+                            <td class="px-4 py-2 border text-center">${rawatInap}</td>
+                            <td class="px-4 py-2 border text-center">${rawatJalan}</td>
+                            <td class="px-4 py-2 border text-center">${lainnya}</td>
+                        `;
                     });
 
-                    return `
-                        <div class="bg-white shadow-lg rounded-lg p-6 mb-6">
-                            <h3 class="font-bold text-xl text-indigo-700 mb-1">Jumlah Pemeriksaan - ${jenisRawat}</h3>
+                    row += `
+                        <td class="px-4 py-2 border text-center">${totalRawatInap}</td>
+                        <td class="px-4 py-2 border text-center">${totalRawatJalan}</td>
+                        <td class="px-4 py-2 border text-center">${totalLainnya}</td>
+                    </tr>`;
 
-                            <!-- Tabel Rekapitulasi Per Grup -->
-                            <h4 class="font-semibold text-lg text-gray-700 mb-3">📊 Rekapitulasi Per Grup Pemeriksaan</h4>
-                            <table class="w-full text-left border-collapse border border-gray-300 min-w-max text-sm">
-                                <thead class="bg-gray-100 text-gray-700">
-                                    <tr>
-                                        <th class="border p-3">Nama Grup</th>
-                                        ${months.map(m => `<th class="border p-3 text-center">${m}</th>`).join('')}
-                                        <th class="border p-3 text-center">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${groupTotals.map(group => `
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="border p-3" width="30%">${group.groupName}</td>
-                                            ${months.map(m => {
-                                                const monthlyTotal = group.totals[m] ?? 0;
-                                                return `<td class="border p-3 text-center">${monthlyTotal}</td>`;
-                                            }).join('')}
-                                            <td class="border p-3 text-center font-bold bg-gray-50">${group.totals.total ?? 0}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                            <br>
+                    tableHtml += row;
+                });
 
-                            <h4 class="font-semibold text-lg text-indigo-700 mb-1">📊 Detail Jumlah Pemeriksaan Pada ${jenisRawat}</h4>
+                tableHtml += `</tbody></table></div>`;
+                testGroupSection.innerHTML = tableHtml;
 
-                            <!-- Detail per Grup -->
-                            ${groupEntries.map(([groupName, groupData]) => {
-                                const totalGroup = Object.values(groupData.totals || {}).reduce((sum, value) => sum + value, 0);
+                setTimeout(() => {
+                    // Cek apakah DataTable sudah ada, jika iya, destroy dulu
+                    if ($.fn.DataTable.isDataTable('#pivotTable')) {
+                        $('#pivotTable').DataTable().destroy();
+                    }
 
-                                return `
-                                    <div class="mb-6">
-                                        <h4 class="font-semibold text-md text-gray-600 mb-2">${groupName} <span class="text-sm text-gray-400">(Total: ${totalGroup})</span></h4>
-                                        <table class="w-full text-left border-collapse border border-gray-300 min-w-max text-sm">
-                                            <thead class="bg-gray-100">
-                                                <tr>
-                                                    <th class="border p-3" width="30%">Nama Pemeriksaan</th>
-                                                    ${months.map(m => `<th class="border p-3 text-center">${m}</th>`).join('')}
-                                                    <th class="border p-3 text-center">Total</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${
-                                                    groupData.tests
-                                                        ? Object.entries(groupData.tests).map(([testName, testData]) => `
-                                                            <tr class="hover:bg-gray-50">
-                                                                <td class="border p-3">${testName}</td>
-                                                                ${months.map(m => `<td class="border p-3 text-center">${testData.totals?.[m] ?? 0}</td>`).join('')}
-                                                                <td class="border p-3 text-center font-bold bg-gray-50">${testData.totals?.total ?? 0}</td>
-                                                            </tr>
-                                                        `).join('')
-                                                        : `<tr><td colspan="${months.length + 2}" class="border p-3 italic text-center">Tidak ada data pemeriksaan</td></tr>`
-                                                }
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    `;
-                }).join('');
+                    $('#pivotTable').DataTable({
+                        dom: 'Bfrtip',
+                        buttons: [{
+                            extend: 'excelHtml5',
+                            text: 'Download Excel',
+                            exportOptions: {
+                                orthogonal: 'export',
+                                columns: ':visible',
+                                modifier: {
+                                    // Pastikan semua baris header ikut
+                                    page: 'all'
+                                }
+                            },
+                            customize: function (xlsx) {
+                                var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                                var rows = $('row', sheet);
+
+                                // Buat style bold untuk dua baris pertama (thead)
+                                rows.each(function (i) {
+                                    if (i === 0 || i === 1) {
+                                        $(this).attr('customHeight', '1');
+                                        $('c', this).attr('s', '51'); // Gaya bold default Excel
+                                    }
+                                });
+
+                                // Tambahkan style kustom (opsional)
+                                var styles = xlsx.xl['styles.xml'];
+                                var newStyle = `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>`;
+                                $(styles).find('cellXfs').append(newStyle);
+                            }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: 'Download PDF',
+                            exportOptions: {
+                                orthogonal: 'export',
+                                columns: ':visible',
+                                modifier: {
+                                    page: 'all'
+                                }
+                            }
+                        }],
+                        searching: true,
+                        paging: false,
+                        ordering: false,
+                        scrollX: true,
+                        initComplete: function () {
+                            const exportButtons = $(".dt-buttons");
+                            const searchBox = $(".dt-search");
+
+                            // Bersihkan isi sebelumnya
+                            $("#export-container").empty();
+
+                            // Masukkan elemen dengan layout Flexbox
+                            $("#export-container")
+                                .append(searchBox)
+                                .append(exportButtons);
+
+                            // Tambahkan styling tambahan jika perlu
+                            exportButtons.addClass("mb-0");
+                            searchBox.addClass("mb-0");
+                        }
+                    });
+                }, 100);
+
+
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                alert("Terjadi kesalahan saat mengambil data. Silakan coba lagi.");
+            } finally {
+                toggleLoading(false);
             }
         });
-    </script>
+
+        function toggleLoading(loading) {
+            searchButton.disabled = loading;
+            searchButton.innerHTML = loading
+                ? `<i class="fas fa-spinner fa-spin"></i><span> Memuat...</span>`
+                : `<i class="fas fa-search"></i><span> Generate Laporan</span>`;
+        }
+    });
+</script>
 
 
-</x-app-layout>
+
+
