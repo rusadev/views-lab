@@ -93,7 +93,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 <!-- DataTables Buttons extensions (to enable CSV, Excel, PDF, etc.) -->
 <script src="https://cdn.datatables.net/buttons/2.3.2/js/buttons.html5.min.js"></script>
-
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const startDateInput = document.getElementById("start_date");
@@ -120,13 +119,19 @@
             searchButton.disabled = true;
             searchButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memuat...`;
 
-                try {
-                    const response = await fetch(`/laboratorium/laporan/tat/data?start_date=${startDate}&end_date=${endDate}`);
-                    const json = await response.json();
+            try {
+                const response = await fetch(`/laboratorium/laporan/tat/data?start_date=${startDate}&end_date=${endDate}`);
+                const json = await response.json();
 
                 const populateTable = (selector, data) => {
-                    const tbody = document.querySelector(`${selector} tbody`);
-                    tbody.innerHTML = "";
+                    const $table = $(selector);
+                    const tbody = $table.find("tbody");
+                    tbody.empty(); // Kosongkan isi tbody
+
+                    // Destroy DataTable jika sudah ada
+                    if ($.fn.DataTable.isDataTable($table)) {
+                        $table.DataTable().clear().destroy();
+                    }
 
                     data.forEach(item => {
                         const rawatJalan = item.rawat_jalan ?? { tat_formatted: "-", total_tests: 0 };
@@ -137,67 +142,45 @@
                                 <td class="border p-2">${item.code}</td>
                                 <td class="border p-2">${item.name}</td>
                                 <td class="border p-2 text-center">${rawatJalan.tat_formatted}</td>
-                                <td class="border p-2 text-center text-center">${rawatJalan.total_tests}</td>
+                                <td class="border p-2 text-center">${rawatJalan.total_tests}</td>
                                 <td class="border p-2 text-center">${rawatInap.tat_formatted}</td>
-                                <td class="border p-2 text-center text-center">${rawatInap.total_tests}</td>
+                                <td class="border p-2 text-center">${rawatInap.total_tests}</td>
                             </tr>
                         `;
-                        tbody.insertAdjacentHTML("beforeend", row);
+                        tbody.append(row);
                     });
 
-                    if ($.fn.DataTable.isDataTable(selector)) {
-                        $(selector).DataTable().clear().destroy();
-                    }
-
-                    $(selector).DataTable({
+                    $table.DataTable({
                         dom: 'Bfrtip',
                         buttons: [{
-                        extend: 'excelHtml5',
-                        text: 'Download Excel',
-                        exportOptions: {
-                            orthogonal: 'export',
-                            columns: ':visible',
-                            modifier: {
-                                page: 'all' // Include all rows, not just the ones visible on the current page
+                            extend: 'excelHtml5',
+                            text: 'Download Excel',
+                            exportOptions: {
+                                orthogonal: 'export',
+                                columns: ':visible',
+                                modifier: { page: 'all' }
+                            },
+                            filename: function () {
+                                if (selector === "#table-cito-test") return 'Laporan TAT Cito';
+                                if (selector === "#table-noncito-test") return 'Laporan TAT Non-Cito';
+                                return 'Laporan TAT';
+                            },
+                            customize: function (xlsx) {
+                                var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                                var rows = $('row', sheet);
+
+                                rows.each(function (i) {
+                                    if (i === 0 || i === 1) {
+                                        $(this).attr('customHeight', '1');
+                                        $('c', this).attr('s', '51');
+                                    }
+                                });
+
+                                var styles = xlsx.xl['styles.xml'];
+                                var newStyle = `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>`;
+                                $(styles).find('cellXfs').append(newStyle);
                             }
-                        },
-                        filename: function () {
-                            if (selector === "#table-cito-test") {
-                                return 'Laporan TAT Cito';
-                            } else if (selector === "#table-noncito-test") {
-                                return 'Laporan TAT Non-Cito';
-                            } else {
-                                return 'Laporan TAT'; // Default filename
-                            }
-                        }, 
-                        customize: function (xlsx) {
-                            var sheet = xlsx.xl.worksheets['sheet1.xml'];
-                            var rows = $('row', sheet);
-
-                            // Apply bold style to the first two header rows (thead)
-                            rows.each(function (i) {
-                                if (i === 0 || i === 1) {  // You can adjust this to target specific rows
-                                    $(this).attr('customHeight', '1');
-                                    $('c', this).attr('s', '51'); // Apply bold style (default Excel style)
-                                }
-                            });
-
-                            // Set first two columns as header in the exported Excel file
-                            var headerRow = $(sheet).find('row').first();  // Get the first row (header row)
-                            var firstTwoCells = headerRow.find('c').slice(0, 2); // Get first two cells (columns)
-
-                            // Customize them to be the headers
-                            firstTwoCells.each(function () {
-                                $(this).attr('s', '51'); // Apply bold style (Excel's bold style)
-                            });
-
-                            // Add custom styles (optional)
-                            var styles = xlsx.xl['styles.xml'];
-                            var newStyle = `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>`;
-                            $(styles).find('cellXfs').append(newStyle);
-                        }
-                    }],
-
+                        }],
                         searching: true,
                         paging: false,
                         ordering: false,
@@ -216,7 +199,6 @@
                                 containerId = "#export-container-noncito";
                             }
 
-                            // Buat flex container yang responsif dan sejajar
                             const flexContainer = $(`
                                 <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
                                     <div class="search-area w-full md:w-auto"></div>
@@ -224,21 +206,16 @@
                                 </div>
                             `);
 
-                            // Tambahkan search dan export ke dalam area yang sesuai
                             flexContainer.find(".search-area").append(searchBox);
                             flexContainer.find(".button-area").append(exportButtons);
 
-                            // Masukkan container ke tempat yang diinginkan
                             $(containerId).empty().append(flexContainer);
-
-                            // Hapus margin bawah bawaan dari DataTables
                             exportButtons.addClass("mb-0");
                             searchBox.addClass("mb-0");
                         }
-
-
                     });
                 };
+
                 populateTable('#table-cito-test', json.cito.by_test);
                 populateTable('#table-noncito-test', json.non_cito.by_test);
 

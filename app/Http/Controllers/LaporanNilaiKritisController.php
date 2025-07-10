@@ -42,8 +42,11 @@ class LaporanNilaiKritisController extends Controller
             'od.od_tr_val',
             'od.od_tr_flag',
             'od.od_update_on',
+            'od.od_tr_comment',
+            'od.od_validate_by',
             'ti.ti_name'
         )
+        ->where('od.od_tr_comment','!=', null)
         ->whereIn('od.od_tr_flag', ['LL', 'HH'])
         ->whereBetween('oh.oh_trx_dt', [$startDate, $endDate])
         ->orderBy('oh.oh_trx_dt', 'asc')

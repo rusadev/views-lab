@@ -124,8 +124,8 @@
                     <th class="border px-4 py-2">Hasil</th>
                     <th class="border px-4 py-2">Flag</th>
                     <th class="border px-4 py-2">Waktu Pemeriksaan</th>
-                    <th class="border px-4 py-2">Waktu Pelaporan</th>
                     <th class="border px-4 py-2">Pelapor</th>
+                    <th class="border px-4 py-2">Keterangan</th>
                 </tr>
             `;
 
@@ -143,8 +143,8 @@
                     ${item.od_tr_flag}
                     </td>
                     <td class="border px-4 py-2">${item.od_update_on}</td>
-                    <td class="border px-4 py-2"></td>
-                    <td class="border px-4 py-2"></td>
+                    <td class="border px-4 py-2">${item.od_validate_by}</td>
+                    <td class="border px-4 py-2">${item.od_tr_comment}</td>
                 </tr>
             `).join('');
             }

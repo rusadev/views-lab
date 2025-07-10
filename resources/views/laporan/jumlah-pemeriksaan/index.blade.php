@@ -62,7 +62,6 @@
         const startDateInput = document.getElementById("start_date");
         const endDateInput = document.getElementById("end_date");
         const searchButton = document.getElementById("search-button");
-        const BASE_URL = "{{ config('app.url') }}";
         const testGroupSection = document.getElementById("test-group-section");
 
         const today = new Date().toISOString().split("T")[0];
@@ -74,39 +73,12 @@
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
 
-                if (startDate > endDate) {
-                    alert("Tanggal mulai tidak boleh lebih besar dari tanggal akhir!");
-                    return;
-                }
-
-                const url = `/laboratorium/laporan/jumlah-pemeriksaan/data?start_date=${startDate}&end_date=${endDate}`;
-                toggleLoading(true);
-
-                try {
-                    const response = await fetch(url);
-                    const result = await response.json();
-
-                    const months = result.months || [];
-                    const table = result.table || {};
-                    const group_totals = result.group_totals || [];
-
-                    renderData({ months, table, group_totals });
-                } catch (error) {
-                    console.error("Error fetching data:", error);
-                    alert("Terjadi kesalahan saat mengambil data. Silakan coba lagi.");
-                } finally {
-                    toggleLoading(false);
-                }
-            });
-
-            function toggleLoading(loading) {
-                searchButton.disabled = loading;
-                searchButton.innerHTML = loading
-                    ? `<i class="fas fa-spinner fa-spin"></i><span>Memuat...</span>`
-                    : `<i class="fas fa-search"></i><span>Generate Laporan</span>`;
+            if (startDate > endDate) {
+                alert("Tanggal mulai tidak boleh lebih besar dari tanggal akhir!");
+                return;
             }
 
-            const url = `${BASE_URL}/laboratorium/laporan/jumlah-pemeriksaan/data?start_date=${startDate}&end_date=${endDate}`;
+            const url = `/laboratorium/laporan/jumlah-pemeriksaan/data?start_date=${startDate}&end_date=${endDate}`;
             toggleLoading(true);
 
             try {
@@ -116,8 +88,14 @@
                 const months = result.months || [];
                 const pivotData = result.pivot || [];
 
+                // Kosongkan tampilan sebelumnya (termasuk DataTable jika ada)
+                if ($.fn.DataTable.isDataTable('#pivotTable')) {
+                    $('#pivotTable').DataTable().destroy();
+                }
                 testGroupSection.innerHTML = "";
+                $("#export-container").empty();
 
+                // Bangun ulang tabel
                 let tableHtml = `
                     <div class="overflow-x-auto mt-4">
                         <table id="pivotTable" class="table-auto w-full border-collapse border border-gray-300 text-sm">
@@ -126,21 +104,16 @@
                                     <th class="px-4 py-2 border text-center" rowspan="2">Nama Pemeriksaan</th>`;
 
                 months.forEach(month => {
-                    tableHtml += ` 
-                        <th class="px-4 py-2 border text-center" colspan="3">${month}</th>
-                    `;
+                    tableHtml += `<th class="px-4 py-2 border text-center" colspan="3">${month}</th>`;
                 });
 
-                tableHtml += `
-                    <th class="px-4 py-2 border text-center" colspan="3">Total</th>
-                </tr><tr>`;
+                tableHtml += `<th class="px-4 py-2 border text-center" colspan="3">Total</th></tr><tr>`;
 
                 months.forEach(() => {
                     tableHtml += `
                         <th class="px-4 py-2 border text-center">Rawat Inap</th>
                         <th class="px-4 py-2 border text-center">Rawat Jalan</th>
-                        <th class="px-4 py-2 border text-center">Lainnya</th>
-                    `;
+                        <th class="px-4 py-2 border text-center">Lainnya</th>`;
                 });
 
                 tableHtml += `
@@ -151,10 +124,7 @@
 
                 pivotData.forEach(item => {
                     let row = `<tr><td class="px-4 py-2 border text-center">${item.test_name}</td>`;
-
-                    let totalRawatInap = 0;
-                    let totalRawatJalan = 0;
-                    let totalLainnya = 0;
+                    let totalRawatInap = 0, totalRawatJalan = 0, totalLainnya = 0;
 
                     months.forEach(month => {
                         const rawatInap = item.data[month]?.["Rawat Inap"] || 0;
@@ -168,8 +138,7 @@
                         row += `
                             <td class="px-4 py-2 border text-center">${rawatInap}</td>
                             <td class="px-4 py-2 border text-center">${rawatJalan}</td>
-                            <td class="px-4 py-2 border text-center">${lainnya}</td>
-                        `;
+                            <td class="px-4 py-2 border text-center">${lainnya}</td>`;
                     });
 
                     row += `
@@ -185,53 +154,43 @@
                 testGroupSection.innerHTML = tableHtml;
 
                 setTimeout(() => {
-                    // Cek apakah DataTable sudah ada, jika iya, destroy dulu
-                    if ($.fn.DataTable.isDataTable('#pivotTable')) {
-                        $('#pivotTable').DataTable().destroy();
-                    }
-
                     $('#pivotTable').DataTable({
                         dom: 'Bfrtip',
-                        buttons: [{
-                            extend: 'excelHtml5',
-                            text: 'Download Excel',
-                            exportOptions: {
-                                orthogonal: 'export',
-                                columns: ':visible',
-                                modifier: {
-                                    // Pastikan semua baris header ikut
-                                    page: 'all'
+                        buttons: [
+                            {
+                                extend: 'excelHtml5',
+                                text: 'Download Excel',
+                                exportOptions: {
+                                    orthogonal: 'export',
+                                    columns: ':visible',
+                                    modifier: { page: 'all' }
+                                },
+                                customize: function (xlsx) {
+                                    var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                                    var rows = $('row', sheet);
+
+                                    rows.each(function (i) {
+                                        if (i === 0 || i === 1) {
+                                            $(this).attr('customHeight', '1');
+                                            $('c', this).attr('s', '51');
+                                        }
+                                    });
+
+                                    var styles = xlsx.xl['styles.xml'];
+                                    var newStyle = `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>`;
+                                    $(styles).find('cellXfs').append(newStyle);
                                 }
                             },
-                            customize: function (xlsx) {
-                                var sheet = xlsx.xl.worksheets['sheet1.xml'];
-                                var rows = $('row', sheet);
-
-                                // Buat style bold untuk dua baris pertama (thead)
-                                rows.each(function (i) {
-                                    if (i === 0 || i === 1) {
-                                        $(this).attr('customHeight', '1');
-                                        $('c', this).attr('s', '51'); // Gaya bold default Excel
-                                    }
-                                });
-
-                                // Tambahkan style kustom (opsional)
-                                var styles = xlsx.xl['styles.xml'];
-                                var newStyle = `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>`;
-                                $(styles).find('cellXfs').append(newStyle);
-                            }
-                        },
-                        {
-                            extend: 'pdfHtml5',
-                            text: 'Download PDF',
-                            exportOptions: {
-                                orthogonal: 'export',
-                                columns: ':visible',
-                                modifier: {
-                                    page: 'all'
+                            {
+                                extend: 'pdfHtml5',
+                                text: 'Download PDF',
+                                exportOptions: {
+                                    orthogonal: 'export',
+                                    columns: ':visible',
+                                    modifier: { page: 'all' }
                                 }
                             }
-                        }],
+                        ],
                         searching: true,
                         paging: false,
                         ordering: false,
@@ -240,22 +199,16 @@
                             const exportButtons = $(".dt-buttons");
                             const searchBox = $(".dt-search");
 
-                            // Bersihkan isi sebelumnya
-                            $("#export-container").empty();
-
-                            // Masukkan elemen dengan layout Flexbox
                             $("#export-container")
+                                .empty()
                                 .append(searchBox)
                                 .append(exportButtons);
 
-                            // Tambahkan styling tambahan jika perlu
                             exportButtons.addClass("mb-0");
                             searchBox.addClass("mb-0");
                         }
                     });
                 }, 100);
-
-
             } catch (error) {
                 console.error("Error fetching data:", error);
                 alert("Terjadi kesalahan saat mengambil data. Silakan coba lagi.");
