@@ -10,24 +10,28 @@
         <div class="max-w-7xl mx-auto px-4">
             <div class="bg-white shadow-sm rounded-lg">
                 <div class="p-4 text-gray-900">
-                    <form method="GET" action="#" class="space-y-4">
+                    <form id="report-form" method="GET" action="#" class="space-y-4">
                         <div class="flex flex-wrap gap-4 items-end">
                             <div id="date_range_section" class="flex w-1/4 gap-2">
                                 <div class="w-1/2">
                                     <label for="start_date" class="block text-sm font-medium mb-1">Tanggal Awal</label>
-                                    <input type="date" id="start_date" class="w-full p-2 border rounded text-sm">
+                                    <input type="date" id="start_date" name="start_date" class="w-full p-2 border rounded text-sm">
                                 </div>
                                 <div class="w-1/2">
                                     <label for="end_date" class="block text-sm font-medium mb-1">Tanggal Akhir</label>
-                                    <input type="date" id="end_date" class="w-full p-2 border rounded text-sm">
+                                    <input type="date" id="end_date" name="end_date" class="w-full p-2 border rounded text-sm">
                                 </div>
                             </div>
                         </div>
 
-                        <div>
-                            <button id="search-button" class="bg-gradient-to-r from-indigo-600 to-indigo-400 hover:from-indigo-600 hover:to-indigo-800 text-white text-sm font-semibold px-3 py-2 rounded flex items-center gap-2 shadow-lg transition-all duration-300">
+                        <div class="flex gap-4">
+                            <button id="search-button" type="button" class="bg-gradient-to-r from-indigo-600 to-indigo-400 hover:from-indigo-600 hover:to-indigo-800 text-white text-sm font-semibold px-3 py-2 rounded flex items-center gap-2 shadow-lg transition-all duration-300">
                                 <i id="search-icon" class="fas fa-search"></i>
                                 <span id="search-text">Generate Laporan</span>
+                            </button>
+                            <button id="export-word-button" type="button" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-3 py-2 rounded flex items-center gap-2 shadow-lg transition-all duration-300">
+                                <i class="fas fa-file-word"></i>
+                                <span>Export ke Word</span>
                             </button>
                         </div>
                     </form>
@@ -40,7 +44,7 @@
                         Rekapitulasi Kunjungan Pasien per Jenis Pelayanan
                     </h3>
                     <p class="text-sm text-gray-500 mb-4">
-                        Tabel berikut menampilkan jumlah kunjungan pasien berdasarkan jenis layanan, 
+                        Tabel berikut menampilkan jumlah kunjungan pasien berdasarkan jenis layanan,
                         termasuk <strong>Rawat Inap</strong>, <strong>Rawat Jalan</strong>, dan <strong>Layanan Lainnya</strong>.
                     </p>
                     <table id="laporanTable" class="min-w-full border border-gray-200 table-auto text-sm font-sans text-center">
@@ -65,7 +69,6 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-                    <!-- Gender Pie Chart -->
                     <div class="bg-white shadow-sm rounded-lg p-4 flex flex-col items-center">
                         <h3 class="font-bold text-lg text-gray-600 mb-2">Distribusi Pasien Berdasarkan Gender</h3>
                         <p class="text-sm text-gray-500 mb-4 text-center">
@@ -76,7 +79,6 @@
                         </div>
                     </div>
 
-                    <!-- Age Bar Chart -->
                     <div class="bg-white shadow-sm rounded-lg p-4 flex flex-col items-center">
                         <h3 class="font-bold text-lg text-gray-600 mb-2">Distribusi Pasien Berdasarkan Kelompok Usia</h3>
                         <p class="text-sm text-gray-500 mb-4 text-center">
@@ -95,7 +97,7 @@
                         Rekapitulasi Kunjungan Pasien per Ruangan
                     </h3>
                     <p class="text-sm text-gray-500 mb-4">
-                        Tabel berikut menyajikan jumlah kunjungan pasien berdasarkan ruangan pelayanan, 
+                        Tabel berikut menyajikan jumlah kunjungan pasien berdasarkan ruangan pelayanan,
                         memberikan gambaran distribusi pasien di berbagai unit layanan.
                     </p>
                     <table id="distribusiTable" class="table-auto w-full border-collapse border border-gray-300 mt-4 text-sm">
@@ -120,12 +122,15 @@
             const startDateInput = document.getElementById("start_date");
             const endDateInput = document.getElementById("end_date");
             const searchButton = document.getElementById("search-button");
+            const exportWordButton = document.getElementById("export-word-button"); // Get the new export button
 
-            const today = new Date().toISOString().split("T")[0];
-            startDateInput.value = today;
-            endDateInput.value = today;
+            // Set default date to today's date
+            const today = new Date();
+            const todayFormatted = today.toISOString().split("T")[0]; // YYYY-MM-DD
+            startDateInput.value = todayFormatted;
+            endDateInput.value = todayFormatted;
 
-            fetchData();
+            fetchData(); // Initial data fetch on page load
 
             async function fetchData() {
                 const startDate = startDateInput.value;
@@ -136,17 +141,17 @@
                     return;
                 }
 
-                // Menonaktifkan tombol saat proses berjalan
+                // Disable buttons and show loading state
                 searchButton.disabled = true;
                 searchButton.innerHTML = `
                     <i class="fas fa-spinner fa-spin"></i>
                     <span>Memuat...</span>
                 `;
+                exportWordButton.disabled = true; // Disable export button too
 
                 try {
                     console.log(`Mengambil data dari ${startDate} hingga ${endDate}...`);
 
-                    // Panggil fungsi fetch lainnya
                     await fetchDataAndRenderKunjunganPasien(startDate, endDate);
                     await fetchDataDistribusiPerRuangan(startDate, endDate);
 
@@ -155,21 +160,29 @@
                     console.error("Terjadi kesalahan saat mengambil data:", error);
                     alert("Terjadi kesalahan saat mengambil data. Silakan coba lagi.");
                 } finally {
-                    // Mengaktifkan kembali tombol setelah proses selesai
+                    // Enable buttons and restore text
                     searchButton.disabled = false;
                     searchButton.innerHTML = `
                         <i class="fas fa-search"></i>
                         <span>Generate Laporan</span>
                     `;
+                    exportWordButton.disabled = false; // Enable export button
                 }
             }
 
             searchButton.addEventListener("click", fetchData);
+
+            // Add event listener for the export button
+            exportWordButton.addEventListener("click", function() {
+                const startDate = startDateInput.value;
+                const endDate = endDateInput.value;
+                window.location.href = `{{ route('laporan.jumlah-pasien.export-word') }}?start_date=${startDate}&end_date=${endDate}`;
+            });
         });
 
 
         async function fetchDataAndRenderKunjunganPasien(startDate, endDate) {
-            const BASE_URL = "{{ config('app.url') }}";
+            // No need for BASE_URL if using relative path
             try {
                 const response = await fetch(`/laboratorium/laporan/jumlah-pasien/data?start_date=${startDate}&end_date=${endDate}`);
                 if (!response.ok) throw new Error("HTTP error " + response.status);
@@ -190,7 +203,7 @@
         }
 
         async function fetchDataDistribusiPerRuangan(startDate, endDate) {
-            const BASE_URL = "{{ config('app.url') }}";
+            // No need for BASE_URL if using relative path
             try {
                 const response = await fetch(`/laboratorium/laporan/jumlah-pasien/data?start_date=${startDate}&end_date=${endDate}`);
                 if (!response.ok) {
@@ -199,7 +212,7 @@
 
                 const res = await response.json();
                 const result = res.getDistribusiPerRuangan;
-                console.log(result);
+                // console.log(result); // Keep for debugging if needed
                 updateTableDistribusi(result.data, result.months);
             } catch (error) {
                 console.error("Terjadi error: ", error);
@@ -216,8 +229,8 @@
             };
 
             for (let key in data) {
-                if (key !== "Total") {
-                    Object.keys(data[key]).forEach(col => col !== "total" && monthSet.add(col));
+                if (key !== "Total Per Bulan") {
+                    Object.keys(data[key]).forEach(col => col !== "Total" && monthSet.add(col)); // Exclude 'Total' from months
                 }
             }
 
@@ -226,32 +239,31 @@
             updateTableBody(data, months, totalData);
         }
 
-        
 
         function updateTableHeader(months) {
             const headerRow = document.getElementById("tableHeader");
-            headerRow.innerHTML = "<th class='px-4 py-2 border bg-grey-200 text-grey-700'>Jenis Pelayanan</th>";
+            headerRow.innerHTML = "<th class='px-4 py-2 border bg-gray-100 text-gray-700'>Jenis Pelayanan</th>"; // Changed to bg-gray-100
 
             months.forEach(month => {
-                headerRow.innerHTML += `<th class='px-4 py-2 border bg-grey-200 text-grey-700'>${month}</th>`;
+                headerRow.innerHTML += `<th class='px-4 py-2 border bg-gray-100 text-gray-700'>${month}</th>`; // Changed to bg-gray-100
             });
-
+            headerRow.innerHTML += `<th class='px-4 py-2 border bg-gray-100 text-gray-700'>Total</th>`; // Added Total column header
         }
 
         function updateTableBody(data, months, totalData) {
             const tbody = document.getElementById("tableBody");
             tbody.innerHTML = "";
 
-            let totalRow = null;
-            let rows = Object.entries(data).filter(([key]) => key !== "Total");
+            // Filter out 'Total Per Bulan' from the main data for rendering rows
+            let rows = Object.entries(data).filter(([key]) => key !== "Total Per Bulan");
 
             rows.forEach(([key, row]) => {
                 tbody.innerHTML += createRow(key, row, months, false);
-                totalData.categories[key] = row["total"] || 0;
+                totalData.categories[key] = row["Total"] || 0; // Use 'Total' for categories total
             });
 
-            if (data["Total"]) {
-                tbody.innerHTML += createRow("Total", data["Total"], months, true);
+            if (data["Total Per Bulan"]) { // Changed to "Total Per Bulan"
+                tbody.innerHTML += createRow("Total", data["Total Per Bulan"], months, true); // Changed to "Total Per Bulan"
                 totalData.labels = Object.keys(totalData.categories);
                 totalData.totals = Object.values(totalData.categories);
             }
@@ -264,19 +276,19 @@
             tableHead.innerHTML = '';
             tableBody.innerHTML = '';
 
-            // Buat Header Tabel
+            // Create Table Header
             let theadRow = `<tr>
-                <th class="border px-4 py-2">Tipe Ruangan</th>
-                <th class="border px-4 py-2">Nama Ruangan</th>`;
+                <th class="border px-4 py-2 bg-gray-100">Tipe Ruangan</th>
+                <th class="border px-4 py-2 bg-gray-100">Nama Ruangan</th>`;
 
             months.forEach(month => {
-                theadRow += `<th class="border px-4 py-2">${month}</th>`;
+                theadRow += `<th class="border px-4 py-2 bg-gray-100">${month}</th>`;
             });
 
-            theadRow += `<th class="border px-4 py-2">Total</th></tr>`;
+            theadRow += `<th class="border px-4 py-2 bg-gray-100">Total</th></tr>`;
             tableHead.innerHTML = theadRow;
 
-            // Isi Data Tabel
+            // Populate Table Data
             Object.keys(data).forEach(tipe => {
                 const ruanganKeys = Object.keys(data[tipe]).filter(ruangan => ruangan !== "Total");
                 let firstRow = true;
@@ -301,7 +313,7 @@
                     tableBody.innerHTML += row;
                 });
 
-                // Baris Total per Tipe Ruangan
+                // Total row for each room type
                 let totalRow = `<tr class="bg-gray-200 font-bold text-center">
                     <td class="border px-4 py-2 text-sm" colspan="2">Total ${tipe}</td>`;
 
@@ -318,12 +330,13 @@
         }
 
         function createRow(label, rowData, months, isTotal) {
-            let rowClass = isTotal ? "bg-grey-200 font-bold" : "bg-grey-50";
-            let row = `<tr><td class='px-4 py-2 border text-grey-700 ${rowClass}'>${label}</td>`;
+            let rowClass = isTotal ? "bg-gray-200 font-bold" : "bg-white"; // Changed to bg-gray-200 and bg-white
+            let row = `<tr><td class='px-4 py-2 border text-gray-700 ${rowClass}'>${label}</td>`;
 
             months.forEach(month => {
-                row += `<td class='px-4 py-2 border text-grey-700 ${rowClass}'>${rowData[month] || 0}</td>`;
+                row += `<td class='px-4 py-2 border text-gray-700 ${rowClass}'>${rowData[month] || 0}</td>`;
             });
+            row += `<td class='px-4 py-2 border text-gray-700 ${rowClass}'>${rowData['Total'] || 0}</td>`; // Added Total column data
 
             return row;
         }
@@ -402,7 +415,7 @@
             if (genderChart !== null) {
                 genderChart.destroy();
             }
-            
+
             genderChart = new Chart(ctx, {
                 type: 'pie',
                 data: {
@@ -412,7 +425,7 @@
                         backgroundColor: [
                             '#FF5733',
                             '#3498DB',
-                            '#2ECC71', 
+                            '#2ECC71',
                             '#F39C12',
                             '#9B59B6'
                         ],
@@ -425,7 +438,7 @@
                     layout: {
                         padding: {
                             top: 20,
-                            bottom: 20 
+                            bottom: 20
                         }
                     },
                     plugins: {
@@ -464,12 +477,12 @@
                             align: 'center',
                             anchor: 'center',
                             padding: 8,
-                            offset: 6, // Jarak agar teks tidak bertumpuk
-                            clip: false // Supaya tidak terpotong
+                            offset: 6, // Distance for text to avoid overlap
+                            clip: false // So it's not cut off
                         }
                     }
                 },
-                plugins: [ChartDataLabels] // Mengaktifkan data labels pada pie chart
+                plugins: [ChartDataLabels] // Enable data labels on pie chart
             });
         }
 
@@ -483,7 +496,7 @@
             if (ageChart !== null) {
                 ageChart.destroy();
             }
-            
+
 
             ageChart = new Chart(ctx, {
                 type: 'bar',
@@ -495,16 +508,16 @@
                         backgroundColor: ['#ff6b6b', '#ff9f43', '#feca57', '#48dbfb', '#1dd1a1'],
                         borderColor: '#ffffff',
                         borderWidth: 2,
-                        maxBarThickness: 50 // Menyesuaikan ketebalan batang
+                        maxBarThickness: 50 // Adjust bar thickness
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true, // Membantu mencegah pemotongan label
+                    maintainAspectRatio: true, // Helps prevent label clipping
                     layout: {
                         padding: {
-                            top: 20,  // Memberi ruang tambahan di atas agar label tidak terpotong
-                            bottom: 20 // Agar label sumbu X tidak terlalu dekat ke batas bawah
+                            top: 20,  // Add extra space at the top to prevent label clipping
+                            bottom: 20 // For bottom X-axis labels
                         }
                     },
                     scales: {
@@ -545,7 +558,7 @@
                         datalabels: {
                             anchor: 'end',
                             align: 'top',
-                            clip: false, // Pastikan label tetap terlihat meskipun keluar area chart
+                            clip: false, // Ensure labels are visible even outside chart area
                             color: '#374151',
                             font: {
                                 size: 14,
@@ -555,10 +568,9 @@
                         }
                     }
                 },
-                plugins: [ChartDataLabels] // Menampilkan jumlah pasien di atas bar
+                plugins: [ChartDataLabels] // Show patient count above bars
             });
         }
-
     </script>
 
 </x-app-layout>

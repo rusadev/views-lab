@@ -45,6 +45,8 @@ Route::middleware('auth')->group(function () {
 
             Route::get('/jumlah-pasien', [LaporanController::class, 'indexJumlahPasien'])->name('laporan.jumlah-pasien.index');
             Route::get('/jumlah-pasien/data', [LaporanController::class, 'getData'])->name('laporan.jumlah-pasien.data');
+            Route::get('/jumlah-pasien/export-word', [LaporanController::class, 'exportToWord'])->name('laporan.jumlah-pasien.export-word');
+
 
             Route::get('/jumlah-pemeriksaan', [LaporanJumlahPemeriksaanController::class, 'index'])->name('laporan.jumlah-pemeriksaan.index');
             Route::get('/jumlah-pemeriksaan/data', [LaporanJumlahPemeriksaanController::class, 'getData'])->name('laporan.jumlah-pemeriksaan.data');
