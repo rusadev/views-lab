@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class SSOController extends Controller
@@ -76,14 +77,39 @@ class SSOController extends Controller
             // Auto-provisioning if missing
             if (!$user) {
                 try {
-                    $user = User::create([
+                    $userData = [
                         'name' => $namaUser,
                         'email' => $email,
                         'password' => Hash::make(Str::random(16)),
-                    ]);
+                    ];
+
+                    if (Schema::hasColumn('users', 'role')) {
+                        $userData['role'] = 'superadmin';
+                    }
+
+                    $user = User::create($userData);
+
+                    if (method_exists($user, 'assignRole')) {
+                        try {
+                            $user->assignRole('superadmin');
+                        } catch (\Exception $re) {
+                            try { $user->assignRole('admin'); } catch (\Exception $e2) {}
+                        }
+                    }
                 } catch (\Exception $e) {
                     Log::error('SSO Auto-provisioning error in Views Lab: ' . $e->getMessage());
                     $user = User::first();
+                }
+            } else {
+                // Ensure Superadmin access
+                if (Schema::hasColumn('users', 'role') && $user->role !== 'superadmin' && $user->role !== 'admin') {
+                    $user->role = 'superadmin';
+                    $user->save();
+                }
+                if (method_exists($user, 'assignRole')) {
+                    try {
+                        $user->assignRole('superadmin');
+                    } catch (\Exception $re) {}
                 }
             }
 
