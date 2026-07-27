@@ -57,7 +57,7 @@ class SSOController extends Controller
                 return redirect()->route('login')->with('failed', 'Token SSO telah kadaluarsa. Silakan masuk kembali melalui Portal.');
             }
 
-            // 5. Identity & Auto-Provision User
+            // 5. Identity & Lookup Official User (ika@soedarso.com)
             $username = $payload['username'] ?? 'dr.ika';
             $namaUser = $payload['name'] ?? 'dr. Ika Ridlawati, M.Sc, Sp.PK';
             $email = $payload['email'] ?? ($username . '@sehatlink.cloud');
@@ -65,8 +65,10 @@ class SSOController extends Controller
             $user = null;
 
             try {
-                // Search user in local DB
-                $user = User::where('email', $email)
+                // Search user in local DB (prioritize official Dr. Ika account: ika@soedarso.com)
+                $user = User::where('email', 'ika@soedarso.com')
+                    ->orWhere('email', $email)
+                    ->orWhere('name', 'LIKE', '%Ika%')
                     ->orWhere('name', 'LIKE', '%' . $username . '%')
                     ->orWhere('name', $namaUser)
                     ->first();
@@ -74,12 +76,12 @@ class SSOController extends Controller
                 Log::warning('SSO DB search warning in Views Lab: ' . $e->getMessage());
             }
 
-            // Auto-provisioning if missing
+            // Auto-provisioning fallback if missing
             if (!$user) {
                 try {
                     $userData = [
                         'name' => $namaUser,
-                        'email' => $email,
+                        'email' => 'ika@soedarso.com',
                         'password' => Hash::make(Str::random(16)),
                     ];
 
@@ -101,7 +103,7 @@ class SSOController extends Controller
                     $user = User::first();
                 }
             } else {
-                // Ensure Superadmin access
+                // Ensure Superadmin access role if role column exists
                 if (Schema::hasColumn('users', 'role') && $user->role !== 'superadmin' && $user->role !== 'admin') {
                     $user->role = 'superadmin';
                     $user->save();
@@ -117,7 +119,7 @@ class SSOController extends Controller
                 return redirect()->route('login')->with('failed', 'Gagal membuat atau menemukan akun pengguna di Dashboard Lab.');
             }
 
-            // 6. Perform Login
+            // 6. Perform Login as official ika@soedarso.com user
             Auth::login($user);
 
             // Redirect to active dashboard route
