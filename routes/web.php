@@ -17,6 +17,13 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+Route::get('/test/error/{code}', function ($code) {
+    if (in_array($code, [401, 404, 419, 500])) {
+        return response()->view("errors.{$code}", [], $code);
+    }
+    abort(404);
+});
+
 
 Route::get('/dashboard', function () {
     return redirect()->route('klinik.index');
