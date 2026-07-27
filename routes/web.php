@@ -12,6 +12,10 @@ use App\Http\Controllers\LaporanPenggunaanTabungController;
 use App\Http\Controllers\LaporanTAT;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SSOController;
+
+// SehatLink Portal SSO Handshake Callback Route
+Route::get('/sso/callback', [SSOController::class, 'handleCallback'])->name('sso.callback');
 
 Route::get('/', function () {
     return redirect()->route('login');
