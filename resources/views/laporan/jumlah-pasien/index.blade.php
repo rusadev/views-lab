@@ -324,7 +324,7 @@
             btn.prop('disabled', true).addClass('opacity-60');
 
             $.ajax({
-                url: "{{ route('laporan.jumlah-pasien.data') }}",
+                url: "{{ route('laporan.jumlah-pasien.data', [], false) }}",
                 type: "GET",
                 data: { 
                     start_date: startDate, 
@@ -457,13 +457,13 @@
         $('#export-excel-button').on('click', function() {
             const start = document.getElementById('start_date').value;
             const end = document.getElementById('end_date').value;
-            window.location.href = `{{ route('laporan.jumlah-pasien.export-excel') }}?start_date=${start}&end_date=${end}`;
+            window.location.href = `{{ route('laporan.jumlah-pasien.export-excel', [], false) }}?start_date=${start}&end_date=${end}`;
         });
 
         $('#export-word-button').on('click', function() {
             const start = document.getElementById('start_date').value;
             const end = document.getElementById('end_date').value;
-            window.location.href = `{{ route('laporan.jumlah-pasien.export-word') }}?start_date=${start}&end_date=${end}`;
+            window.location.href = `{{ route('laporan.jumlah-pasien.export-word', [], false) }}?start_date=${start}&end_date=${end}`;
         });
     });
 </script>

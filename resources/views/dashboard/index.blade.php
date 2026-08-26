@@ -623,8 +623,8 @@
             btn.prop('disabled', true).addClass('opacity-60');
 
             $.ajax({
-                url: "{{ route('dashboard.data') }}",
-                type: "GET",
+                url: "{{ route('dashboard.data', [], false) }}",
+                type: 'GET',
                 data: {
                     start_date: startDate,
                     end_date: endDate,

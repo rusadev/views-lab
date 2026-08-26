@@ -181,7 +181,7 @@
             btn.prop('disabled', true).addClass('opacity-60');
 
             $.ajax({
-                url: "{{ route('laporan.nilai-kritis.data') }}",
+                url: "{{ route('laporan.nilai-kritis.data', [], false) }}",
                 type: "GET",
                 data: { 
                     start_date: startDate, 
@@ -250,13 +250,13 @@
         $('#export-excel-button').on('click', function() {
             const start = document.getElementById('start_date').value;
             const end = document.getElementById('end_date').value;
-            window.location.href = `{{ route('laporan.nilai-kritis.export-excel') }}?start_date=${start}&end_date=${end}`;
+            window.location.href = `{{ route('laporan.nilai-kritis.export-excel', [], false) }}?start_date=${start}&end_date=${end}`;
         });
 
         $('#export-word-button').on('click', function() {
             const start = document.getElementById('start_date').value;
             const end = document.getElementById('end_date').value;
-            window.location.href = `{{ route('laporan.nilai-kritis.export-word') }}?start_date=${start}&end_date=${end}`;
+            window.location.href = `{{ route('laporan.nilai-kritis.export-word', [], false) }}?start_date=${start}&end_date=${end}`;
         });
     });
 </script>
