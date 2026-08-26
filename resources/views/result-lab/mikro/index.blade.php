@@ -1,22 +1,22 @@
-<title>@yield('title', 'Laboratorium Mikrobiologi Klinik')</title>
+@section('title', 'Laboratorium Mikrobiologi Klinik')
 
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="text-lg font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-500 px-4 py-3 rounded-md shadow-md flex items-center gap-2 transition-all duration-300 hover:shadow-lg hover:brightness-110">
-            <svg class="w-6 h-6 text-white animate-pulse" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-6-8h6m4 12H5a2 2 0 01-2-2V5a2 2 0 012-2h9l5 5v12a2 2 0 01-2 2z" />
-            </svg>
-            {{ __('Hasil Pemeriksaan Laboratorium Mikrobiologi Klinik') }}
-        </h2>
-    </x-slot>
+    <div class="py-10">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-white border border-slate-200 rounded p-8 text-center space-y-4">
+                <div class="space-y-1">
+                    <span class="inline-block px-2.5 py-0.5 text-xs font-bold rounded bg-indigo-50 text-indigo-800 border border-indigo-200">Dalam Tahap Pengembangan (v2.0)</span>
+                    <h1 class="text-xl font-bold text-slate-900">Laboratorium Mikrobiologi Klinik</h1>
+                    <p class="text-xs text-slate-500 max-w-md mx-auto">Modul pemeriksaan kultur, resistensi antibiotik, dan mikrobiologi klinik sedang disiapkan.</p>
+                </div>
 
-    <div class="h-screen flex items-center justify-center bg-gradient-to-r from-purple-600 to-blue-500">
-        <div class="text-center text-white">
-            <h1 class="text-6xl font-bold mb-4 animate-bounce">Coming Soon</h1>
-            <p class="text-xl mb-8">Halaman ini sedang dalam pengembangan. Silakan kembali lagi nanti!</p>
-            <a href="{{ url('/') }}" class="inline-block bg-white text-purple-600 px-6 py-3 rounded-full font-semibold hover:bg-purple-50 transition-all duration-300 transform hover:scale-105 shadow-lg">
-                Kembali ke Beranda
-            </a>
+                <div class="pt-2">
+                    <a href="{{ route('klinik.index') }}" 
+                       class="inline-block px-4 py-2 text-xs font-semibold rounded text-white bg-blue-600 hover:bg-blue-700 border border-blue-700 transition-colors">
+                        &larr; Buka Patologi Klinik
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </x-app-layout>

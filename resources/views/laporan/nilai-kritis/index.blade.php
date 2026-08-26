@@ -1,179 +1,262 @@
+@section('title', 'Laporan Nilai Kritis Laboratorium')
+
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="text-lg font-semibold text-white bg-gradient-to-r from-indigo-600 to-indigo-400 px-4 py-3 rounded-md shadow-md flex items-center gap-2 transition-all duration-300 hover:shadow-lg hover:brightness-110">
-            <i class="fas fa-exclamation-circle text-white"></i>
-            {{ __('Laporan Nilai Kritis') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-4">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="bg-white shadow-sm rounded-lg">
-                <div class="p-4 text-gray-900">
-                    <form id="report-form" class="space-y-4">
-                        <div class="flex flex-wrap gap-4 items-end">
-                            <div id="date_range_section" class="flex w-1/4 gap-2">
-                                <div class="w-1/2">
-                                    <label for="start_date" class="block text-sm font-medium mb-1">Tanggal Awal</label>
-                                    <input type="date" id="start_date" name="start_date" class="w-full p-2 border rounded text-sm">
-                                </div>
-                                <div class="w-1/2">
-                                    <label for="end_date" class="block text-sm font-medium mb-1">Tanggal Akhir</label>
-                                    <input type="date" id="end_date" name="end_date" class="w-full p-2 border rounded text-sm">
-                                </div>
-                            </div>
-                        </div>
-
+    <div class="py-4 bg-slate-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+            
+            <!-- Page Header Card & Filter Bar (Flat v2.0) -->
+            <div class="bg-white border border-slate-200 rounded p-4 space-y-3">
+                <!-- Top Row: Navigation & Meta -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
+                    <div class="flex items-center gap-3">
+                        <a href="{{ route('laporan.index') }}" class="px-2.5 py-1.5 text-xs font-semibold rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-colors">
+                            &larr; Pusat Laporan
+                        </a>
                         <div>
-                            <button id="search-button" class="bg-gradient-to-r from-indigo-600 to-indigo-400 hover:from-indigo-600 hover:to-indigo-800 text-white text-sm font-semibold px-3 py-2 rounded flex items-center gap-2 shadow-lg transition-all duration-300">
-                                <i id="search-icon" class="fas fa-search"></i>
-                                <span id="search-text">Generate Laporan</span>
-                            </button>
+                            <h1 class="text-base font-bold text-slate-900">Laporan Nilai Kritis Laboratorium</h1>
+                            <p class="text-xs text-slate-500 mt-0.5">Dokumentasi hasil laboratorium yang melewati batas kritis (HH / LL) untuk audit keselamatan pasien.</p>
                         </div>
-                    </form>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 text-xs">
+                        <span id="cache-badge" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Cache Aktif: <span id="cache-time" class="font-mono">-</span>
+                        </span>
+                        <button id="refresh-button" type="button" title="Muat ulang data segar dari server LIS" class="px-2.5 py-1 text-[11px] font-semibold rounded bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-300 transition-colors flex items-center gap-1">
+                            <span>Perbarui Data</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bottom Row: Filter Controls -->
+                <div class="flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Presets Segmented Control -->
+                        <div class="inline-flex border border-slate-300 rounded overflow-hidden bg-slate-100">
+                            <button type="button" class="dash-preset px-3 py-1.5 text-slate-700 hover:bg-white text-xs font-semibold transition-colors border-r border-slate-300" data-preset="today">Hari Ini</button>
+                            <button type="button" class="dash-preset px-3 py-1.5 text-slate-700 hover:bg-white text-xs font-semibold transition-colors border-r border-slate-300" data-preset="7d">7 Hari</button>
+                            <button type="button" class="dash-preset px-3 py-1.5 text-slate-700 hover:bg-white text-xs font-semibold transition-colors border-r border-slate-300" data-preset="30d">30 Hari</button>
+                            <button type="button" class="dash-preset px-3 py-1.5 text-slate-700 hover:bg-white text-xs font-semibold transition-colors border-r border-slate-300 active-preset bg-white text-blue-700" data-preset="this_month">Bulan Ini</button>
+                            <button type="button" class="dash-preset px-3 py-1.5 text-slate-700 hover:bg-white text-xs font-semibold transition-colors" data-preset="this_year">Tahun Ini</button>
+                        </div>
+
+                        <!-- Date Inputs -->
+                        <div class="flex items-center gap-1.5 bg-slate-50 px-2 py-1 border border-slate-300 rounded">
+                            <input type="date" id="start_date" name="start_date" class="h-7 px-2 bg-white border border-slate-300 rounded text-xs text-slate-800 outline-none focus:border-blue-600 font-mono">
+                            <span class="text-slate-400 text-xs font-medium">s/d</span>
+                            <input type="date" id="end_date" name="end_date" class="h-7 px-2 bg-white border border-slate-300 rounded text-xs text-slate-800 outline-none focus:border-blue-600 font-mono">
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center gap-2">
+                        <button id="search-button" type="button" class="h-9 px-4 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded border border-rose-700 transition-colors flex items-center gap-1.5">
+                            <span id="search-text">Tampilkan</span>
+                        </button>
+
+                        <button id="export-excel-button" type="button" class="h-9 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded border border-emerald-700 transition-colors flex items-center gap-1.5 whitespace-nowrap">
+                            <span>Excel (.xlsx)</span>
+                        </button>
+
+                        <button id="export-word-button" type="button" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded border border-slate-300 transition-colors flex items-center gap-1.5 whitespace-nowrap">
+                            <span>Word (.docx)</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-            <!-- Tabel Laporan -->
-            <div class="bg-white shadow-sm rounded-lg mt-4">
-                <div class="p-4 text-gray-900">
-                    <h3 class="font-bold text-lg text-gray-600 mb-2">
-                        Laporan Nilai Kritis
-                    </h3>
-                    <p class="text-sm text-gray-500 mb-4">
-                        Tabel berikut menyajikan data nilai kritis pasien berdasarkan periode yang dipilih.
-                    </p>
-                    <table id="nilaiKritisTable" class="table-auto w-full border-collapse border border-gray-300 mt-4 text-sm">
-                        <thead id="tableHeadnilaiKritis"></thead>
-                        <tbody id="tableBodynilaiKritis"></tbody>
+
+            <!-- KPI Summary Bar -->
+            <div class="bg-white border-2 border-rose-200 rounded p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-rose-50/10">
+                <div class="space-y-0.5">
+                    <span class="text-xs font-bold text-rose-900 uppercase tracking-wider">Total Kasus Nilai Kritis Teridentifikasi</span>
+                    <p class="text-[11px] text-slate-500">Pasien dengan hasil di atas batas atas ekstrim (HH) atau di bawah batas bawah ekstrim (LL).</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input type="text" id="filter-kritis-input" placeholder="Cari nama / RM / uji..." class="h-8 px-3 text-xs border border-slate-300 rounded outline-none focus:border-rose-600 w-48 sm:w-60">
+                    <div class="text-2xl font-black text-rose-700 font-mono" id="kpiTotalKritis">-</div>
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="bg-white border border-slate-200 rounded p-4">
+                <div class="border-b border-slate-200 pb-2 mb-3">
+                    <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Daftar Pasien & Riwayat Hasil Kritis</h2>
+                    <p class="text-[11px] text-slate-500">Rincian parameter, waktu verifikasi dokter, dan unit ruangan pengirim.</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table id="nilaiKritisTable" class="w-full border border-slate-200 text-xs text-left border-collapse">
+                        <thead class="bg-rose-100 text-rose-950 font-bold border-b border-rose-200">
+                            <tr>
+                                <th class="py-2.5 px-3 w-10 text-center">No</th>
+                                <th class="py-2.5 px-3 w-24">Tanggal</th>
+                                <th class="py-2.5 px-3 w-28">No. RM / Order</th>
+                                <th class="py-2.5 px-3">Nama Pasien</th>
+                                <th class="py-2.5 px-3">Ruangan</th>
+                                <th class="py-2.5 px-3">Pemeriksaan</th>
+                                <th class="py-2.5 px-3 text-right">Hasil Kritis</th>
+                                <th class="py-2.5 px-3 text-center">Flag</th>
+                                <th class="py-2.5 px-3">Waktu Validasi</th>
+                                <th class="py-2.5 px-3">Validator</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBodynilaiKritis" class="divide-y divide-rose-100 text-slate-800">
+                            <!-- Skeleton Rows -->
+                        </tbody>
                     </table>
                 </div>
             </div>
 
         </div>
     </div>
+</x-app-layout>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const searchButton = document.getElementById("search-button");
-            const startDateInput = document.getElementById("start_date");
-            const endDateInput = document.getElementById("end_date");
-            const tableHead = document.getElementById("tableHeadnilaiKritis");
-            const tableBody = document.getElementById("tableBodynilaiKritis");
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-            const BASE_URL = "{{ config('app.url') }}";
-            const today = new Date().toISOString().split("T")[0];
-            startDateInput.value = today;
-            endDateInput.value = today;
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        document.getElementById('start_date').value = startOfMonth.toISOString().split('T')[0];
+        document.getElementById('end_date').value = now.toISOString().split('T')[0];
 
-            searchButton.addEventListener("click", async (e) => {
-                e.preventDefault();
+        // Date Presets Handler
+        document.querySelectorAll('.dash-preset').forEach(btn => {
+            btn.addEventListener('click', function() {
+                $('.dash-preset').removeClass('active-preset bg-white text-blue-700');
+                $(this).addClass('active-preset bg-white text-blue-700');
 
-                const startDate = startDateInput.value;
-                const endDate = endDateInput.value;
+                const preset = this.getAttribute('data-preset');
+                const toDate = new Date();
+                let fromDate = new Date();
 
-                if (startDate > endDate) {
-                    alert("Tanggal mulai tidak boleh lebih besar dari tanggal akhir!");
-                    return;
+                if (preset === 'today') {
+                } else if (preset === '7d') {
+                    fromDate.setDate(toDate.getDate() - 7);
+                } else if (preset === '30d') {
+                    fromDate.setDate(toDate.getDate() - 30);
+                } else if (preset === 'this_month') {
+                    fromDate = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
+                } else if (preset === 'this_year') {
+                    fromDate = new Date(toDate.getFullYear(), 0, 1);
                 }
 
-                searchButton.disabled = true;
-                searchButton.innerHTML = `
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <span>Memuat...</span>
-                `;
+                document.getElementById('start_date').value = fromDate.toISOString().split('T')[0];
+                document.getElementById('end_date').value = toDate.toISOString().split('T')[0];
+                fetchReportData(false);
+            });
+        });
 
+        function showSkeletons() {
+            $('#kpiTotalKritis').html('<span class="inline-block h-6 w-20 bg-rose-200 animate-pulse rounded"></span>');
 
-                // Tampilkan teks loading sebelum fetch data
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="9" class="text-center text-gray-500 py-4">Loading data...</td>
+            let skelHtml = '';
+            for (let i = 0; i < 6; i++) {
+                skelHtml += `
+                    <tr class="animate-pulse">
+                        <td class="py-2.5 px-3 text-center"><div class="h-3 w-4 bg-rose-200 rounded mx-auto"></div></td>
+                        <td class="py-2.5 px-3"><div class="h-3 w-16 bg-rose-200 rounded"></div></td>
+                        <td class="py-2.5 px-3"><div class="h-3 w-20 bg-rose-200 rounded"></div></td>
+                        <td class="py-2.5 px-3"><div class="h-3 w-32 bg-rose-200 rounded"></div></td>
+                        <td class="py-2.5 px-3"><div class="h-3 w-24 bg-rose-200 rounded"></div></td>
+                        <td class="py-2.5 px-3"><div class="h-3 w-28 bg-rose-200 rounded"></div></td>
+                        <td class="py-2.5 px-3 text-right"><div class="h-3 w-12 bg-rose-200 rounded ml-auto"></div></td>
+                        <td class="py-2.5 px-3 text-center"><div class="h-4 w-8 bg-rose-200 rounded mx-auto"></div></td>
+                        <td class="py-2.5 px-3"><div class="h-3 w-20 bg-rose-200 rounded"></div></td>
+                        <td class="py-2.5 px-3"><div class="h-3 w-16 bg-rose-200 rounded"></div></td>
                     </tr>
                 `;
+            }
+            $('#tableBodynilaiKritis').html(skelHtml);
+        }
 
-                try {
-                    const response = await fetch(`/laboratorium/laporan/nilai-kritis/data?start_date=${startDate}&end_date=${endDate}`);
-                    const data = await response.json();
+        function fetchReportData(forceRefresh = false) {
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            const btn = $('#search-button');
+            const btnText = $('#search-text');
 
-                    if (data.length > 0) {
-                        renderTable(data);
+            showSkeletons();
+            btnText.text('Memuat...');
+            btn.prop('disabled', true).addClass('opacity-60');
+
+            $.ajax({
+                url: "{{ route('laporan.nilai-kritis.data') }}",
+                type: "GET",
+                data: { 
+                    start_date: startDate, 
+                    end_date: endDate,
+                    refresh: forceRefresh ? 1 : 0
+                },
+                success: function(data) {
+                    $('#kpiTotalKritis').text(data.length + ' Kasus');
+
+                    let tbHtml = '';
+                    if (data.length === 0) {
+                        tbHtml = '<tr><td colspan="10" class="p-6 text-center text-slate-400">Tidak ada kasus nilai kritis pada periode yang dipilih.</td></tr>';
                     } else {
-                        showNoDataMessage();
+                        data.forEach((row, idx) => {
+                            const flagClass = row.od_tr_flag === 'HH' ? 'badge-flag-hh' : 'badge-flag-ll';
+                            const dateStr = row.oh_trx_dt ? new Date(row.oh_trx_dt).toLocaleDateString('id-ID') : '-';
+                            const updateStr = row.od_update_on ? new Date(row.od_update_on).toLocaleString('id-ID') : '-';
+
+                            tbHtml += `
+                                <tr class="hover:bg-rose-50/60 row-kritis">
+                                    <td class="py-2 px-3 text-center text-slate-400">${idx + 1}</td>
+                                    <td class="py-2 px-3 text-slate-600 whitespace-nowrap">${dateStr}</td>
+                                    <td class="py-2 px-3 font-mono">
+                                        <span class="font-bold text-slate-900 block target-search">${row.oh_pid || '-'}</span>
+                                        <span class="text-[10px] text-slate-400 block">${row.oh_tno || '-'}</span>
+                                    </td>
+                                    <td class="py-2 px-3 font-semibold text-slate-900 target-search">${row.oh_last_name || '-'}</td>
+                                    <td class="py-2 px-3 text-slate-600 target-search">${row.clinic_desc || '-'}</td>
+                                    <td class="py-2 px-3 font-medium text-slate-800 target-search">${row.ti_name || '-'}</td>
+                                    <td class="py-2 px-3 text-right font-mono font-black text-rose-700 text-sm whitespace-nowrap">${row.od_tr_val || '-'}</td>
+                                    <td class="py-2 px-3 text-center whitespace-nowrap"><span class="${flagClass}">${row.od_tr_flag}</span></td>
+                                    <td class="py-2 px-3 text-[11px] text-slate-500 whitespace-nowrap">${updateStr}</td>
+                                    <td class="py-2 px-3 text-[11px] text-slate-600">${row.od_validate_by || '-'}</td>
+                                </tr>
+                            `;
+                        });
                     }
-                } catch (error) {
-                    console.error("Error fetching data:", error);
-                    showErrorMessage();
-                } finally {
-                    searchButton.disabled = false;
-                    searchButton.innerHTML = `
-                        <i class="fas fa-search"></i>
-                        <span>Generate Laporan</span>
-                    `;
+                    $('#tableBodynilaiKritis').html(tbHtml);
+                },
+                error: function(xhr, status, err) {
+                    console.error("Laporan error:", err);
+                    $('#tableBodynilaiKritis').html('<tr><td colspan="10" class="p-6 text-center text-rose-500">Gagal memuat data laporan nilai kritis.</td></tr>');
+                },
+                complete: function() {
+                    btnText.text('Tampilkan');
+                    btn.prop('disabled', false).removeClass('opacity-60');
                 }
             });
+        }
 
-            function renderTable(data) {
-                tableHead.innerHTML = `
-                <tr class="bg-gray-100">
-                    <th class="border px-4 py-2">Tanggal</th>
-                    <th class="border px-4 py-2">No. Order</th>
-                    <th class="border px-4 py-2">ID Pasien</th>
-                    <th class="border px-4 py-2">Nama Pasien</th>
-                    <th class="border px-4 py-2">Dokter</th>
-                    <th class="border px-4 py-2">Klinik</th>
-                    <th class="border px-4 py-2">Pemeriksaan</th>
-                    <th class="border px-4 py-2">Hasil</th>
-                    <th class="border px-4 py-2">Flag</th>
-                    <th class="border px-4 py-2">Waktu Pemeriksaan</th>
-                    <th class="border px-4 py-2">Pelapor</th>
-                    <th class="border px-4 py-2">Keterangan</th>
-                </tr>
-            `;
-
-                tableBody.innerHTML = data.map(item => `
-                <tr class="border text-center">
-                    <td class="border px-4 py-2">${item.oh_trx_dt}</td>
-                    <td class="border px-4 py-2">${item.oh_tno}</td>
-                    <td class="border px-4 py-2">${item.oh_pid}</td>
-                    <td class="border px-4 py-2">${item.oh_last_name}</td>
-                    <td class="border px-4 py-2">${item.oh_dname}</td>
-                    <td class="border px-4 py-2">${item.clinic_desc}</td>
-                    <td class="border px-4 py-2">${item.ti_name}</td>
-                    <td class="border px-4 py-2">${item.od_tr_val}</td>
-                    <td class="border px-4 py-2 font-bold ${item.od_tr_flag === 'LL' ? 'text-orange-500' : 'text-red-500'}">
-                    ${item.od_tr_flag}
-                    </td>
-                    <td class="border px-4 py-2">${item.od_update_on}</td>
-                    <td class="border px-4 py-2">${item.od_validate_by}</td>
-                    <td class="border px-4 py-2">${item.od_tr_comment}</td>
-                </tr>
-            `).join('');
-            }
-
-            function showNoDataMessage() {
-                tableBody.innerHTML = `
-                <tr>
-                    <td colspan="9" class="text-center text-gray-500 py-4">Tidak ada data ditemukan.</td>
-                </tr>
-            `;
-            }
-
-            function showErrorMessage() {
-                tableBody.innerHTML = `
-                <tr>
-                    <td colspan="9" class="text-center text-red-500 py-4">Gagal mengambil data, silakan coba lagi.</td>
-                </tr>
-            `;
-            }
-
-            function formatDate(dateString) {
-                return new Date(dateString).toLocaleDateString('id-ID', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-            }
+        // Search in table
+        $('#filter-kritis-input').on('keyup', function() {
+            const query = $(this).val().toLowerCase();
+            $('.row-kritis').each(function() {
+                const text = $(this).find('.target-search').text().toLowerCase();
+                if (text.includes(query) || query === '') $(this).show();
+                else $(this).hide();
+            });
         });
-    </script>
 
+        fetchReportData(false);
 
-</x-app-layout>
+        $('#search-button').on('click', () => fetchReportData(false));
+        $('#refresh-button').on('click', () => fetchReportData(true));
+
+        $('#export-excel-button').on('click', function() {
+            const start = document.getElementById('start_date').value;
+            const end = document.getElementById('end_date').value;
+            window.location.href = `{{ route('laporan.nilai-kritis.export-excel') }}?start_date=${start}&end_date=${end}`;
+        });
+
+        $('#export-word-button').on('click', function() {
+            const start = document.getElementById('start_date').value;
+            const end = document.getElementById('end_date').value;
+            window.location.href = `{{ route('laporan.nilai-kritis.export-word') }}?start_date=${start}&end_date=${end}`;
+        });
+    });
+</script>

@@ -1,120 +1,143 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
+<nav x-data="{ open: false }" class="bg-white border-b border-slate-200 sticky top-0 z-40">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            <div class="flex">
-                <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('klinik.index') }}">
-                        <img src="{{ asset('img/logo.png') }}" alt="" style="height: 60px;">
+        <div class="flex justify-between h-14">
+            <div class="flex items-center gap-6">
+                <!-- Logo & Brand Title -->
+                <div class="shrink-0 flex items-center gap-3">
+                    <a href="{{ route('klinik.index') }}" class="flex items-center gap-2.5">
+                        <img src="{{ asset('img/logo.png') }}" alt="RSUD Logo" class="h-9 w-auto object-contain">
+                        <div class="flex flex-col">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-bold text-slate-900 text-sm tracking-tight">Views Lab</span>
+                                <span class="px-1.5 py-0.2 text-[10px] font-bold rounded bg-slate-100 text-slate-700 border border-slate-300">v2.0</span>
+                            </div>
+                            <span class="text-[11px] text-slate-500 -mt-0.5">SIM Laboratorium</span>
+                        </div>
                     </a>
                 </div>
 
-                <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('klinik.index')" :active="request()->routeIs('klinik.*')">
+                <!-- Navigation Links (Desktop) -->
+                <div class="hidden sm:flex sm:items-center sm:space-x-1 ms-4">
+                    <a href="{{ route('klinik.index') }}" 
+                       class="px-3 py-1.5 text-xs font-semibold rounded border transition-colors {{ request()->routeIs('klinik.*') ? 'bg-blue-50 text-blue-800 border-blue-300' : 'text-slate-700 hover:bg-slate-50 border-transparent' }}">
                         {{ __('Patologi Klinik') }}
-                    </x-nav-link>
-                </div>
+                    </a>
 
-                @if (auth()->user()->id == 1)
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('mikro.index')" :active="request()->routeIs('mikro.index')">
-                        {{ __('Mikrobioliogi Klinik') }}
-                    </x-nav-link>
-                </div>
+                    @if (auth()->user()?->id == 1)
+                    <a href="{{ route('mikro.index') }}" 
+                       class="px-3 py-1.5 text-xs font-semibold rounded border transition-colors {{ request()->routeIs('mikro.*') ? 'bg-blue-50 text-blue-800 border-blue-300' : 'text-slate-700 hover:bg-slate-50 border-transparent' }}">
+                        {{ __('Mikrobiologi Klinik') }}
+                    </a>
 
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('pa.index')" :active="request()->routeIs('pa.index')">
+                    <a href="{{ route('pa.index') }}" 
+                       class="px-3 py-1.5 text-xs font-semibold rounded border transition-colors {{ request()->routeIs('pa.*') ? 'bg-blue-50 text-blue-800 border-blue-300' : 'text-slate-700 hover:bg-slate-50 border-transparent' }}">
                         {{ __('Patologi Anatomi') }}
-                    </x-nav-link>
+                    </a>
+                    @endif
+                    
+                    @if(auth()->user()?->id == 2)
+                    <a href="{{ route('dashboard.index') }}" 
+                       class="px-3 py-1.5 text-xs font-semibold rounded border transition-colors {{ request()->routeIs('dashboard.*') ? 'bg-blue-50 text-blue-800 border-blue-300' : 'text-slate-700 hover:bg-slate-50 border-transparent' }}">
+                        {{ __('Dashboard') }}
+                    </a>
+
+                    <a href="{{ route('laporan.index') }}" 
+                       class="px-3 py-1.5 text-xs font-semibold rounded border transition-colors {{ request()->routeIs('laporan.*') ? 'bg-blue-50 text-blue-800 border-blue-300' : 'text-slate-700 hover:bg-slate-50 border-transparent' }}">
+                        {{ __('Laporan Laboratorium') }}
+                    </a>
+                    @endif
                 </div>
-                @endif
-                
-                @if(auth()->user()->id == 2)
-                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                        <x-nav-link :href="route('dashboard.index')" :active="request()->routeIs('dashboard.*')">
-                            {{ __('Dashboard') }}
-                        </x-nav-link>
-                    </div>
-
-                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                        <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
-                            {{ __('Laporan Laboratorium') }}
-                        </x-nav-link>
-                    </div>
-                @endif
-
-
             </div>
 
-            <!-- Settings Dropdown -->
+            <!-- Settings Dropdown & Status -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
+                <!-- Live Indicator -->
+                <div class="mr-4 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-300 text-[11px] font-bold text-emerald-800">
+                    Online
+                </div>
+
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }}</div>
-
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
+                        <button class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-slate-300 text-xs font-medium rounded text-slate-800 bg-white hover:bg-slate-50 focus:outline-none">
+                            <span class="font-semibold text-slate-800">{{ Auth::user()->name ?? 'Pengguna' }}</span>
+                            <span class="text-slate-400 text-[10px]">&#9660;</span>
                         </button>
                     </x-slot>
 
                     <x-slot name="content">
+                        <div class="px-4 py-2 border-b border-slate-200">
+                            <p class="text-xs font-bold text-slate-800">{{ Auth::user()->name ?? 'Pengguna' }}</p>
+                            <p class="text-[11px] text-slate-500 truncate">{{ Auth::user()->email ?? '' }}</p>
+                        </div>
+
+                        <x-dropdown-link :href="route('profile.edit')" class="text-xs">
+                            {{ __('Pengaturan Profil') }}
+                        </x-dropdown-link>
+
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-
                             <x-dropdown-link :href="route('logout')"
                                     onclick="event.preventDefault();
-                                                this.closest('form').submit();">
-                                {{ __('Log Out') }}
+                                                this.closest('form').submit();" class="text-xs text-red-700 hover:bg-red-50">
+                                {{ __('Keluar (Log Out)') }}
                             </x-dropdown-link>
                         </form>
                     </x-slot>
                 </x-dropdown>
             </div>
 
-            <!-- Hamburger -->
+            <!-- Hamburger (Mobile) -->
             <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
-                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded text-slate-600 hover:bg-slate-100 focus:outline-none">
+                    <span class="text-xs font-bold">MENU</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Responsive Navigation Menu -->
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('klinik.index')" :active="request()->routeIs('klinik.index')">
-                {{ __('Laboratorium Klinik') }}
-            </x-responsive-nav-link>
+    <!-- Responsive Navigation Menu (Mobile) -->
+    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden border-t border-slate-200 bg-white">
+        <div class="pt-2 pb-3 space-y-1 px-2">
+            <a href="{{ route('klinik.index') }}" class="block px-3 py-2 rounded text-xs font-medium {{ request()->routeIs('klinik.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-700 hover:bg-slate-50' }}">
+                {{ __('Patologi Klinik') }}
+            </a>
+
+            @if (auth()->user()?->id == 1)
+            <a href="{{ route('mikro.index') }}" class="block px-3 py-2 rounded text-xs font-medium {{ request()->routeIs('mikro.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-700 hover:bg-slate-50' }}">
+                {{ __('Mikrobiologi Klinik') }}
+            </a>
+
+            <a href="{{ route('pa.index') }}" class="block px-3 py-2 rounded text-xs font-medium {{ request()->routeIs('pa.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-700 hover:bg-slate-50' }}">
+                {{ __('Patologi Anatomi') }}
+            </a>
+            @endif
+
+            @if(auth()->user()?->id == 2)
+            <a href="{{ route('dashboard.index') }}" class="block px-3 py-2 rounded text-xs font-medium {{ request()->routeIs('dashboard.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-700 hover:bg-slate-50' }}">
+                {{ __('Dashboard') }}
+            </a>
+
+            <a href="{{ route('laporan.index') }}" class="block px-3 py-2 rounded text-xs font-medium {{ request()->routeIs('laporan.*') ? 'bg-blue-50 text-blue-800' : 'text-slate-700 hover:bg-slate-50' }}">
+                {{ __('Laporan Laboratorium') }}
+            </a>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200">
-            <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+        <div class="pt-3 pb-3 border-t border-slate-200 px-4">
+            <div class="mb-3">
+                <div class="font-bold text-xs text-slate-800">{{ Auth::user()->name ?? 'Pengguna' }}</div>
+                <div class="text-[11px] text-slate-500">{{ Auth::user()->email ?? '' }}</div>
             </div>
 
-            <div class="mt-3 space-y-1">
-                <!-- Authentication -->
+            <div class="space-y-1">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-
-                    <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
-                                        this.closest('form').submit();">
+                    <button type="submit" class="w-full text-left px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 rounded">
                         {{ __('Log Out') }}
-                    </x-responsive-nav-link>
+                    </button>
                 </form>
             </div>
         </div>

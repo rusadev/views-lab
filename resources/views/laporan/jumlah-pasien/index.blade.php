@@ -1,576 +1,469 @@
+@section('title', 'Laporan Jumlah Pasien')
+
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="text-lg font-semibold text-white bg-gradient-to-r from-indigo-600 to-indigo-400 px-4 py-3 rounded-md shadow-md flex items-center gap-2 transition-all duration-300 hover:shadow-lg hover:brightness-110">
-            <i class="fas fa-user-injured text-white"></i>
-            {{ __('Laporan Jumlah Pasien') }}
-        </h2>
-    </x-slot>
+    <div class="py-4 bg-slate-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+            
+            <!-- Page Header Card & Filter Bar (Flat v2.0) -->
+            <div class="bg-white border border-slate-200 rounded p-4 space-y-3">
+                <!-- Top Row: Navigation & Meta -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
+                    <div class="flex items-center gap-3">
+                        <a href="{{ route('laporan.index') }}" class="px-2.5 py-1.5 text-xs font-semibold rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-colors">
+                            &larr; Pusat Laporan
+                        </a>
+                        <div>
+                            <h1 class="text-base font-bold text-slate-900">Laporan Jumlah Pasien</h1>
+                            <p class="text-xs text-slate-500 mt-0.5">Rekapitulasi kunjungan pasien per jenis rawat, kelompok umur, gender, dan unit ruangan.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 text-xs">
+                        <span id="cache-badge" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Cache Aktif: <span id="cache-time" class="font-mono">-</span>
+                        </span>
+                        <button id="refresh-button" type="button" title="Muat ulang data segar dari server LIS" class="px-2.5 py-1 text-[11px] font-semibold rounded bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-300 transition-colors flex items-center gap-1">
+                            <span>Perbarui Data</span>
+                        </button>
+                    </div>
+                </div>
 
-    <div class="py-4">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="bg-white shadow-sm rounded-lg">
-                <div class="p-4 text-gray-900">
-                    <form id="report-form" method="GET" action="#" class="space-y-4">
-                        <div class="flex flex-wrap gap-4 items-end">
-                            <div id="date_range_section" class="flex w-1/4 gap-2">
-                                <div class="w-1/2">
-                                    <label for="start_date" class="block text-sm font-medium mb-1">Tanggal Awal</label>
-                                    <input type="date" id="start_date" name="start_date" class="w-full p-2 border rounded text-sm">
-                                </div>
-                                <div class="w-1/2">
-                                    <label for="end_date" class="block text-sm font-medium mb-1">Tanggal Akhir</label>
-                                    <input type="date" id="end_date" name="end_date" class="w-full p-2 border rounded text-sm">
-                                </div>
-                            </div>
+                <!-- Bottom Row: Filter Controls -->
+                <div class="flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Presets Segmented Control -->
+                        <div class="inline-flex border border-slate-300 rounded overflow-hidden bg-slate-100">
+                            <button type="button" class="dash-preset px-3 py-1.5 text-slate-700 hover:bg-white text-xs font-semibold transition-colors border-r border-slate-300" data-preset="today">Hari Ini</button>
+                            <button type="button" class="dash-preset px-3 py-1.5 text-slate-700 hover:bg-white text-xs font-semibold transition-colors border-r border-slate-300" data-preset="7d">7 Hari</button>
+                            <button type="button" class="dash-preset px-3 py-1.5 text-slate-700 hover:bg-white text-xs font-semibold transition-colors border-r border-slate-300" data-preset="30d">30 Hari</button>
+                            <button type="button" class="dash-preset px-3 py-1.5 text-slate-700 hover:bg-white text-xs font-semibold transition-colors border-r border-slate-300 active-preset bg-white text-blue-700" data-preset="this_month">Bulan Ini</button>
+                            <button type="button" class="dash-preset px-3 py-1.5 text-slate-700 hover:bg-white text-xs font-semibold transition-colors" data-preset="this_year">Tahun Ini</button>
                         </div>
 
-                        <div class="flex gap-4">
-                            <button id="search-button" type="button" class="bg-gradient-to-r from-indigo-600 to-indigo-400 hover:from-indigo-600 hover:to-indigo-800 text-white text-sm font-semibold px-3 py-2 rounded flex items-center gap-2 shadow-lg transition-all duration-300">
-                                <i id="search-icon" class="fas fa-search"></i>
-                                <span id="search-text">Generate Laporan</span>
-                            </button>
-                            <button id="export-word-button" type="button" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-3 py-2 rounded flex items-center gap-2 shadow-lg transition-all duration-300">
-                                <i class="fas fa-file-word"></i>
-                                <span>Export ke Word</span>
-                            </button>
+                        <!-- Date Inputs -->
+                        <div class="flex items-center gap-1.5 bg-slate-50 px-2 py-1 border border-slate-300 rounded">
+                            <input type="date" id="start_date" name="start_date" class="h-7 px-2 bg-white border border-slate-300 rounded text-xs text-slate-800 outline-none focus:border-blue-600 font-mono">
+                            <span class="text-slate-400 text-xs font-medium">s/d</span>
+                            <input type="date" id="end_date" name="end_date" class="h-7 px-2 bg-white border border-slate-300 rounded text-xs text-slate-800 outline-none focus:border-blue-600 font-mono">
                         </div>
-                    </form>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center gap-2">
+                        <button id="search-button" type="button" class="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded border border-blue-700 transition-colors flex items-center gap-1.5">
+                            <span id="search-text">Tampilkan</span>
+                        </button>
+
+                        <button id="export-excel-button" type="button" class="h-9 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded border border-emerald-700 transition-colors flex items-center gap-1.5 whitespace-nowrap">
+                            <span>Excel (.xlsx)</span>
+                        </button>
+
+                        <button id="export-word-button" type="button" class="h-9 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded border border-slate-300 transition-colors flex items-center gap-1.5 whitespace-nowrap">
+                            <span>Word (.docx)</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-white shadow-sm rounded-lg mt-4">
-                <div class="p-4 text-gray-900">
-                    <h3 class="font-bold text-lg text-gray-600 mb-2">
-                        Rekapitulasi Kunjungan Pasien per Jenis Pelayanan
-                    </h3>
-                    <p class="text-sm text-gray-500 mb-4">
-                        Tabel berikut menampilkan jumlah kunjungan pasien berdasarkan jenis layanan,
-                        termasuk <strong>Rawat Inap</strong>, <strong>Rawat Jalan</strong>, dan <strong>Layanan Lainnya</strong>.
-                    </p>
-                    <table id="laporanTable" class="min-w-full border border-gray-200 table-auto text-sm font-sans text-center">
-                        <thead class="bg-gray-100 text-gray-700">
+            <!-- Table 1: Rekapitulasi per Jenis Pelayanan -->
+            <div class="bg-white border border-slate-200 rounded p-4">
+                <div class="border-b border-slate-200 pb-2 mb-3">
+                    <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Rekapitulasi Kunjungan Pasien per Jenis Pelayanan</h2>
+                    <p class="text-[11px] text-slate-500">Jumlah pasien unik berdasarkan Rawat Jalan, Rawat Inap, dan Layanan Lainnya.</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table id="laporanTable" class="w-full border border-slate-200 text-xs text-center border-collapse">
+                        <thead class="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
                             <tr id="tableHeader"></tr>
                         </thead>
-                        <tbody id="tableBody"></tbody>
+                        <tbody id="tableBody" class="divide-y divide-slate-200 text-slate-800">
+                            <!-- Skeleton Rows -->
+                        </tbody>
                     </table>
                 </div>
             </div>
 
-            <div class="bg-white shadow-sm rounded-lg mt-4">
-                <div class="text-center"></div>
-                <div class="p-4 text-gray-900">
-                    <h3 class="font-bold text-lg text-gray-600 mb-2">Distribusi Pasien Berdasarkan Tipe Layanan</h3>
-                    <p class="text-sm text-gray-500 mb-4">
-                        Grafik ini menunjukkan proporsi pasien berdasarkan jenis layanan yang diterima, yaitu <strong>Rawat Inap</strong> dan <strong>Rawat Jalan</strong>.
-                    </p>
-                    <div class="w-full justify-center">
-                        <canvas id="totalPieChart" class="max-h-[350px]"></canvas>
+            <!-- Visual Charts (3 cols) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+                <!-- Chart 1: Distribusi Layanan -->
+                <div class="bg-white border border-slate-200 rounded p-4 flex flex-col justify-between">
+                    <div class="border-b border-slate-200 pb-2 mb-2">
+                        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Distribusi Tipe Layanan</h3>
+                        <p class="text-[10px] text-slate-500">Proporsi Rawat Inap vs Rawat Jalan.</p>
+                    </div>
+                    <div class="flex-1 flex items-center justify-center min-h-[180px]">
+                        <canvas id="totalPieChart" style="max-height: 180px;"></canvas>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-                    <div class="bg-white shadow-sm rounded-lg p-4 flex flex-col items-center">
-                        <h3 class="font-bold text-lg text-gray-600 mb-2">Distribusi Pasien Berdasarkan Gender</h3>
-                        <p class="text-sm text-gray-500 mb-4 text-center">
-                            Grafik ini menampilkan perbandingan jumlah pasien berdasarkan <strong>jenis kelamin</strong>.
-                        </p>
-                        <div class="w-full flex justify-center">
-                            <canvas id="genderPieChart" class="max-w-[350px] max-h-[350px]"></canvas>
-                        </div>
+                <!-- Chart 2: Distribusi Gender -->
+                <div class="bg-white border border-slate-200 rounded p-4 flex flex-col justify-between">
+                    <div class="border-b border-slate-200 pb-2 mb-2">
+                        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Distribusi Gender</h3>
+                        <p class="text-[10px] text-slate-500">Perbandingan Laki-laki vs Perempuan.</p>
                     </div>
+                    <div class="flex-1 flex items-center justify-center min-h-[180px]">
+                        <canvas id="genderPieChart" style="max-height: 180px;"></canvas>
+                    </div>
+                </div>
 
-                    <div class="bg-white shadow-sm rounded-lg p-4 flex flex-col items-center">
-                        <h3 class="font-bold text-lg text-gray-600 mb-2">Distribusi Pasien Berdasarkan Kelompok Usia</h3>
-                        <p class="text-sm text-gray-500 mb-4 text-center">
-                            Grafik ini menggambarkan jumlah pasien dalam berbagai <strong>kelompok usia</strong>.
-                        </p>
-                        <div class="w-full">
-                            <canvas id="ageBarChart" class="max-h-[350px]"></canvas>
-                        </div>
+                <!-- Chart 3: Kelompok Usia -->
+                <div class="bg-white border border-slate-200 rounded p-4 flex flex-col justify-between">
+                    <div class="border-b border-slate-200 pb-2 mb-2">
+                        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Distribusi Kelompok Usia</h3>
+                        <p class="text-[10px] text-slate-500">Rentang umur pasien terlayani.</p>
+                    </div>
+                    <div class="flex-1 flex items-center justify-center min-h-[180px]">
+                        <canvas id="ageBarChart" style="width: 100%; height: 180px;"></canvas>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white shadow-sm rounded-lg mt-4">
-                <div class="p-4 text-gray-900">
-                    <h3 class="font-bold text-lg text-gray-600 mb-2">
-                        Rekapitulasi Kunjungan Pasien per Ruangan
-                    </h3>
-                    <p class="text-sm text-gray-500 mb-4">
-                        Tabel berikut menyajikan jumlah kunjungan pasien berdasarkan ruangan pelayanan,
-                        memberikan gambaran distribusi pasien di berbagai unit layanan.
-                    </p>
-                    <table id="distribusiTable" class="table-auto w-full border-collapse border border-gray-300 mt-4 text-sm">
-                        <thead id="tableHeadRuangan"></thead>
-                        <tbody id="tableBodyRuangan"></tbody>
+            <!-- Table 2: Rekapitulasi per Ruangan -->
+            <div class="bg-white border border-slate-200 rounded p-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 pb-3 mb-3">
+                    <div>
+                        <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Rekapitulasi Kunjungan Pasien per Ruangan / Poliklinik</h2>
+                        <p class="text-[11px] text-slate-500">Rincian pasien terdistribusi di setiap unit bangsal rawat inap dan poliklinik rawat jalan.</p>
+                    </div>
+                    <input type="text" id="filter-ruangan-input" placeholder="Cari nama ruangan..." class="h-8 px-3 text-xs border border-slate-300 rounded outline-none focus:border-blue-600 w-full sm:w-60">
+                </div>
+                <div class="overflow-x-auto">
+                    <table id="laporanTableRuangan" class="w-full border border-slate-200 text-xs border-collapse">
+                        <thead class="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
+                            <tr id="tableHeaderRuangan"></tr>
+                        </thead>
+                        <tbody id="tableBodyRuangan" class="divide-y divide-slate-200 text-slate-800">
+                            <!-- Skeleton Rows -->
+                        </tbody>
                     </table>
                 </div>
             </div>
+
         </div>
     </div>
+</x-app-layout>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
-    <script>
-        Chart.register(ChartDataLabels);
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
-        let distribusiChart = null;
-        let genderChart = null;
-        let ageChart = null;
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof ChartDataLabels !== 'undefined') {
+            Chart.register(ChartDataLabels);
+        }
 
-        document.addEventListener("DOMContentLoaded", function () {
-            const startDateInput = document.getElementById("start_date");
-            const endDateInput = document.getElementById("end_date");
-            const searchButton = document.getElementById("search-button");
-            const exportWordButton = document.getElementById("export-word-button"); // Get the new export button
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        document.getElementById('start_date').value = startOfMonth.toISOString().split('T')[0];
+        document.getElementById('end_date').value = now.toISOString().split('T')[0];
 
-            // Set default date to today's date
-            const today = new Date();
-            const todayFormatted = today.toISOString().split("T")[0]; // YYYY-MM-DD
-            startDateInput.value = todayFormatted;
-            endDateInput.value = todayFormatted;
+        // Date Presets Handler
+        document.querySelectorAll('.dash-preset').forEach(btn => {
+            btn.addEventListener('click', function() {
+                $('.dash-preset').removeClass('active-preset bg-white text-blue-700');
+                $(this).addClass('active-preset bg-white text-blue-700');
 
-            fetchData(); // Initial data fetch on page load
+                const preset = this.getAttribute('data-preset');
+                const toDate = new Date();
+                let fromDate = new Date();
 
-            async function fetchData() {
-                const startDate = startDateInput.value;
-                const endDate = endDateInput.value;
-
-                if (startDate > endDate) {
-                    alert("Tanggal mulai tidak boleh lebih besar dari tanggal akhir!");
-                    return;
+                if (preset === 'today') {
+                } else if (preset === '7d') {
+                    fromDate.setDate(toDate.getDate() - 7);
+                } else if (preset === '30d') {
+                    fromDate.setDate(toDate.getDate() - 30);
+                } else if (preset === 'this_month') {
+                    fromDate = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
+                } else if (preset === 'this_year') {
+                    fromDate = new Date(toDate.getFullYear(), 0, 1);
                 }
 
-                // Disable buttons and show loading state
-                searchButton.disabled = true;
-                searchButton.innerHTML = `
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <span>Memuat...</span>
-                `;
-                exportWordButton.disabled = true; // Disable export button too
-
-                try {
-                    console.log(`Mengambil data dari ${startDate} hingga ${endDate}...`);
-
-                    await fetchDataAndRenderKunjunganPasien(startDate, endDate);
-                    await fetchDataDistribusiPerRuangan(startDate, endDate);
-
-                    console.log("Data berhasil diperoleh.");
-                } catch (error) {
-                    console.error("Terjadi kesalahan saat mengambil data:", error);
-                    alert("Terjadi kesalahan saat mengambil data. Silakan coba lagi.");
-                } finally {
-                    // Enable buttons and restore text
-                    searchButton.disabled = false;
-                    searchButton.innerHTML = `
-                        <i class="fas fa-search"></i>
-                        <span>Generate Laporan</span>
-                    `;
-                    exportWordButton.disabled = false; // Enable export button
-                }
-            }
-
-            searchButton.addEventListener("click", fetchData);
-
-            // Add event listener for the export button
-            exportWordButton.addEventListener("click", function() {
-                const startDate = startDateInput.value;
-                const endDate = endDateInput.value;
-                window.location.href = `{{ route('laporan.jumlah-pasien.export-word') }}?start_date=${startDate}&end_date=${endDate}`;
+                document.getElementById('start_date').value = fromDate.toISOString().split('T')[0];
+                document.getElementById('end_date').value = toDate.toISOString().split('T')[0];
+                fetchReportData(false);
             });
         });
 
+        let totalPieChart = null;
+        let genderPieChart = null;
+        let ageBarChart = null;
 
-        async function fetchDataAndRenderKunjunganPasien(startDate, endDate) {
-            // No need for BASE_URL if using relative path
-            try {
-                const response = await fetch(`/laboratorium/laporan/jumlah-pasien/data?start_date=${startDate}&end_date=${endDate}`);
-                if (!response.ok) throw new Error("HTTP error " + response.status);
-
-                const res = await response.json();
-                const dataDistribusiRuangan = res.distribusi_ruangan['Tipe Ruangan'];
-                const dataDistribusiGender = res.distribusi_ruangan['Gender'];
-                const dataDistribusiUsia = res.distribusi_ruangan['Usia'];
-
-                renderRekapitulasiKunjunganPasienTable(dataDistribusiRuangan);
-                renderDistribusiChart(dataDistribusiRuangan);
-
-                renderGenderChart(dataDistribusiGender);
-                renderAgeChart(dataDistribusiUsia);
-            } catch (error) {
-                console.error("Terjadi error: ", error);
-            }
-        }
-
-        async function fetchDataDistribusiPerRuangan(startDate, endDate) {
-            // No need for BASE_URL if using relative path
-            try {
-                const response = await fetch(`/laboratorium/laporan/jumlah-pasien/data?start_date=${startDate}&end_date=${endDate}`);
-                if (!response.ok) {
-                    throw new Error("Gagal mengambil data");
-                }
-
-                const res = await response.json();
-                const result = res.getDistribusiPerRuangan;
-                // console.log(result); // Keep for debugging if needed
-                updateTableDistribusi(result.data, result.months);
-            } catch (error) {
-                console.error("Terjadi error: ", error);
-            }
-        }
-
-
-        function renderRekapitulasiKunjunganPasienTable(data) {
-            let monthSet = new Set();
-            let totalData = {
-                labels: [],
-                totals: [],
-                categories: {}
-            };
-
-            for (let key in data) {
-                if (key !== "Total Per Bulan") {
-                    Object.keys(data[key]).forEach(col => col !== "Total" && monthSet.add(col)); // Exclude 'Total' from months
-                }
-            }
-
-            let months = Array.from(monthSet).sort();
-            updateTableHeader(months);
-            updateTableBody(data, months, totalData);
-        }
-
-
-        function updateTableHeader(months) {
-            const headerRow = document.getElementById("tableHeader");
-            headerRow.innerHTML = "<th class='px-4 py-2 border bg-gray-100 text-gray-700'>Jenis Pelayanan</th>"; // Changed to bg-gray-100
-
-            months.forEach(month => {
-                headerRow.innerHTML += `<th class='px-4 py-2 border bg-gray-100 text-gray-700'>${month}</th>`; // Changed to bg-gray-100
-            });
-            headerRow.innerHTML += `<th class='px-4 py-2 border bg-gray-100 text-gray-700'>Total</th>`; // Added Total column header
-        }
-
-        function updateTableBody(data, months, totalData) {
-            const tbody = document.getElementById("tableBody");
-            tbody.innerHTML = "";
-
-            // Filter out 'Total Per Bulan' from the main data for rendering rows
-            let rows = Object.entries(data).filter(([key]) => key !== "Total Per Bulan");
-
-            rows.forEach(([key, row]) => {
-                tbody.innerHTML += createRow(key, row, months, false);
-                totalData.categories[key] = row["Total"] || 0; // Use 'Total' for categories total
-            });
-
-            if (data["Total Per Bulan"]) { // Changed to "Total Per Bulan"
-                tbody.innerHTML += createRow("Total", data["Total Per Bulan"], months, true); // Changed to "Total Per Bulan"
-                totalData.labels = Object.keys(totalData.categories);
-                totalData.totals = Object.values(totalData.categories);
-            }
-        }
-
-
-        function updateTableDistribusi(data, months) {
-            const tableHead = document.getElementById('tableHeadRuangan');
-            const tableBody = document.getElementById('tableBodyRuangan');
-            tableHead.innerHTML = '';
-            tableBody.innerHTML = '';
-
-            // Create Table Header
-            let theadRow = `<tr>
-                <th class="border px-4 py-2 bg-gray-100">Tipe Ruangan</th>
-                <th class="border px-4 py-2 bg-gray-100">Nama Ruangan</th>`;
-
-            months.forEach(month => {
-                theadRow += `<th class="border px-4 py-2 bg-gray-100">${month}</th>`;
-            });
-
-            theadRow += `<th class="border px-4 py-2 bg-gray-100">Total</th></tr>`;
-            tableHead.innerHTML = theadRow;
-
-            // Populate Table Data
-            Object.keys(data).forEach(tipe => {
-                const ruanganKeys = Object.keys(data[tipe]).filter(ruangan => ruangan !== "Total");
-                let firstRow = true;
-
-                ruanganKeys.forEach(ruangan => {
-                    let row = `<tr>`;
-                    if (firstRow) {
-                        row += `<td class="border px-4 py-2 align-middle text-sm" rowspan="${ruanganKeys.length}">${tipe}</td>`;
-                        firstRow = false;
-                    }
-
-                    row += `<td class="border px-4 py-2">${ruangan}</td>`;
-
-                    months.forEach(month => {
-                        let jumlahPasien = data[tipe][ruangan][month] || 0;
-                        row += `<td class="border px-4 py-2 text-center text-sm">${jumlahPasien}</td>`;
-                    });
-
-                    let totalPerRuangan = data[tipe][ruangan]["Total"] || 0;
-                    row += `<td class="border px-4 py-2 text-center font-bold text-sm">${totalPerRuangan}</td></tr>`;
-
-                    tableBody.innerHTML += row;
-                });
-
-                // Total row for each room type
-                let totalRow = `<tr class="bg-gray-200 font-bold text-center">
-                    <td class="border px-4 py-2 text-sm" colspan="2">Total ${tipe}</td>`;
-
-                months.forEach(month => {
-                    let totalPerBulan = data[tipe]["Total"][month] || 0;
-                    totalRow += `<td class="border px-4 py-2 text-sm">${totalPerBulan}</td>`;
-                });
-
-                let totalKeseluruhan = data[tipe]["Total"]["Total"] || 0;
-                totalRow += `<td class="border px-4 py-2 text-sm">${totalKeseluruhan}</td></tr>`;
-
-                tableBody.innerHTML += totalRow;
-            });
-        }
-
-        function createRow(label, rowData, months, isTotal) {
-            let rowClass = isTotal ? "bg-gray-200 font-bold" : "bg-white"; // Changed to bg-gray-200 and bg-white
-            let row = `<tr><td class='px-4 py-2 border text-gray-700 ${rowClass}'>${label}</td>`;
-
-            months.forEach(month => {
-                row += `<td class='px-4 py-2 border text-gray-700 ${rowClass}'>${rowData[month] || 0}</td>`;
-            });
-            row += `<td class='px-4 py-2 border text-gray-700 ${rowClass}'>${rowData['Total'] || 0}</td>`; // Added Total column data
-
-            return row;
-        }
-
-        function renderDistribusiChart(data) {
-            let labels = Object.keys(data).filter(key => key !== "Total Per Bulan");
-            let totals = labels.map(label => data[label]['Total'] || 0);
-            const ctx = document.getElementById('totalPieChart').getContext('2d');
-
-            if (distribusiChart !== null) {
-                distribusiChart.destroy();
-            }
-
-            distribusiChart = new Chart(ctx, {
-                type: 'pie',
+        function initCharts() {
+            totalPieChart = new Chart(document.getElementById('totalPieChart'), {
+                type: 'doughnut',
+                plugins: [ChartDataLabels],
                 data: {
-                    labels: labels,
+                    labels: [],
                     datasets: [{
-                        data: totals,
-                        backgroundColor: ['#60a5fa', '#3b82f6', '#1e40af', '#1e3a8a'],
-                        borderColor: '#ffffff',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                usePointStyle: true,
-                                pointStyle: 'rect',
-                                color: '#1e40af',
-                                font: {
-                                    family: 'Inter, sans-serif',
-                                    size: 13
-                                },
-                                padding: 10
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: '#1e3a8a',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
-                            borderWidth: 1,
-                            borderColor: '#3b82f6'
-                        },
-                        datalabels: {
-                            formatter: (value, context) => {
-                                let total = context.dataset.data.reduce((sum, val) => sum + val, 0);
-                                return `${((value / total) * 100).toFixed(2)}%\n${value} Orang`;
-                            },
-                            color: '#ffffff',
-                            font: {
-                                family: 'Inter, sans-serif',
-                                weight: 'bold',
-                                size: 11
-                            },
-                            align: 'center',
-                            anchor: 'center',
-                            padding: 6,
-                            offset: 5
-                        }
-                    }
-                }
-            });
-        }
-
-        function renderGenderChart(data) {
-            let labels = Object.keys(data);
-            let totals = labels.map(label => data[label] || 0);
-
-            const ctx = document.getElementById('genderPieChart').getContext('2d');
-
-            if (genderChart !== null) {
-                genderChart.destroy();
-            }
-
-            genderChart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: totals,
-                        backgroundColor: [
-                            '#FF5733',
-                            '#3498DB',
-                            '#2ECC71',
-                            '#F39C12',
-                            '#9B59B6'
-                        ],
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    layout: {
-                        padding: {
-                            top: 20,
-                            bottom: 20
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                usePointStyle: true,
-                                pointStyle: 'rect',
-                                color: '#1e40af',
-                                font: {
-                                    family: 'Inter, sans-serif',
-                                    size: 14
-                                },
-                                padding: 12
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: '#1e3a8a',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
-                            borderWidth: 1,
-                            borderColor: '#3b82f6'
-                        },
-                        datalabels: {
-                            formatter: (value, context) => {
-                                let total = context.dataset.data.reduce((sum, val) => sum + val, 0);
-                                let percentage = ((value / total) * 100).toFixed(1);
-                                return `${percentage}%\n(${value} Orang)`;
-                            },
-                            color: '#ffffff',
-                            font: {
-                                family: 'Inter, sans-serif',
-                                weight: 'bold',
-                                size: 13
-                            },
-                            align: 'center',
-                            anchor: 'center',
-                            padding: 8,
-                            offset: 6, // Distance for text to avoid overlap
-                            clip: false // So it's not cut off
-                        }
-                    }
-                },
-                plugins: [ChartDataLabels] // Enable data labels on pie chart
-            });
-        }
-
-
-        function renderAgeChart(data) {
-            let labels = Object.keys(data);
-            let totals = labels.map(label => data[label] || 0);
-
-            const ctx = document.getElementById('ageBarChart').getContext('2d');
-
-            if (ageChart !== null) {
-                ageChart.destroy();
-            }
-
-
-            ageChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Jumlah Pasien',
-                        data: totals,
-                        backgroundColor: ['#ff6b6b', '#ff9f43', '#feca57', '#48dbfb', '#1dd1a1'],
-                        borderColor: '#ffffff',
+                        data: [],
+                        backgroundColor: ['#2563eb', '#059669', '#d97706'],
                         borderWidth: 2,
-                        maxBarThickness: 50 // Adjust bar thickness
+                        borderColor: '#ffffff'
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true, // Helps prevent label clipping
-                    layout: {
-                        padding: {
-                            top: 20,  // Add extra space at the top to prevent label clipping
-                            bottom: 20 // For bottom X-axis labels
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { boxWidth: 10, font: { family: 'Plus Jakarta Sans', size: 10 } } },
+                        datalabels: {
+                            display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+                            color: '#ffffff',
+                            font: { family: 'Plus Jakarta Sans', weight: 'bold', size: 11 },
+                            formatter: (v) => v
+                        }
+                    }
+                }
+            });
+
+            genderPieChart = new Chart(document.getElementById('genderPieChart'), {
+                type: 'doughnut',
+                plugins: [ChartDataLabels],
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: ['#2563eb', '#ec4899', '#94a3b8'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { boxWidth: 10, font: { family: 'Plus Jakarta Sans', size: 10 } } },
+                        datalabels: {
+                            display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+                            color: '#ffffff',
+                            font: { family: 'Plus Jakarta Sans', weight: 'bold', size: 11 },
+                            formatter: (v) => v
+                        }
+                    }
+                }
+            });
+
+            ageBarChart = new Chart(document.getElementById('ageBarChart'), {
+                type: 'bar',
+                plugins: [ChartDataLabels],
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Pasien',
+                        data: [],
+                        backgroundColor: '#2563eb',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 20 } },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            display: true,
+                            color: '#0f172a',
+                            anchor: 'end',
+                            align: 'top',
+                            offset: 2,
+                            font: { family: 'Plus Jakarta Sans', weight: 'bold', size: 11 },
+                            formatter: (v) => v > 0 ? v : ''
                         }
                     },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                color: '#374151',
-                                font: {
-                                    size: 14,
-                                    weight: 'bold'
-                                }
-                            },
-                            grid: {
-                                color: '#e5e7eb'
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                color: '#374151',
-                                font: {
-                                    size: 14,
-                                    weight: 'bold'
-                                }
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: '#1e3a8a',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
-                            borderWidth: 1,
-                            borderColor: '#3b82f6'
-                        },
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'top',
-                            clip: false, // Ensure labels are visible even outside chart area
-                            color: '#374151',
-                            font: {
-                                size: 14,
-                                weight: 'bold'
-                            },
-                            formatter: (value) => value.toLocaleString()
-                        }
+                        y: { beginAtZero: true, grace: '15%', grid: { color: '#f1f5f9' }, ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } } },
+                        x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 10, weight: 'bold' } } }
                     }
-                },
-                plugins: [ChartDataLabels] // Show patient count above bars
+                }
             });
         }
-    </script>
 
-</x-app-layout>
+        initCharts();
+
+        function showSkeletons() {
+            let skel1 = '';
+            for (let i = 0; i < 4; i++) {
+                skel1 += `
+                    <tr class="animate-pulse">
+                        <td class="p-2 text-left"><div class="h-3 w-28 bg-slate-200 rounded"></div></td>
+                        <td class="p-2"><div class="h-3 w-12 bg-slate-200 rounded mx-auto"></div></td>
+                        <td class="p-2 bg-slate-50"><div class="h-3 w-16 bg-slate-200 rounded mx-auto"></div></td>
+                    </tr>
+                `;
+            }
+            $('#tableHeader').html('<th class="p-2 text-left">Jenis Pelayanan</th><th class="p-2">Bulan</th><th class="p-2 bg-slate-200">Total</th>');
+            $('#tableBody').html(skel1);
+
+            let skel2 = '';
+            for (let i = 0; i < 6; i++) {
+                skel2 += `
+                    <tr class="animate-pulse">
+                        <td class="p-2 text-left"><div class="h-3 w-20 bg-slate-200 rounded"></div></td>
+                        <td class="p-2 text-left"><div class="h-3 w-40 bg-slate-200 rounded"></div></td>
+                        <td class="p-2"><div class="h-3 w-12 bg-slate-200 rounded mx-auto"></div></td>
+                        <td class="p-2 bg-slate-50"><div class="h-3 w-16 bg-slate-200 rounded mx-auto"></div></td>
+                    </tr>
+                `;
+            }
+            $('#tableHeaderRuangan').html('<th class="p-2 text-left">Tipe</th><th class="p-2 text-left">Nama Ruangan</th><th class="p-2 text-center">Bulan</th><th class="p-2 bg-slate-200 text-center">Total</th>');
+            $('#tableBodyRuangan').html(skel2);
+        }
+
+        function fetchReportData(forceRefresh = false) {
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            const btn = $('#search-button');
+            const btnText = $('#search-text');
+
+            showSkeletons();
+            btnText.text('Memuat...');
+            btn.prop('disabled', true).addClass('opacity-60');
+
+            $.ajax({
+                url: "{{ route('laporan.jumlah-pasien.data') }}",
+                type: "GET",
+                data: { 
+                    start_date: startDate, 
+                    end_date: endDate,
+                    refresh: forceRefresh ? 1 : 0
+                },
+                success: function(res) {
+                    $('#cache-time').text(res.cached_at || 'Baru saja');
+
+                    // 1. Render Table 1: Tipe Ruangan
+                    const dist = res.distribusi_ruangan || {};
+                    const tipeRuangan = dist['Tipe Ruangan'] || {};
+
+                    const monthSet = {};
+                    Object.keys(tipeRuangan).forEach(k => {
+                        if (k !== 'Total Per Bulan' && typeof tipeRuangan[k] === 'object') {
+                            Object.keys(tipeRuangan[k]).forEach(m => {
+                                if (m !== 'Total') monthSet[m] = true;
+                            });
+                        }
+                    });
+                    const months = Object.keys(monthSet).sort();
+
+                    let thHtml = '<th class="p-2 text-left">Jenis Pelayanan</th>';
+                    months.forEach(m => thHtml += `<th class="p-2">${m}</th>`);
+                    thHtml += '<th class="p-2 bg-slate-200">Total</th>';
+                    $('#tableHeader').html(thHtml);
+
+                    let tbHtml = '';
+                    Object.keys(tipeRuangan).forEach(k => {
+                        if (k === 'Total Per Bulan') return;
+                        tbHtml += `<tr class="hover:bg-slate-50">`;
+                        tbHtml += `<td class="p-2 text-left font-bold">${k}</td>`;
+                        months.forEach(m => {
+                            tbHtml += `<td class="p-2">${tipeRuangan[k][m] || 0}</td>`;
+                        });
+                        tbHtml += `<td class="p-2 font-bold bg-slate-50">${tipeRuangan[k]['Total'] || 0}</td>`;
+                        tbHtml += `</tr>`;
+                    });
+
+                    if (tipeRuangan['Total Per Bulan']) {
+                        tbHtml += `<tr class="bg-slate-100 font-black border-t-2 border-slate-300">`;
+                        tbHtml += `<td class="p-2 text-left">TOTAL</td>`;
+                        months.forEach(m => {
+                            tbHtml += `<td class="p-2">${tipeRuangan['Total Per Bulan'][m] || 0}</td>`;
+                        });
+                        tbHtml += `<td class="p-2 bg-slate-200">${tipeRuangan['Total Per Bulan']['Total'] || 0}</td>`;
+                        tbHtml += `</tr>`;
+                    }
+                    $('#tableBody').html(tbHtml || '<tr><td colspan="10" class="p-4 text-center text-slate-400">Tidak ada data ditemukan.</td></tr>');
+
+                    // 2. Render Charts
+                    const labelsTipe = Object.keys(tipeRuangan).filter(k => k !== 'Total Per Bulan');
+                    const valuesTipe = labelsTipe.map(k => tipeRuangan[k]['Total'] || 0);
+                    totalPieChart.data.labels = labelsTipe;
+                    totalPieChart.data.datasets[0].data = valuesTipe;
+                    totalPieChart.update();
+
+                    const gender = dist['Gender'] || {};
+                    genderPieChart.data.labels = Object.keys(gender);
+                    genderPieChart.data.datasets[0].data = Object.values(gender);
+                    genderPieChart.update();
+
+                    const usia = dist['Usia'] || {};
+                    ageBarChart.data.labels = Object.keys(usia);
+                    ageBarChart.data.datasets[0].data = Object.values(usia);
+                    ageBarChart.update();
+
+                    // 3. Render Table 2: Per Ruangan
+                    const distRuang = res.getDistribusiPerRuangan || {};
+                    const ruangData = distRuang.data || {};
+                    const monthsRuang = (distRuang.months || []).sort();
+
+                    let thRuang = '<th class="p-2 text-left">Tipe</th><th class="p-2 text-left">Nama Ruangan / Poliklinik</th>';
+                    monthsRuang.forEach(m => thRuang += `<th class="p-2 text-center">${m}</th>`);
+                    thRuang += '<th class="p-2 text-center bg-slate-200">Total</th>';
+                    $('#tableHeaderRuangan').html(thRuang);
+
+                    let tbRuang = '';
+                    Object.keys(ruangData).forEach(tipe => {
+                        const units = Object.keys(ruangData[tipe]).filter(k => k !== 'Total').sort();
+                        units.forEach(u => {
+                            tbRuang += `<tr class="hover:bg-slate-50 row-ruang">`;
+                            tbRuang += `<td class="p-2 text-left text-slate-500 font-medium">${tipe}</td>`;
+                            tbRuang += `<td class="p-2 text-left font-semibold text-slate-800 search-ruang-target">${u}</td>`;
+                            monthsRuang.forEach(m => {
+                                tbRuang += `<td class="p-2 text-center">${ruangData[tipe][u][m] || 0}</td>`;
+                            });
+                            tbRuang += `<td class="p-2 text-center font-bold bg-slate-50">${ruangData[tipe][u]['Total'] || 0}</td>`;
+                            tbRuang += `</tr>`;
+                        });
+
+                        if (ruangData[tipe]['Total']) {
+                            tbRuang += `<tr class="bg-slate-100 font-bold border-t border-slate-300">`;
+                            tbRuang += `<td colspan="2" class="p-2 text-left">Subtotal ${tipe}</td>`;
+                            monthsRuang.forEach(m => {
+                                tbRuang += `<td class="p-2 text-center">${ruangData[tipe]['Total'][m] || 0}</td>`;
+                            });
+                            tbRuang += `<td class="p-2 text-center bg-slate-200">${ruangData[tipe]['Total']['Total'] || 0}</td>`;
+                            tbRuang += `</tr>`;
+                        }
+                    });
+                    $('#tableBodyRuangan').html(tbRuang || '<tr><td colspan="10" class="p-4 text-center text-slate-400">Tidak ada data ditemukan.</td></tr>');
+                },
+                error: function(xhr, status, err) {
+                    console.error("Laporan error:", err);
+                },
+                complete: function() {
+                    btnText.text('Tampilkan');
+                    btn.prop('disabled', false).removeClass('opacity-60');
+                }
+            });
+        }
+
+        // Live Room Search
+        $('#filter-ruangan-input').on('keyup', function() {
+            const query = $(this).val().toLowerCase();
+            $('.row-ruang').each(function() {
+                const text = $(this).find('.search-ruang-target').text().toLowerCase();
+                if (text.includes(query) || query === '') $(this).show();
+                else $(this).hide();
+            });
+        });
+
+        fetchReportData(false);
+
+        $('#search-button').on('click', () => fetchReportData(false));
+        $('#refresh-button').on('click', () => fetchReportData(true));
+
+        $('#export-excel-button').on('click', function() {
+            const start = document.getElementById('start_date').value;
+            const end = document.getElementById('end_date').value;
+            window.location.href = `{{ route('laporan.jumlah-pasien.export-excel') }}?start_date=${start}&end_date=${end}`;
+        });
+
+        $('#export-word-button').on('click', function() {
+            const start = document.getElementById('start_date').value;
+            const end = document.getElementById('end_date').value;
+            window.location.href = `{{ route('laporan.jumlah-pasien.export-word') }}?start_date=${start}&end_date=${end}`;
+        });
+    });
+</script>

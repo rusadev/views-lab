@@ -18,10 +18,51 @@ class LaboratoriumKlinikController extends Controller
         return view('result-lab.klinik.index', compact('ruangans'));
     }
 
+    public function searchPatient(Request $request)
+    {
+        $term = trim($request->input('q') ?? '');
+        if (empty($term)) {
+            return response()->json(['results' => []]);
+        }
+
+        $query = DB::connection('oracle')
+            ->table('ord_hdr')
+            ->select('oh_pid', 'oh_last_name')
+            ->distinct();
+
+        if (is_numeric($term)) {
+            $query->where('oh_pid', 'LIKE', $term . '%');
+        } else {
+            $query->where(function($q) use ($term) {
+                $q->where('oh_pid', 'LIKE', $term . '%')
+                  ->orWhere('oh_last_name', 'LIKE', '%' . strtoupper($term) . '%');
+            });
+        }
+
+        $results = $query->limit(20)->get();
+
+        $formatted = [];
+        $seen = [];
+        foreach ($results as $row) {
+            $key = $row->oh_pid;
+            if (!isset($seen[$key])) {
+                $seen[$key] = true;
+                $formatted[] = [
+                    'id' => $row->oh_pid,
+                    'text' => $row->oh_pid . ' - ' . ($row->oh_last_name ?? 'Tanpa Nama')
+                ];
+            }
+        }
+
+        return response()->json(['results' => $formatted]);
+    }
+
+
     public function getOrder(Request $request)
     {
-        $searchType = $request->input('search_type');
-        $rmNumber = $request->input('rm_number');
+        $searchType = $request->input('search_type', 'rm');
+        $rawRm = $request->input('rm_number');
+        $rmNumber = !empty($rawRm) ? trim(explode(' - ', $rawRm)[0]) : null;
         $ruangan = $request->input('ruangan');
         $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date'))->startOfDay() : null;
         $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date'))->endOfDay() : null;
@@ -49,14 +90,22 @@ class LaboratoriumKlinikController extends Controller
             )
             ->orderBy('a.oh_trx_dt', 'desc');
 
-        if ($searchType === 'rm' && !empty($rmNumber)) {
-            $query->where('a.oh_pid', $rmNumber);
+        if ($searchType === 'rm') {
+            if (!empty($rmNumber)) {
+                $query->where('a.oh_pid', $rmNumber);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         } else {
             if (!empty($ruangan)) {
-                $query->where('b.clinic_code', 'LIKE', $ruangan);
+                $query->where('a.oh_clinic_code', $ruangan);
             }
             if (!empty($startDate) && !empty($endDate)) {
                 $query->whereBetween('a.oh_trx_dt', [$startDate, $endDate]);
+            } elseif (!empty($startDate)) {
+                $query->where('a.oh_trx_dt', '>=', $startDate);
+            } elseif (!empty($endDate)) {
+                $query->where('a.oh_trx_dt', '<=', $endDate);
             }
         }
 
@@ -111,34 +160,24 @@ class LaboratoriumKlinikController extends Controller
             ->addColumn('oh_ord_status', function ($row) {
                 switch ($row['final_status']) {
                     case 'Belum tersedia':
-                        return '<button class="px-3 font-medium py-1 bg-gradient-to-r from-gray-400 to-gray-600 text-xs text-white rounded-md shadow-sm opacity-50 cursor-not-allowed" disabled>
-                            <i class="fas fa-times-circle mr-1"></i> Belum Tersedia
-                        </button>';
+                        return '<span class="badge-status-belum">Belum Tersedia</span>';
                     case 'Hasil Sebagian':
-                        return '<a href="' . route('klinik.detail', ['labno' => Hashids::encode($row['oh_tno'])]) . '" target="_blank"
-                            class="px-3 font-medium py-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-xs text-white rounded-md shadow-sm hover:from-yellow-500 hover:to-yellow-700 transition-all duration-300">
-                            <i class="fas fa-hourglass-half mr-1"></i> Hasil Sebagian
-                        </a>';
+                        return '<a href="' . route('klinik.detail', ['labno' => Hashids::encode($row['oh_tno'])]) . '" target="_blank" class="badge-status-sebagian">Hasil Sebagian</a>';
                     case 'Selesai':
-                        return '<a href="' . route('klinik.detail', ['labno' => Hashids::encode($row['oh_tno'])]) . '" target="_blank"
-                            class="px-3 font-medium py-1 bg-gradient-to-r from-green-500 to-green-700 text-xs text-white rounded-md shadow-sm hover:from-green-600 hover:to-green-800 transition-all duration-300">
-                            <i class="fas fa-check-circle mr-1"></i> Selesai
-                        </a>';
+                        return '<a href="' . route('klinik.detail', ['labno' => Hashids::encode($row['oh_tno'])]) . '" target="_blank" class="badge-status-selesai">Selesai</a>';
                     default:
-                        return '<span class="px-3 font-medium py-1 bg-gradient-to-r from-gray-200 to-gray-400 text-gray-700 text-sm rounded-md shadow-sm">
-                            Tidak Diketahui
-                        </span>';
+                        return '<span class="badge-status-belum">Tidak Diketahui</span>';
                 }
             })
-            
             ->rawColumns(['oh_ord_status'])
             ->make(true);
     }
 
     public function getOrderFlag(Request $request)
     {
-        $searchType = $request->input('search_type');
-        $rmNumber = $request->input('rm_number');
+        $searchType = $request->input('search_type', 'rm');
+        $rawRm = $request->input('rm_number');
+        $rmNumber = !empty($rawRm) ? trim(explode(' - ', $rawRm)[0]) : null;
         $ruangan = $request->input('ruangan');
         $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date'))->startOfDay() : null;
         $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date'))->endOfDay() : null;
@@ -164,14 +203,22 @@ class LaboratoriumKlinikController extends Controller
             ->where('c.od_action_flag', '!=', 'N')
             ->orderBy('a.oh_trx_dt', 'desc');
 
-        if ($searchType === 'rm' && !empty($rmNumber)) {
-            $query->where('a.oh_pid', $rmNumber);
+        if ($searchType === 'rm') {
+            if (!empty($rmNumber)) {
+                $query->where('a.oh_pid', $rmNumber);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         } else {
             if (!empty($ruangan)) {
-                $query->where('b.clinic_code', 'LIKE', $ruangan);
+                $query->where('a.oh_clinic_code', $ruangan);
             }
             if (!empty($startDate) && !empty($endDate)) {
                 $query->whereBetween('a.oh_trx_dt', [$startDate, $endDate]);
+            } elseif (!empty($startDate)) {
+                $query->where('a.oh_trx_dt', '>=', $startDate);
+            } elseif (!empty($endDate)) {
+                $query->where('a.oh_trx_dt', '<=', $endDate);
             }
         }
 
@@ -201,18 +248,22 @@ class LaboratoriumKlinikController extends Controller
 
         return DataTables::of(collect(array_values($groupedData)))
             ->addColumn('patient_info', function ($row) {
-                return '<a href="' . route('klinik.detail', ['labno' => Hashids::encode($row['oh_tno'])]) . '" target="_blank" class="font-medium text-black no-underline">'
-                        . $row['oh_last_name'] . 
-                        '</a>';
+                return '<a href="' . route('klinik.detail', ['labno' => Hashids::encode($row['oh_tno'])]) . '" target="_blank" class="font-bold text-slate-900 hover:text-blue-700 hover:underline block leading-tight">'
+                        . e($row['oh_last_name']) . 
+                        '</a><span class="text-[11px] font-mono text-slate-500">RM: ' . e($row['oh_pid']) . '</span>';
             })
             ->addColumn('test_name', function ($row) {
-                return implode(' ', array_map(fn($d) => '<span class="block">' . $d['ti_name'] . '</span>', $row['details']));
+                return implode('', array_map(fn($d) => '<div class="py-0.5 text-xs text-slate-900 font-medium">' . e($d['ti_name']) . '</div>', $row['details']));
             })
             ->addColumn('result', function ($row) {
-                return implode(' ', array_map(fn($d) => '<span class="block">' . $d['od_tr_val'] . '</span>', $row['details']));
+                return implode('', array_map(fn($d) => '<div class="py-0.5 text-xs font-mono font-bold text-rose-700">' . e($d['od_tr_val']) . '</div>', $row['details']));
             })
             ->addColumn('critical_status', function ($row) {
-                return implode(' ', array_map(fn($d) => '<span class="block font-bold text-red-500">' . $d['od_tr_flag'] . '</span>', $row['details']));
+                return implode('', array_map(function($d) {
+                    $flag = $d['od_tr_flag'];
+                    $badgeClass = $flag === 'HH' ? 'badge-flag-hh' : 'badge-flag-ll';
+                    return '<div class="py-0.5"><span class="' . $badgeClass . '">' . e($flag) . '</span></div>';
+                }, $row['details']));
             })
             ->rawColumns(['test_name', 'result', 'critical_status', 'patient_info'])
             ->make(true);

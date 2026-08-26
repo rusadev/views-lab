@@ -2,17 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ReportExcelService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpWord\IOFactory;
-use PhpOffice\PhpWord\SimpleType\TblWidth; // This might not be strictly necessary for basic table styling
+use PhpOffice\PhpWord\PhpWord;
 
 class LaporanController extends Controller
 {
-    //
     public function index()
     {
         return view('laporan.index');
@@ -25,21 +24,37 @@ class LaporanController extends Controller
 
     public function getData(Request $request)
     {
+        ini_set('max_execution_time', 300);
+        ini_set('memory_limit', '512M');
+
         $startDate = $request->input('start_date')
             ? Carbon::parse($request->input('start_date'))->startOfDay()
-            : Carbon::create(2024, 1, 1)->startOfDay();
+            : Carbon::now()->startOfMonth()->startOfDay();
 
         $endDate = $request->input('end_date')
             ? Carbon::parse($request->input('end_date'))->endOfDay()
-            : Carbon::create(2024, 1, 31)->endOfDay();
+            : Carbon::now()->endOfDay();
 
-        $oracleConnection = DB::connection('oracle');
-        $distribusiRuangan = $this->getDistribusiTipeRuangan($oracleConnection, $startDate, $endDate);
-        $getDistribusiPerRuangan = $this->getDistribusiPerRuangan($oracleConnection, $startDate, $endDate);
-        return response()->json([
-            'distribusi_ruangan' => $distribusiRuangan,
-            'getDistribusiPerRuangan' => $getDistribusiPerRuangan,
-        ]);
+        $forceRefresh = $request->boolean('refresh', false);
+        $cacheKey = 'laporan_pasien_' . md5($startDate->format('Y-m-d') . '_' . $endDate->format('Y-m-d'));
+
+        if ($forceRefresh) {
+            \Illuminate\Support\Facades\Cache::forget($cacheKey);
+        }
+
+        $data = \Illuminate\Support\Facades\Cache::remember($cacheKey, 600, function () use ($startDate, $endDate) {
+            $oracleConnection = DB::connection('oracle');
+            $distribusiRuangan = $this->getDistribusiTipeRuangan($oracleConnection, $startDate, $endDate);
+            $getDistribusiPerRuangan = $this->getDistribusiPerRuangan($oracleConnection, $startDate, $endDate);
+
+            return [
+                'distribusi_ruangan' => $distribusiRuangan,
+                'getDistribusiPerRuangan' => $getDistribusiPerRuangan,
+                'cached_at' => now()->format('d/m/Y H:i:s'),
+            ];
+        });
+
+        return response()->json($data);
     }
 
     private function getDistribusiTipeRuangan($oracleConnection, $startDate, $endDate)
@@ -170,10 +185,10 @@ class LaporanController extends Controller
             ->select(
                 'hfclinic.clinic_desc AS nama_ruangan',
                 DB::raw("CASE
-                WHEN oh_ptype = 'IN' THEN 'Rawat Inap'
-                WHEN oh_ptype = 'OP' THEN 'Rawat Jalan'
-                ELSE 'Lainnya'
-            END AS tipe_ruangan"),
+                    WHEN oh_ptype = 'IN' THEN 'Rawat Inap'
+                    WHEN oh_ptype = 'OP' THEN 'Rawat Jalan'
+                    ELSE 'Lainnya'
+                END AS tipe_ruangan"),
                 DB::raw("TO_CHAR(oh_trx_dt, 'YYYY-MM') AS bulan_tahun"),
                 DB::raw("COUNT(DISTINCT oh_pid) AS jumlah_pasien")
             )
@@ -182,10 +197,10 @@ class LaporanController extends Controller
             ->groupBy(
                 'hfclinic.clinic_desc',
                 DB::raw("CASE
-                WHEN oh_ptype = 'IN' THEN 'Rawat Inap'
-                WHEN oh_ptype = 'OP' THEN 'Rawat Jalan'
-                ELSE 'Lainnya'
-            END"),
+                    WHEN oh_ptype = 'IN' THEN 'Rawat Inap'
+                    WHEN oh_ptype = 'OP' THEN 'Rawat Jalan'
+                    ELSE 'Lainnya'
+                END"),
                 DB::raw("TO_CHAR(oh_trx_dt, 'YYYY-MM')")
             )
             ->orderBy('hfclinic.clinic_desc')
@@ -222,9 +237,7 @@ class LaporanController extends Controller
             }
         }
 
-        // Calculate totals for "Total" row within each type
         foreach ($pivotData as $tipeRuangan => &$ruangan) {
-            // Initialize the 'Total' array for this $tipeRuangan
             if (!isset($ruangan["Total"])) {
                 $ruangan["Total"] = [];
             }
@@ -238,7 +251,7 @@ class LaporanController extends Controller
                 }
                 $ruangan["Total"][$monthTahun] = $monthlyTotal;
             }
-            // Calculate the grand total for the 'Total' row
+
             $grandTotalForTipe = 0;
             foreach ($ruangan as $namaRuangan => $dataPerBulan) {
                 if ($namaRuangan !== "Total" && isset($dataPerBulan['Total'])) {
@@ -248,54 +261,197 @@ class LaporanController extends Controller
             $ruangan["Total"]["Total"] = $grandTotalForTipe;
         }
 
-
         return [
             'data' => $pivotData,
             'months' => array_keys($months)
         ];
     }
 
+    public function exportToExcel(Request $request)
+    {
+        $startDate = $request->input('start_date')
+            ? Carbon::parse($request->input('start_date'))->startOfDay()
+            : Carbon::now()->startOfMonth()->startOfDay();
+
+        $endDate = $request->input('end_date')
+            ? Carbon::parse($request->input('end_date'))->endOfDay()
+            : Carbon::now()->endOfDay();
+
+        $oracle = DB::connection('oracle');
+        $distribusiRuanganData = $this->getDistribusiTipeRuangan($oracle, $startDate, $endDate);
+        $distribusiPerRuanganData = $this->getDistribusiPerRuangan($oracle, $startDate, $endDate);
+
+        $periodStr = $startDate->format('d/m/Y') . ' - ' . $endDate->format('d/m/Y');
+        $spreadsheet = ReportExcelService::createSpreadsheet('Laporan Jumlah Pasien Laboratorium', $periodStr);
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Jenis Pelayanan');
+
+        // Table 1: Jenis Pelayanan
+        $sheet->setCellValue('A6', 'No');
+        $sheet->setCellValue('B6', 'Jenis Pelayanan');
+
+        $dataDistribusiTipeRuangan = $distribusiRuanganData['Tipe Ruangan'] ?? [];
+        $months = [];
+        foreach ($dataDistribusiTipeRuangan as $key => $row) {
+            if ($key !== "Total Per Bulan" && is_array($row)) {
+                foreach ($row as $col => $val) {
+                    if ($col !== "Total") {
+                        $months[$col] = true;
+                    }
+                }
+            }
+        }
+        $monthList = array_keys($months);
+        sort($monthList);
+
+        $colIdx = 3;
+        foreach ($monthList as $m) {
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
+            $sheet->setCellValue("{$colLetter}6", $m);
+            $colIdx++;
+        }
+        $totalColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
+        $sheet->setCellValue("{$totalColLetter}6", 'Total Pasien');
+
+        $rowIdx = 7;
+        $no = 1;
+        foreach ($dataDistribusiTipeRuangan as $key => $row) {
+            if ($key === "Total Per Bulan" || !is_array($row)) continue;
+
+            $sheet->setCellValue("A{$rowIdx}", $no++);
+            $sheet->setCellValue("B{$rowIdx}", $key);
+
+            $c = 3;
+            foreach ($monthList as $m) {
+                $cLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c);
+                $sheet->setCellValue("{$cLetter}{$rowIdx}", $row[$m] ?? 0);
+                $c++;
+            }
+            $sheet->setCellValue("{$totalColLetter}{$rowIdx}", $row['Total'] ?? 0);
+            $rowIdx++;
+        }
+
+        // Total Row
+        if (isset($dataDistribusiTipeRuangan['Total Per Bulan'])) {
+            $sheet->setCellValue("A{$rowIdx}", '');
+            $sheet->setCellValue("B{$rowIdx}", 'TOTAL KESELURUHAN');
+            $c = 3;
+            foreach ($monthList as $m) {
+                $cLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c);
+                $sheet->setCellValue("{$cLetter}{$rowIdx}", $dataDistribusiTipeRuangan['Total Per Bulan'][$m] ?? 0);
+                $c++;
+            }
+            $sheet->setCellValue("{$totalColLetter}{$rowIdx}", $dataDistribusiTipeRuangan['Total Per Bulan']['Total'] ?? 0);
+            ReportExcelService::formatTable($sheet, 6, $rowIdx, 'A', $totalColLetter, true);
+        } else {
+            ReportExcelService::formatTable($sheet, 6, $rowIdx - 1, 'A', $totalColLetter, false);
+        }
+
+        // Sheet 2: Distribusi Per Ruangan
+        $sheet2 = $spreadsheet->createSheet();
+        $sheet2->setTitle('Per Ruangan');
+        
+        $sheet2->setCellValue('A1', 'RUMAH SAKIT UMUM DAERAH');
+        $sheet2->setCellValue('A2', 'INSTALASI LABORATORIUM PATOLOGI KLINIK');
+        $sheet2->setCellValue('A3', 'REKAPITULASI PASIEN PER RUANGAN');
+        $sheet2->setCellValue('A4', 'Periode: ' . $periodStr);
+        $sheet2->getStyle('A1:A3')->getFont()->setBold(true);
+
+        $sheet2->setCellValue('A6', 'No');
+        $sheet2->setCellValue('B6', 'Tipe Layanan');
+        $sheet2->setCellValue('C6', 'Nama Ruangan / Poliklinik');
+
+        $monthsDistribusi = $distribusiPerRuanganData['months'] ?? [];
+        sort($monthsDistribusi);
+
+        $cIdx2 = 4;
+        foreach ($monthsDistribusi as $m) {
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($cIdx2);
+            $sheet2->setCellValue("{$colLetter}6", $m);
+            $cIdx2++;
+        }
+        $totCol2 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($cIdx2);
+        $sheet2->setCellValue("{$totCol2}6", 'Total');
+
+        $rIdx2 = 7;
+        $no2 = 1;
+        $dataRuanganActual = $distribusiPerRuanganData['data'] ?? [];
+
+        foreach ($dataRuanganActual as $tipe => $ruanganData) {
+            $ruanganKeys = array_keys(array_filter($ruanganData, fn($val, $key) => $key !== 'Total', ARRAY_FILTER_USE_BOTH));
+            sort($ruanganKeys);
+
+            foreach ($ruanganKeys as $ruangan) {
+                $sheet2->setCellValue("A{$rIdx2}", $no2++);
+                $sheet2->setCellValue("B{$rIdx2}", $tipe);
+                $sheet2->setCellValue("C{$rIdx2}", $ruangan);
+
+                $c = 4;
+                foreach ($monthsDistribusi as $m) {
+                    $cLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c);
+                    $sheet2->setCellValue("{$cLetter}{$rIdx2}", $ruanganData[$ruangan][$m] ?? 0);
+                    $c++;
+                }
+                $sheet2->setCellValue("{$totCol2}{$rIdx2}", $ruanganData[$ruangan]['Total'] ?? 0);
+                $rIdx2++;
+            }
+
+            if (isset($ruanganData['Total'])) {
+                $sheet2->setCellValue("A{$rIdx2}", '');
+                $sheet2->setCellValue("B{$rIdx2}", "SUBTOTAL {$tipe}");
+                $sheet2->setCellValue("C{$rIdx2}", '');
+                $c = 4;
+                foreach ($monthsDistribusi as $m) {
+                    $cLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c);
+                    $sheet2->setCellValue("{$cLetter}{$rIdx2}", $ruanganData['Total'][$m] ?? 0);
+                    $c++;
+                }
+                $sheet2->setCellValue("{$totCol2}{$rIdx2}", $ruanganData['Total']['Total'] ?? 0);
+                $sheet2->getStyle("A{$rIdx2}:{$totCol2}{$rIdx2}")->getFont()->setBold(true);
+                $rIdx2++;
+            }
+        }
+
+        ReportExcelService::formatTable($sheet2, 6, $rIdx2 - 1, 'A', $totCol2, true);
+
+        $filename = 'Laporan_Jumlah_Pasien_' . $startDate->format('Ymd') . '_' . $endDate->format('Ymd') . '.xlsx';
+        return ReportExcelService::streamDownload($spreadsheet, $filename);
+    }
+
     public function exportToWord(Request $request)
     {
         $startDate = $request->input('start_date')
             ? Carbon::parse($request->input('start_date'))->startOfDay()
-            : Carbon::create(2024, 1, 1)->startOfDay();
+            : Carbon::now()->startOfMonth()->startOfDay();
 
         $endDate = $request->input('end_date')
             ? Carbon::parse($request->input('end_date'))->endOfDay()
-            : Carbon::create(2024, 1, 31)->endOfDay();
+            : Carbon::now()->endOfDay();
 
         $oracleConnection = DB::connection('oracle');
-
         $distribusiRuanganData = $this->getDistribusiTipeRuangan($oracleConnection, $startDate, $endDate);
         $distribusiPerRuanganData = $this->getDistribusiPerRuangan($oracleConnection, $startDate, $endDate);
-
-        // --- IMPORTANT: REMOVE ALL DEBUGGING LOGS HERE ---
-        // Log::info('DEBUG: Data for Distribusi Tipe Ruangan:', $distribusiRuanganData); // DELETE THIS LINE
-        // Log::info('DEBUG: Data for Distribusi Per Ruangan:', $distribusiPerRuanganData); // DELETE THIS LINE
-        // --- END OF DEBUGGING LOGS ---
 
         $phpWord = new PhpWord();
         $section = $phpWord->addSection();
 
-        // Styles for table
-        $tableStyle = ['borderSize' => 6, 'borderColor' => '000000', 'cellMargin' => 80, 'width' => 100 * 50, 'unit' => \PhpOffice\PhpWord\SimpleType\TblWidth::PERCENT];
-        $fontStyle = ['name' => 'Arial', 'size' => 9];
-        $headerFontStyle = ['name' => 'Arial', 'size' => 9, 'bold' => true]; // For header text
+        $tableStyle = ['borderSize' => 6, 'borderColor' => '94A3B8', 'cellMargin' => 80, 'width' => 100 * 50, 'unit' => \PhpOffice\PhpWord\SimpleType\TblWidth::PERCENT];
+        $fontStyle = ['name' => 'Plus Jakarta Sans', 'size' => 9];
+        $headerFontStyle = ['name' => 'Plus Jakarta Sans', 'size' => 9, 'bold' => true, 'color' => 'FFFFFF'];
         $cellStyle = ['valign' => 'center'];
-        $headerCellStyle = ['valign' => 'center', 'bgColor' => 'E0E0E0']; // Light grey background for headers
-        $totalRowStyle = ['valign' => 'center', 'bgColor' => 'D3D3D3']; // Slightly darker grey for total row
+        $headerCellStyle = ['valign' => 'center', 'bgColor' => '2563EB'];
+        $totalRowStyle = ['valign' => 'center', 'bgColor' => 'F1F5F9'];
 
-        // Add header
-        $section->addText('Laporan Jumlah Pasien', ['bold' => true, 'size' => 16, 'name' => 'Arial'], ['align' => 'center']);
-        $section->addText('Periode: ' . $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y'), ['size' => 10], ['align' => 'center']);
+        $section->addText('RUMAH SAKIT UMUM DAERAH', ['bold' => true, 'size' => 14, 'name' => 'Plus Jakarta Sans'], ['align' => 'center']);
+        $section->addText('INSTALASI LABORATORIUM PATOLOGI KLINIK', ['bold' => true, 'size' => 12, 'name' => 'Plus Jakarta Sans'], ['align' => 'center']);
+        $section->addText('LAPORAN JUMLAH PASIEN', ['bold' => true, 'size' => 11, 'name' => 'Plus Jakarta Sans'], ['align' => 'center']);
+        $section->addText('Periode: ' . $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y'), ['size' => 9, 'italic' => true], ['align' => 'center']);
         $section->addTextBreak(1);
 
-        // --- Rekapitulasi Kunjungan Pasien per Jenis Pelayanan ---
-        $section->addText('Rekapitulasi Kunjungan Pasien per Jenis Pelayanan', ['bold' => true, 'size' => 14]);
+        $section->addText('1. Rekapitulasi Pasien per Jenis Pelayanan', ['bold' => true, 'size' => 11]);
         $section->addTextBreak(1);
 
-        $dataDistribusiTipeRuangan = $distribusiRuanganData['Tipe Ruangan'];
+        $dataDistribusiTipeRuangan = $distribusiRuanganData['Tipe Ruangan'] ?? [];
         $monthSet = [];
         foreach ($dataDistribusiTipeRuangan as $key => $row) {
             if ($key !== "Total Per Bulan" && is_array($row)) {
@@ -311,7 +467,7 @@ class LaporanController extends Controller
 
         $table = $section->addTable($tableStyle);
         $table->addRow();
-        $table->addCell(2000, $headerCellStyle)->addText('Jenis Pelayanan', $headerFontStyle, ['align' => 'center']);
+        $table->addCell(3000, $headerCellStyle)->addText('Jenis Pelayanan', $headerFontStyle, ['align' => 'center']);
         foreach ($months as $month) {
             $table->addCell(1500, $headerCellStyle)->addText($month, $headerFontStyle, ['align' => 'center']);
         }
@@ -321,7 +477,7 @@ class LaporanController extends Controller
 
         foreach ($rows as $key => $row) {
             $table->addRow();
-            $table->addCell(2000, $cellStyle)->addText($key, $fontStyle);
+            $table->addCell(3000, $cellStyle)->addText($key, $fontStyle);
             foreach ($months as $month) {
                 $table->addCell(1500, $cellStyle)->addText($row[$month] ?? 0, $fontStyle, ['align' => 'center']);
             }
@@ -331,7 +487,7 @@ class LaporanController extends Controller
         if (isset($dataDistribusiTipeRuangan['Total Per Bulan'])) {
             $totalRowData = $dataDistribusiTipeRuangan['Total Per Bulan'];
             $table->addRow();
-            $table->addCell(2000, $totalRowStyle)->addText('Total', ['bold' => true, 'size' => 9]);
+            $table->addCell(3000, $totalRowStyle)->addText('TOTAL', ['bold' => true, 'size' => 9]);
             foreach ($months as $month) {
                 $table->addCell(1500, $totalRowStyle)->addText($totalRowData[$month] ?? 0, ['bold' => true, 'size' => 9], ['align' => 'center']);
             }
@@ -339,19 +495,16 @@ class LaporanController extends Controller
         }
 
         $section->addTextBreak(1);
-
-
-        // --- Rekapitulasi Kunjungan Pasien per Ruangan ---
-        $section->addText('Rekapitulasi Kunjungan Pasien per Ruangan', ['bold' => true, 'size' => 14]);
+        $section->addText('2. Rekapitulasi Pasien per Ruangan', ['bold' => true, 'size' => 11]);
         $section->addTextBreak(1);
 
-        $dataDistribusiPerRuanganActual = $distribusiPerRuanganData['data'];
-        $monthsDistribusi = $distribusiPerRuanganData['months'];
+        $dataDistribusiPerRuanganActual = $distribusiPerRuanganData['data'] ?? [];
+        $monthsDistribusi = $distribusiPerRuanganData['months'] ?? [];
         sort($monthsDistribusi);
 
         $table2 = $section->addTable($tableStyle);
         $table2->addRow();
-        $table2->addCell(2000, $headerCellStyle)->addText('Tipe Ruangan', $headerFontStyle, ['align' => 'center']);
+        $table2->addCell(2000, $headerCellStyle)->addText('Tipe', $headerFontStyle, ['align' => 'center']);
         $table2->addCell(3000, $headerCellStyle)->addText('Nama Ruangan', $headerFontStyle, ['align' => 'center']);
         foreach ($monthsDistribusi as $month) {
             $table2->addCell(1500, $headerCellStyle)->addText($month, $headerFontStyle, ['align' => 'center']);
@@ -359,15 +512,12 @@ class LaporanController extends Controller
         $table2->addCell(1500, $headerCellStyle)->addText('Total', $headerFontStyle, ['align' => 'center']);
 
         foreach ($dataDistribusiPerRuanganActual as $tipe => $ruanganData) {
-            $ruanganKeys = array_keys(array_filter($ruanganData, function($val, $key) {
-                return $key !== 'Total';
-            }, ARRAY_FILTER_USE_BOTH));
+            $ruanganKeys = array_keys(array_filter($ruanganData, fn($val, $key) => $key !== 'Total', ARRAY_FILTER_USE_BOTH));
             sort($ruanganKeys);
 
             foreach ($ruanganKeys as $ruangan) {
                 $table2->addRow();
                 $table2->addCell(2000, $cellStyle)->addText($tipe, $fontStyle, ['align' => 'center']);
-
                 $table2->addCell(3000, $cellStyle)->addText($ruangan, $fontStyle);
                 foreach ($monthsDistribusi as $month) {
                     $table2->addCell(1500, $cellStyle)->addText($ruanganData[$ruangan][$month] ?? 0, $fontStyle, ['align' => 'center']);
@@ -377,7 +527,7 @@ class LaporanController extends Controller
 
             if (isset($ruanganData['Total'])) {
                 $table2->addRow();
-                $table2->addCell(2000, $totalRowStyle)->addText("Total {$tipe}", ['bold' => true, 'size' => 9], ['align' => 'center']);
+                $table2->addCell(2000, $totalRowStyle)->addText("Subtotal {$tipe}", ['bold' => true, 'size' => 9], ['align' => 'center']);
                 $table2->addCell(3000, $totalRowStyle);
                 foreach ($monthsDistribusi as $month) {
                     $table2->addCell(1500, $totalRowStyle)->addText($ruanganData['Total'][$month] ?? 0, ['bold' => true, 'size' => 9], ['align' => 'center']);
@@ -386,14 +536,13 @@ class LaporanController extends Controller
             }
         }
 
-        // Save the Word document
         $fileName = 'Laporan_Jumlah_Pasien_' . $startDate->format('Ymd') . '_' . $endDate->format('Ymd') . '.docx';
         $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
 
-        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-        header('Content-Disposition: attachment;filename="' . $fileName . '"');
-        header('Cache-Control: max-age=0');
-        $objWriter->save('php://output');
-        exit;
+        return response()->streamDownload(function() use ($objWriter) {
+            $objWriter->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ]);
     }
 }

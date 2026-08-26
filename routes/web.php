@@ -44,6 +44,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
         Route::get('/dashboard/data', [DashboardController::class, 'dashboardData'])->name('dashboard.data');
         Route::get('/patologi-klinik', [LaboratoriumKlinikController::class, 'index'])->name('klinik.index');
+        Route::get('/patologi-klinik/search-patient', [LaboratoriumKlinikController::class, 'searchPatient'])->name('klinik.patient.search');
         Route::get('/patologi-klinik/get-order', [LaboratoriumKlinikController::class, 'getOrder'])->name('klinik.order');
         Route::get('/patologi-klinik/get-order/flag', [LaboratoriumKlinikController::class, 'getOrderFlag'])->name('klinik.order.flag');
         Route::get('/patologi-klinik/detail/{labno}', [LaboratoriumKlinikController::class, 'detailResult'])->name('klinik.detail');
@@ -54,27 +55,37 @@ Route::middleware('auth')->group(function () {
         Route::prefix('laporan')->group(function() {
             Route::get('/', [LaporanController::class, 'index'])->name('laporan.index');
 
+            // 1. Jumlah Pasien
             Route::get('/jumlah-pasien', [LaporanController::class, 'indexJumlahPasien'])->name('laporan.jumlah-pasien.index');
             Route::get('/jumlah-pasien/data', [LaporanController::class, 'getData'])->name('laporan.jumlah-pasien.data');
             Route::get('/jumlah-pasien/export-word', [LaporanController::class, 'exportToWord'])->name('laporan.jumlah-pasien.export-word');
+            Route::get('/jumlah-pasien/export-excel', [LaporanController::class, 'exportToExcel'])->name('laporan.jumlah-pasien.export-excel');
 
-
+            // 2. Jumlah Pemeriksaan
             Route::get('/jumlah-pemeriksaan', [LaporanJumlahPemeriksaanController::class, 'index'])->name('laporan.jumlah-pemeriksaan.index');
             Route::get('/jumlah-pemeriksaan/data', [LaporanJumlahPemeriksaanController::class, 'getData'])->name('laporan.jumlah-pemeriksaan.data');
+            Route::get('/jumlah-pemeriksaan/export-excel', [LaporanJumlahPemeriksaanController::class, 'exportToExcel'])->name('laporan.jumlah-pemeriksaan.export-excel');
 
+            // 3. Detail Pemeriksaan
             Route::get('/detail-pemeriksaan', [LaporanDetailPemeriksaanController::class, 'index'])->name('laporan.detail-pemeriksaan.index');
             Route::get('/detail-pemeriksaan/data', [LaporanDetailPemeriksaanController::class, 'getData'])->name('laporan.detail-pemeriksaan.data');
+            Route::get('/detail-pemeriksaan/export-excel', [LaporanDetailPemeriksaanController::class, 'exportToExcel'])->name('laporan.detail-pemeriksaan.export-excel');
 
+            // 4. Penggunaan Tabung
             Route::get('/penggunaan-tabung', [LaporanPenggunaanTabungController::class, 'index'])->name('laporan.penggunaan-tabung.index');
             Route::get('/penggunaan-tabung/data', [LaporanPenggunaanTabungController::class, 'getData'])->name('laporan.penggunaan-tabung.data');
+            Route::get('/penggunaan-tabung/export-excel', [LaporanPenggunaanTabungController::class, 'exportToExcel'])->name('laporan.penggunaan-tabung.export-excel');
 
+            // 5. Nilai Kritis
             Route::get('/nilai-kritis', [LaporanNilaiKritisController::class, 'index'])->name('laporan.nilai-kritis.index');
             Route::get('/nilai-kritis/data', [LaporanNilaiKritisController::class, 'getData'])->name('laporan.nilai-kritis.data');
+            Route::get('/nilai-kritis/export-excel', [LaporanNilaiKritisController::class, 'exportToExcel'])->name('laporan.nilai-kritis.export-excel');
+            Route::get('/nilai-kritis/export-word', [LaporanNilaiKritisController::class, 'exportToWord'])->name('laporan.nilai-kritis.export-word');
 
-            
+            // 6. TAT
             Route::get('/tat', [LaporanTAT::class, 'index'])->name('laporan.tat.index');
             Route::get('/tat/data', [LaporanTAT::class, 'getData'])->name('laporan.tat.data');
-
+            Route::get('/tat/export-excel', [LaporanTAT::class, 'exportToExcel'])->name('laporan.tat.export-excel');
         });
 
     });

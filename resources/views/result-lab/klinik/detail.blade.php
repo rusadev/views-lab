@@ -1,193 +1,261 @@
-<title>@yield('title', 'Laboratorium Patologi Klinik - Details')</title>
-
+@section('title', 'Detail Hasil Lab: ' . ($orderHeader->name ?? 'Pasien') . ' (' . ($orderHeader->pid ?? '') . ')')
 
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="text-lg font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-700 px-4 py-3 rounded-md shadow-md flex items-center gap-2 transition-all duration-300 hover:shadow-lg hover:brightness-110">
-            <svg class="w-6 h-6 text-white animate-pulse" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-6-8h6m4 12H5a2 2 0 01-2-2V5a2 2 0 012-2h9l5 5v12a2 2 0 01-2 2z" />
-            </svg>
-            {{ __('Hasil Pemeriksaan Laboratorium Patologi Klinik') }}
-        </h2>
-    </x-slot>
+    <div class="py-5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
 
+            <!-- Action Bar (Hidden on Print, Flat) -->
+            <div class="no-print bg-white border border-slate-200 rounded p-3.5 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('klinik.index') }}" 
+                       class="px-3 py-1.5 text-xs font-semibold rounded text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-colors">
+                        &larr; Kembali ke Pencarian
+                    </a>
+                    <span class="text-slate-300">|</span>
+                    <span class="text-xs font-medium text-slate-600">
+                        No. LAB: <strong class="text-slate-900 font-mono">{{ $orderHeader->tno }}</strong> &bull; No. RM: <strong class="text-slate-900 font-mono">{{ $orderHeader->pid }}</strong>
+                    </span>
+                </div>
 
-    <div class="py-2">
-        <div class="max-w-7xl mx-auto px-2">
-            <div class="bg-white shadow-md rounded-lg p-4">
-                <!-- Order Header Section -->
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <!-- Bagian Kiri: Informasi Pasien -->
-                    <div class="p-3">
-                        <table class="w-full text-sm border-collapse">
+                <div>
+                    <button onclick="window.print()" 
+                            class="px-4 py-1.5 text-xs font-semibold rounded text-white bg-blue-600 hover:bg-blue-700 border border-blue-700 transition-colors">
+                        Cetak Hasil (Print)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Printable Laboratory Report Container (Flat) -->
+            <div class="bg-white border border-slate-200 rounded p-6 space-y-5">
+                
+                <!-- Report Header -->
+                <div class="border-b border-slate-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                    <div class="flex items-center gap-3">
+                        <img src="{{ asset('img/logo.png') }}" alt="Logo" class="h-12 w-auto object-contain">
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900 tracking-tight">INSTALASI LABORATORIUM PATOLOGI KLINIK</h2>
+                            <p class="text-xs font-medium text-slate-500">RSUD - Hasil Pemeriksaan Terkomputerisasi</p>
+                        </div>
+                    </div>
+
+                    <div class="text-left md:text-right">
+                        <div class="inline-block px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                            Hasil Terverifikasi
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1 font-mono">Tgl Validasi: {{ $orderHeader->validate_on ?? '-' }}</p>
+                    </div>
+                </div>
+
+                <!-- Patient & Order Metadata Grid (Flat) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    
+                    <!-- Left: Patient Information -->
+                    <div class="bg-slate-50 rounded p-3.5 border border-slate-200">
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-blue-800 mb-2 border-b border-slate-200 pb-1">
+                            Informasi Pasien
+                        </div>
+                        <table class="w-full text-xs border-collapse space-y-1">
                             <tbody>
-                                <tr class="align-top">
-                                    <td class="px-2 py-0 font-medium whitespace-nowrap w-40">Nomor Laboratorium</td>
-                                    <td class="px-2 py-0 w-4">:</td>
-                                    <td class="px-2 py-0 text-gray-800 w-full">{{ $orderHeader->ono }} / {{ $orderHeader->tno }}</td>
+                                <tr>
+                                    <td class="py-0.5 text-slate-500 font-medium w-36">No. Rekam Medis</td>
+                                    <td class="py-0.5 text-slate-400 w-3">:</td>
+                                    <td class="py-0.5 text-slate-900 font-bold font-mono">{{ $orderHeader->pid ?? '-' }}</td>
                                 </tr>
-                                <tr class="align-top">
-                                    <td class="px-2 py-0 font-medium whitespace-nowrap">Nomor Rekam Medis</td>
-                                    <td class="px-2 py-0">:</td>
-                                    <td class="px-2 py-0 text-gray-800">{{ $orderHeader->pid }}</td>
+                                <tr>
+                                    <td class="py-0.5 text-slate-500 font-medium">Nama Pasien</td>
+                                    <td class="py-0.5 text-slate-400">:</td>
+                                    <td class="py-0.5 text-slate-900 font-bold">{{ $orderHeader->name ?? '-' }}</td>
                                 </tr>
-                                <tr class="align-top">
-                                    <td class="px-2 py-0 font-medium whitespace-nowrap">Nama Lengkap</td>
-                                    <td class="px-2 py-0">:</td>
-                                    <td class="px-2 py-0 text-gray-800">{{ $orderHeader->name }}</td>
+                                <tr>
+                                    <td class="py-0.5 text-slate-500 font-medium">Tanggal Lahir / Usia</td>
+                                    <td class="py-0.5 text-slate-400">:</td>
+                                    <td class="py-0.5 text-slate-800">{{ $orderHeader->bod ?? '-' }} ({{ $orderHeader->calculated_age ?? '-' }})</td>
                                 </tr>
-                                <tr class="align-top">
-                                    <td class="px-2 py-0 font-medium whitespace-nowrap">Tanggal Lahir</td>
-                                    <td class="px-2 py-0">:</td>
-                                    <td class="px-2 py-0 text-gray-800">{{ $orderHeader->bod }} / {{ $orderHeader->calculated_age }}</td>
+                                <tr>
+                                    <td class="py-0.5 text-slate-500 font-medium">Jenis Kelamin</td>
+                                    <td class="py-0.5 text-slate-400">:</td>
+                                    <td class="py-0.5 text-slate-800">
+                                        @if(($orderHeader->gender ?? '') === 'M' || ($orderHeader->gender ?? '') === 'L')
+                                            Laki-laki (L)
+                                        @elseif(($orderHeader->gender ?? '') === 'F' || ($orderHeader->gender ?? '') === 'P')
+                                            Perempuan (P)
+                                        @else
+                                            {{ $orderHeader->gender ?? '-' }}
+                                        @endif
+                                    </td>
                                 </tr>
-                                <tr class="align-top">
-                                    <td class="px-2 py-0 font-medium whitespace-nowrap">Jenis Kelamin</td>
-                                    <td class="px-2 py-0">:</td>
-                                    <td class="px-2 py-0 text-gray-800">{{ $orderHeader->gender }}</td>
-                                </tr>
-                                <tr class="align-top">
-                                    <td class="px-2 py-0 font-medium whitespace-nowrap">Alamat</td>
-                                    <td class="px-2 py-0">:</td>
-                                    <td class="px-2 py-0 text-gray-800">
-                                        {{ implode(', ', array_filter([$orderHeader->addr1, $orderHeader->addr2, $orderHeader->addr3, $orderHeader->addr4])) }}
+                                <tr>
+                                    <td class="py-0.5 text-slate-500 font-medium align-top">Alamat</td>
+                                    <td class="py-0.5 text-slate-400 align-top">:</td>
+                                    <td class="py-0.5 text-slate-700">
+                                        {{ implode(', ', array_filter([$orderHeader->addr1, $orderHeader->addr2, $orderHeader->addr3, $orderHeader->addr4])) ?: '-' }}
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- Bagian Kanan: Informasi Dokter & Pemeriksaan -->
-                    <div class="p-3">
-                        <table class="w-full text-sm border-collapse">
+                    <!-- Right: Order & Doctor Information -->
+                    <div class="bg-slate-50 rounded p-3.5 border border-slate-200">
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-blue-800 mb-2 border-b border-slate-200 pb-1">
+                            Informasi Pemeriksaan
+                        </div>
+                        <table class="w-full text-xs border-collapse space-y-1">
                             <tbody>
-                                <tr class="align-top">
-                                    <td class="px-2 py-0 font-medium whitespace-nowrap w-40">Dokter Pengirim</td>
-                                    <td class="px-2 py-0 w-4">:</td>
-                                    <td class="px-2 py-0 text-gray-800 w-full">{{ $orderHeader->clinician }}</td>
+                                <tr>
+                                    <td class="py-0.5 text-slate-500 font-medium w-36">No. Order / LAB</td>
+                                    <td class="py-0.5 text-slate-400 w-3">:</td>
+                                    <td class="py-0.5 text-slate-900 font-bold font-mono">{{ $orderHeader->ono ?? '-' }} / {{ $orderHeader->tno ?? '-' }}</td>
                                 </tr>
-                                <tr class="align-top">
-                                    <td class="px-2 py-0 font-medium whitespace-nowrap">Ruangan</td>
-                                    <td class="px-2 py-0">:</td>
-                                    <td class="px-2 py-0 text-gray-800">{{ $orderHeader->room_desc }}</td>
+                                <tr>
+                                    <td class="py-0.5 text-slate-500 font-medium">Dokter Pengirim</td>
+                                    <td class="py-0.5 text-slate-400">:</td>
+                                    <td class="py-0.5 text-slate-900 font-semibold">{{ $orderHeader->clinician ?? '-' }}</td>
                                 </tr>
-                                <tr class="align-top">
-                                    <td class="px-2 py-0 font-medium whitespace-nowrap">Tanggal Permintaan</td>
-                                    <td class="px-2 py-0">:</td>
-                                    <td class="px-2 py-0 text-gray-800">{{ $orderHeader->order_date }}</td>
+                                <tr>
+                                    <td class="py-0.5 text-slate-500 font-medium">Ruangan / Asal</td>
+                                    <td class="py-0.5 text-slate-400">:</td>
+                                    <td class="py-0.5 text-slate-800">{{ $orderHeader->room_desc ?? '-' }}</td>
                                 </tr>
-                                <tr class="align-top">
-                                    <td class="px-2 py-0 font-medium whitespace-nowrap">Tanggal Spesimen</td>
-                                    <td class="px-2 py-0">:</td>
-                                    <td class="px-2 py-0 text-gray-800">{{ $orderHeader->spl_rcvdt}}</td>
+                                <tr>
+                                    <td class="py-0.5 text-slate-500 font-medium">Tgl Permintaan</td>
+                                    <td class="py-0.5 text-slate-400">:</td>
+                                    <td class="py-0.5 text-slate-800 font-mono">{{ $orderHeader->order_date ?? '-' }}</td>
                                 </tr>
-                                <tr class="align-top">
-                                    <td class="px-2 py-0 font-medium whitespace-nowrap">Tanggal Pelaporan</td>
-                                    <td class="px-2 py-0">:</td>
-                                    <td class="px-2 py-0 text-gray-800">{{ $orderHeader->validate_on }}</td>
+                                <tr>
+                                    <td class="py-0.5 text-slate-500 font-medium">Tgl Spesimen / Selesai</td>
+                                    <td class="py-0.5 text-slate-400">:</td>
+                                    <td class="py-0.5 text-slate-800 font-mono">{{ $orderHeader->spl_rcvdt ?? '-' }} / {{ $orderHeader->validate_on ?? '-' }}</td>
                                 </tr>
-                                <tr class="align-top">
-                                    <td class="px-2 py-0 font-medium whitespace-nowrap">Keterangan Klinis</td>
-                                    <td class="px-2 py-0">:</td>
-                                    <td class="px-2 py-0 text-gray-800">{{ $orderHeader->diag1 }}</td>
+                                <tr>
+                                    <td class="py-0.5 text-slate-500 font-medium">Diagnosa Klinis</td>
+                                    <td class="py-0.5 text-slate-400">:</td>
+                                    <td class="py-0.5 text-slate-700 italic">{{ $orderHeader->diag1 ?? '-' }}</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
+
                 </div>
-                <hr class="my-4 border-gray-200">
 
-                <!-- Order Details Section -->
-                <h6 class="font-bold mb-3 text-center">HASIL PEMERIKSAAN LABORATORIUM</h6>
-                <table class="w-full bg-white shadow-md text-sm border-collapse">
-                    <thead class="bg-gray-50 text-gray-700 uppercase">
-                        <tr>
-                            <th class="px-3 py-2 text-left font-bold w-1/4">Nama Pemeriksaan</th>
-                            <th class="px-2 py-2 text-left font-bold w-8"></th>
-                            <th class="px-3 py-2 text-left font-bold w-1/6">Hasil</th>
-                            <th class="px-3 py-2 text-left font-bold w-1/6">Satuan</th>
-                            <th class="px-3 py-2 text-left font-bold w-1/6">Nilai Referensi</th>
-                            <th class="px-3 py-2 text-left font-bold w-3/10">Catatan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <!-- Laboratory Test Results Table (Flat) -->
+                <div class="space-y-2 pt-2">
+                    <div class="border-b border-slate-200 pb-1.5">
+                        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                            Hasil Uji Laboratorium
+                        </h3>
+                    </div>
 
-                        @foreach ($groupedOrderDetails as $groupName => $details)
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 border-y border-slate-300 text-slate-700 font-bold uppercase text-[11px]">
+                                    <th class="py-2 px-2.5 w-2/5">Nama Pemeriksaan</th>
+                                    <th class="py-2 px-2.5 w-1/6">Hasil</th>
+                                    <th class="py-2 px-2 w-12 text-center">Flag</th>
+                                    <th class="py-2 px-2.5 w-1/6">Satuan</th>
+                                    <th class="py-2 px-2.5 w-1/6">Nilai Rujukan</th>
+                                    <th class="py-2 px-2.5">Catatan</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 text-slate-800">
+                                @forelse ($groupedOrderDetails as $groupName => $details)
+                                
+                                <!-- Group Header Row -->
+                                <tr class="bg-slate-50 font-bold text-slate-900 border-t border-slate-300">
+                                    <td colspan="6" class="py-1.5 px-2.5 uppercase tracking-wide">
+                                        {{ $groupName }}
+                                    </td>
+                                </tr>
 
-                        <!-- Group Name Row -->
-                        <tr class="bg-gray-100 border-b border-gray-300">
-                            <td colspan="6" class="px-3 py-2 text-sm font-semibold text-gray-800">
-                                {{ $groupName }}
-                            </td>
-                        </tr>
+                                <!-- Details Rows -->
+                                @foreach ($details as $detail)
+                                    @if ($detail->test_value !== '!' && $detail->test_value !== '.' && $detail->test_value !== '-')
+                                    <tr class="hover:bg-slate-50 {{ $detail->abnormal_flag !== 'N' ? 'bg-rose-50/40' : '' }}">
+                                        <!-- Test Name with indentation -->
+                                        <td class="py-1.5 px-2.5 {{ $detail->od_item_type === 'P' ? 'pl-6 font-bold text-slate-900' : '' }} {{ $detail->od_item_type === 'U' ? 'pl-10 text-slate-700' : '' }}">
+                                            {{ $detail->test_name }}
+                                        </td>
 
-                        <!-- Details Rows -->
-                        @foreach ($details as $detail)
-                        @if ($detail->test_value !== '!' && $detail->test_value !== '.' && $detail->test_value !== '-')
-                        <tr class="hover:bg-gray-50 transition duration-150 border-b border-gray-200">
-                            <td class="px-3 py-1 {{ $detail->od_item_type === 'P' ? 'pl-6 font-bold' : '' }} {{ $detail->od_item_type === 'U' ? 'pl-10' : '' }}">
-                                {{ $detail->test_name }}
-                            </td>
+                                        <!-- Test Value -->
+                                        @if ($detail->od_data_type == 'W')
+                                        <td colspan="4" class="py-1.5 px-2.5 font-mono font-medium text-slate-800">
+                                            {!! nl2br(e($detail->test_value)) !!}
+                                        </td>
+                                        @else
+                                        <td class="py-1.5 px-2.5 font-mono font-semibold {{ $detail->abnormal_flag !== 'N' ? 'text-rose-800 font-bold' : 'text-slate-900' }}">
+                                            @if ($detail->od_data_type !== "X" && $detail->od_data_type !== "P")
+                                                {{ $detail->test_value }}
+                                            @endif
+                                        </td>
 
-                            <td class="px-2 py-1 {{ $detail->abnormal_flag !== 'N' ? 'font-bold text-red-600' : 'text-gray-700' }}">
-                                @if ($detail->test_value !== 'Belum Tersedia')
-                                @if ($detail->abnormal_flag !== 'N')
-                                {{ $detail->abnormal_flag }}
-                                @endif
-                                @endif
-                            </td>
+                                        <!-- Flag (Abnormal indicator) -->
+                                        <td class="py-1.5 px-2 text-center">
+                                            @if ($detail->test_value !== 'Belum Tersedia' && $detail->abnormal_flag !== 'N' && !empty($detail->abnormal_flag))
+                                                <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold {{ in_array($detail->abnormal_flag, ['HH', 'H']) ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-blue-100 text-blue-800 border border-blue-300' }}">
+                                                    {{ $detail->abnormal_flag }}
+                                                </span>
+                                            @endif
+                                        </td>
 
+                                        <!-- Unit -->
+                                        <td class="py-1.5 px-2.5 text-slate-600 font-medium">
+                                            @if ($detail->test_value !== "Belum Tersedia" && $detail->od_data_type !== "X" && $detail->od_data_type !== "P")
+                                                {{ $detail->test_unit }}
+                                            @endif
+                                        </td>
 
+                                        <!-- Reference Range -->
+                                        <td class="py-1.5 px-2.5 text-slate-600 font-mono text-[11px]">
+                                            @if ($detail->ref_range !== 'MRR' && !empty($detail->ref_range))
+                                                {!! nl2br(e($detail->ref_range)) !!}
+                                            @endif
+                                        </td>
+                                        @endif
 
-                            @if ($detail->od_data_type == 'W')
-                            <td colspan="3" class="px-3 py-1 text-gray-700">
-                                {!! nl2br(e($detail->test_value)) !!}
-                            </td>
-                            @else
-                            <td class="px-3 py-1 text-gray-700">
-                                @if ($detail->od_data_type !== "X" && $detail->od_data_type !== "P")
-                                {{ $detail->test_value }}
-                                @endif
-                            </td>
-                            <td class="px-3 py-1 text-gray-700">
-                                @if ($detail->test_value !== "Belum Tersedia")
-                                @if ($detail->od_data_type !== "X" && $detail->od_data_type !== "P")
-                                {{ $detail->test_unit }}
-                                @endif
-                                @endif
-                            </td>
+                                        <!-- Comments -->
+                                        <td class="py-1.5 px-2.5 text-slate-500 italic text-[11px]">
+                                            @if ($detail->test_value !== 'Belum Tersedia')
+                                                @if ($detail->test_comment)
+                                                    <div>{!! nl2br(e($detail->test_comment)) !!}</div>
+                                                @endif
+                                                @if ($detail->attached_comment)
+                                                    <div>{!! nl2br(e($detail->attached_comment)) !!}</div>
+                                                @endif
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @endif
+                                @endforeach
 
-                            <td class="px-3 py-1 text-gray-700">
-                                @if ($detail->ref_range !== 'MRR' && !empty($detail->ref_range))
-                                {!! nl2br(e($detail->ref_range)) !!}
-                                @endif
-                            </td>
-                            @endif
+                                @empty
+                                <tr>
+                                    <td colspan="6" class="py-6 text-center text-slate-400 text-xs">
+                                        Tidak ada item pemeriksaan yang ditemukan untuk order ini.
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
+                <!-- Report Footer / Signature Area -->
+                <div class="border-t border-slate-200 pt-5 mt-6 flex flex-col sm:flex-row justify-between items-end gap-4 text-xs text-slate-600">
+                    <div class="space-y-1 text-[11px]">
+                        <p class="font-bold text-slate-700">Catatan:</p>
+                        <p class="text-slate-400">* Hasil laboratorium ini dicetak secara otomatis dari Sistem Informasi Laboratorium (LIS).</p>
+                        <p class="text-slate-400">* Interpretasi hasil laboratorium harus disesuaikan dengan kondisi klinis pasien oleh dokter.</p>
+                    </div>
 
-                            <td class="px-3 py-1 text-gray-700 font-semibold italic">
-                                @if ($detail->test_value !== 'Belum Tersedia')
-                                @if ($detail->test_comment)
-                                {!! nl2br(e($detail->test_comment)) !!}
-                                @endif
-                                @if ($detail->attached_comment)
-                                {!! nl2br(e($detail->attached_comment)) !!}
-                                @endif
-                                @endif
-
-                            </td>
-
-                        </tr>
-
-                        @endif
-                        @endforeach
-
-                        @endforeach
-                    </tbody>
-
-                </table>
+                    <div class="text-center sm:text-right min-w-[180px]">
+                        <p class="text-slate-500 mb-10">Petugas Laboratorium / Validasi,</p>
+                        <p class="font-bold text-slate-900 border-t border-slate-300 pt-1">( Tim Patologi Klinik )</p>
+                    </div>
+                </div>
 
             </div>
+
         </div>
     </div>
 </x-app-layout>

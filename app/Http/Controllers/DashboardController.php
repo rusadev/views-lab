@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Vinkla\Hashids\Facades\Hashids;
 
 class DashboardController extends Controller
 {
@@ -13,48 +15,62 @@ class DashboardController extends Controller
         return view('dashboard.index');
     }
 
-    public function dashboardData (Request $request) 
+    public function dashboardData(Request $request)
     {
+        $startDateInput = $request->input('start_date');
+        $endDateInput = $request->input('end_date');
+        $forceRefresh = $request->boolean('refresh', false);
 
-        $startDate = $request->input('start_date') 
-        ? Carbon::parse($request->input('start_date'))->startOfDay() 
-        : Carbon::today()->startOfDay();
-    
-        $endDate = $request->input('end_date') 
-            ? Carbon::parse($request->input('end_date'))->endOfDay() 
+        $startDate = $startDateInput 
+            ? Carbon::parse($startDateInput)->startOfDay() 
+            : Carbon::today()->startOfDay();
+
+        $endDate = $endDateInput 
+            ? Carbon::parse($endDateInput)->endOfDay() 
             : Carbon::today()->endOfDay();
 
-        $oracleConnection = DB::connection('oracle');
+        $cacheKey = 'dashboard_data_' . md5($startDate->format('Y-m-d') . '_' . $endDate->format('Y-m-d'));
 
-        $kunjunganData = $this->kunjunganData($oracleConnection, $startDate, $endDate);
-        $permintaanRawatJalanInap = $this->permintaanRawatJalanInap($oracleConnection, $startDate, $endDate);
-        $averageTAT = $this->averageTAT($oracleConnection, $startDate, $endDate);
-        $distribusiKunjunganPasien = $this->distribusiKunjunganPasien($oracleConnection, $startDate, $endDate);
-        $distribusiPemeriksaan = $this->distribusiPemeriksaan($oracleConnection, $startDate, $endDate);
-        $distribusiSpesimen = $this->distribusiSpesimen($oracleConnection, $startDate, $endDate);
-        $permintaanPemeriksaan = $this->permintaanPemeriksaan($oracleConnection, $startDate, $endDate);
-        $permintaanPerWaktu = $this->permintaanPerWaktu($oracleConnection, $startDate, $endDate);
-        $nilaiKritis = $this->nilaiKritis($oracleConnection, $startDate, $endDate);
-        $statusPemeriksaan = $this->statusPemeriksaan($oracleConnection, $startDate, $endDate);
+        if ($forceRefresh) {
+            Cache::forget($cacheKey);
+        }
 
-        // Mengembalikan respons JSON
-        return response()->json([
-            'kunjunganData' => $kunjunganData,
-            'permintaanRawatJalanInap' => $permintaanRawatJalanInap,
-            'averageTAT' => $averageTAT,
-            'distribusiKunjunganPasien' => $distribusiKunjunganPasien,
-            'distribusiPemeriksaan' => $distribusiPemeriksaan,
-            'distribusiSpesimen' => $distribusiSpesimen,
-            'permintaanPemeriksaan' => $permintaanPemeriksaan,
-            'permintaanPerWaktu' => $permintaanPerWaktu,
-            'nilaiKritis' => $nilaiKritis,
-            'statusPemeriksaan' => $statusPemeriksaan
-        ]);
+        // Cache response for 5 minutes (300 seconds)
+        $data = Cache::remember($cacheKey, 300, function () use ($startDate, $endDate) {
+            $oracle = DB::connection('oracle');
+
+            $kunjunganData = $this->kunjunganData($oracle, $startDate, $endDate);
+            $permintaanRawatJalanInap = $this->permintaanRawatJalanInap($oracle, $startDate, $endDate);
+            $averageTAT = $this->averageTAT($oracle, $startDate, $endDate);
+            $distribusiKunjunganPasien = $this->distribusiKunjunganPasien($oracle, $startDate, $endDate);
+            $distribusiPemeriksaan = $this->distribusiPemeriksaan($oracle, $startDate, $endDate);
+            $distribusiSpesimen = $this->distribusiSpesimen($oracle, $startDate, $endDate);
+            $permintaanPemeriksaan = $this->permintaanPemeriksaan($oracle, $startDate, $endDate);
+            $permintaanPerWaktu = $this->permintaanPerWaktu($oracle, $startDate, $endDate);
+            $nilaiKritis = $this->nilaiKritis($oracle, $startDate, $endDate);
+            $statusPemeriksaan = $this->statusPemeriksaan($oracle, $startDate, $endDate);
+
+            return [
+                'kunjunganData' => $kunjunganData,
+                'permintaanRawatJalanInap' => $permintaanRawatJalanInap,
+                'averageTAT' => $averageTAT,
+                'distribusiKunjunganPasien' => $distribusiKunjunganPasien,
+                'distribusiPemeriksaan' => $distribusiPemeriksaan,
+                'distribusiSpesimen' => $distribusiSpesimen,
+                'permintaanPemeriksaan' => $permintaanPemeriksaan,
+                'permintaanPerWaktu' => $permintaanPerWaktu,
+                'nilaiKritis' => $nilaiKritis,
+                'statusPemeriksaan' => $statusPemeriksaan,
+                'cached_at' => now()->format('H:i:s'),
+            ];
+        });
+
+        return response()->json($data);
     }
 
-    private function kunjunganData($oracleConnection, $startDate, $endDate)
+    private function kunjunganData($oracle, $startDate, $endDate)
     {
-        $kunjunganData = $oracleConnection
+        return $oracle
             ->table('ord_hdr')
             ->select(
                 DB::raw('COUNT(DISTINCT oh_pid) AS kunjungan_pasien'),
@@ -64,45 +80,37 @@ class DashboardController extends Controller
             )
             ->whereBetween('oh_trx_dt', [$startDate, $endDate])
             ->first();
-
-        return $kunjunganData;
     }
 
-    private function statusPemeriksaan($oracleConnection, $startDate, $endDate)
+    private function statusPemeriksaan($oracle, $startDate, $endDate)
     {
-
-        $permintaanPemeriksaan = $oracleConnection
+        $permintaan = $oracle
             ->table('ord_hdr as a')
             ->leftJoin('ord_dtl as b', function ($join) {
                 $join->on('a.oh_tno', '=', 'b.od_tno')
                     ->where('b.od_order_item', '=', 'Y');
             })
-            ->leftJoin('ord_spl as d', function ($join) {
-                $join->on('b.od_tno', '=', 'd.os_tno')
-                    ->on('b.od_spl_type', '=', 'd.os_spl_type');
-            })
             ->select(
-                DB::raw("count(*) as total_pemeriksaan"),
+                DB::raw('count(*) as total_pemeriksaan'),
                 DB::raw("count(CASE WHEN b.od_validate_on IS NOT NULL AND b.od_action_flag = 'R' THEN 1 END) as total_selesai"),
-                DB::raw("count(CASE WHEN d.os_spl_rj_dt IS NOT NULL THEN 1 END) as total_pending"),
-                DB::raw("count(CASE WHEN d.os_spl_rcvdt IS NOT NULL AND b.od_action_flag = 'N' THEN 1 END) as total_diproses"),
-                DB::raw("count(CASE WHEN d.os_spl_rcvdt IS NULL AND b.od_action_flag = 'N' THEN 1 END) as total_belum_dikerjakan") // Tambahan kondisi
+                DB::raw("count(CASE WHEN b.od_action_flag = 'N' AND b.od_validate_on IS NULL THEN 1 END) as total_diproses"),
+                DB::raw("count(CASE WHEN b.od_action_flag IS NULL OR b.od_action_flag = ' ' THEN 1 END) as total_belum_dikerjakan")
             )
             ->whereBetween('a.oh_trx_dt', [$startDate, $endDate])
             ->first();
-        
+
         return [
-            'total_pemeriksaan' => $permintaanPemeriksaan->total_pemeriksaan,
-            'total_selesai' => $permintaanPemeriksaan->total_selesai,
-            'total_pending' => $permintaanPemeriksaan->total_pending,
-            'total_diproses' => $permintaanPemeriksaan->total_diproses,
-            'total_belum_dikerjakan' => $permintaanPemeriksaan->total_belum_dikerjakan, // Tambahan return
+            'total_pemeriksaan' => $permintaan->total_pemeriksaan ?? 0,
+            'total_selesai' => $permintaan->total_selesai ?? 0,
+            'total_pending' => 0,
+            'total_diproses' => $permintaan->total_diproses ?? 0,
+            'total_belum_dikerjakan' => $permintaan->total_belum_dikerjakan ?? 0,
         ];
     }
-    
-    private function permintaanRawatJalanInap($oracleConnection, $startDate, $endDate)
+
+    private function permintaanRawatJalanInap($oracle, $startDate, $endDate)
     {
-        $rawatJalanInapData = $oracleConnection
+        return $oracle
             ->table('ord_hdr')
             ->select(
                 DB::raw("
@@ -123,34 +131,25 @@ class DashboardController extends Controller
             ->mapWithKeys(function ($item) {
                 return [$item->jenis_rawat => $item];
             });
-        
-        return $rawatJalanInapData;
-    
-
     }
 
-    private function averageTAT($oracleConnection, $startDate, $endDate)
+    private function averageTAT($oracle, $startDate, $endDate)
     {
-        $averageTAT = $oracleConnection
+        return $oracle
             ->table('ord_hdr as a')
-            ->leftJoin('ord_dtl as b', function ($join) {
+            ->join('ord_dtl as b', function ($join) {
                 $join->on('a.oh_tno', '=', 'b.od_tno')
                     ->where('b.od_order_item', '=', 'Y');
             })
-            ->leftJoin('ord_spl as c', function ($join) {
+            ->join('ord_spl as c', function ($join) {
                 $join->on('b.od_tno', '=', 'c.os_tno')
                     ->on('b.od_spl_type', '=', 'c.os_spl_type');
             })
             ->leftJoin('test_group as d', 'b.od_test_grp', '=', 'd.tg_code')
             ->selectRaw("
                 b.od_test_grp, 
-                d.tg_name as test_group_name,
+                COALESCE(d.tg_name, b.od_test_grp) as test_group_name,
                 COUNT(*) as total_tests,
-                CASE 
-                    WHEN FLOOR(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440) / 60) > 0 
-                    THEN FLOOR(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440) / 60) || ' jam ' || MOD(ROUND(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440)), 60) || ' menit'
-                    ELSE MOD(ROUND(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440)), 60) || ' menit'
-                END as avg_tat_time,
                 ROUND(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440), 0) as avg_tat_minutes  
             ")
             ->whereBetween('a.oh_trx_dt', [$startDate, $endDate])
@@ -159,21 +158,19 @@ class DashboardController extends Controller
             ->whereNotNull('c.os_spl_rcvdt')
             ->whereIn('b.od_test_grp', ['HM', 'KM', 'IM', 'SR', 'UR'])
             ->groupBy('b.od_test_grp', 'd.tg_name')
-            ->orderBy('tg_name')
+            ->orderBy('test_group_name')
             ->get();
-            
-        return $averageTAT;
     }
-    
-    private function distribusiKunjunganPasien($oracleConnection, $startDate, $endDate)
+
+    private function distribusiKunjunganPasien($oracle, $startDate, $endDate)
     {
-        $distribusiRanapRajal = $oracleConnection
+        return $oracle
             ->table('ord_hdr')
             ->select(
                 DB::raw("CASE 
                             WHEN oh_ptype = 'IN' THEN 'Rawat Inap' 
                             WHEN oh_ptype = 'OP' THEN 'Rawat Jalan' 
-                            ELSE 'Lainnya' 
+                            ELSE 'Lainnya / UGD' 
                         END AS jenis_rawat"),
                 DB::raw('COUNT(DISTINCT oh_pid) AS jumlah_pasien')
             )
@@ -181,52 +178,49 @@ class DashboardController extends Controller
             ->groupBy(DB::raw("CASE 
                     WHEN oh_ptype = 'IN' THEN 'Rawat Inap' 
                     WHEN oh_ptype = 'OP' THEN 'Rawat Jalan' 
-                    ELSE 'Lainnya' 
+                    ELSE 'Lainnya / UGD' 
                 END"))
             ->get();
-        
-        return $distribusiRanapRajal;
-    
     }
 
-    private function distribusiPemeriksaan($oracleConnection, $startDate, $endDate)
+    private function distribusiPemeriksaan($oracle, $startDate, $endDate)
     {
-        $distribusiPemeriksaan = $oracleConnection
+        $distribusi = $oracle
             ->table('ord_hdr as a')
-            ->leftJoin('ord_dtl as b', function ($join) {
+            ->join('ord_dtl as b', function ($join) {
                 $join->on('a.oh_tno', '=', 'b.od_tno')
                     ->where('b.od_order_item', '=', 'Y');
             })
             ->leftJoin('test_group as c', 'b.od_test_grp', '=', 'c.tg_code')
             ->select(
                 'b.od_test_grp as test_group_code',
-                'c.tg_name as test_group_name',
-                DB::raw('count(*) as total'),
-                DB::raw('round((count(*) / sum(count(*)) over()) * 100, 2) as percentage') 
+                DB::raw('COALESCE(c.tg_name, b.od_test_grp) as test_group_name'),
+                DB::raw('count(*) as total')
             )
             ->whereBetween('a.oh_trx_dt', [$startDate, $endDate])
             ->whereNotNull('b.od_test_grp')
             ->groupBy('b.od_test_grp', 'c.tg_name')
-            ->orderByDesc(DB::raw('total'))
-            ->take(5)
+            ->orderByDesc(DB::raw('count(*)'))
+            ->take(6)
             ->get();
-        
-        $distribusiPemeriksaan->each(function ($item) {
-            $item->percentage = number_format($item->percentage, 2) . '%'; 
+
+        $totalSum = $distribusi->sum('total') ?: 1;
+        $distribusi->each(function ($item) use ($totalSum) {
+            $item->percentage = number_format(($item->total / $totalSum) * 100, 1) . '%';
         });
-        
-        return $distribusiPemeriksaan;
+
+        return $distribusi;
     }
 
-    private function distribusiSpesimen($oracleConnection, $startDate, $endDate)
+    private function distribusiSpesimen($oracle, $startDate, $endDate)
     {
-        $distribusiSpesimen = $oracleConnection
+        return $oracle
             ->table('ord_hdr as a')
-            ->leftJoin('ord_dtl as b', function ($join) {
+            ->join('ord_dtl as b', function ($join) {
                 $join->on('a.oh_tno', '=', 'b.od_tno')
                     ->where('b.od_order_item', '=', 'Y');
             })
-            ->leftJoin('ord_spl as d', function ($join) {
+            ->join('ord_spl as d', function ($join) {
                 $join->on('b.od_tno', '=', 'd.os_tno')
                     ->on('b.od_spl_type', '=', 'd.os_spl_type');
             })
@@ -234,49 +228,43 @@ class DashboardController extends Controller
             ->selectRaw('
                 COUNT(DISTINCT d.os_tno) as total, 
                 d.os_spl_type as specimen_type, 
-                e.st_name as sample
+                COALESCE(e.st_name, d.os_spl_type) as sample
             ')
             ->whereBetween('a.oh_trx_dt', [$startDate, $endDate])
             ->groupBy('d.os_spl_type', 'e.st_name')
-            ->orderBy('total', 'desc')
-            ->take(7)
+            ->orderByDesc('total')
+            ->take(6)
             ->get();
-
-        return $distribusiSpesimen;
     }
 
-    private function permintaanPemeriksaan($oracleConnection, $startDate, $endDate)
+    private function permintaanPemeriksaan($oracle, $startDate, $endDate)
     {
-        $permintaanPemeriksaan = $oracleConnection
+        return $oracle
             ->table('ord_hdr as a')
-            ->leftJoin('ord_dtl as b', function ($join) {
+            ->join('ord_dtl as b', function ($join) {
                 $join->on('a.oh_tno', '=', 'b.od_tno')
                     ->where('b.od_order_item', '=', 'Y');
             })
-            ->leftJoin('test_item as c', 'b.od_testcode','=','c.ti_code')
+            ->leftJoin('test_item as c', 'b.od_testcode', '=', 'c.ti_code')
             ->select(
-                'c.ti_name as pemeriksaan',
+                DB::raw('COALESCE(c.ti_name, b.od_testcode) as pemeriksaan'),
                 DB::raw('count(*) as total'), 
-                DB::raw('round((count(*) / sum(count(*)) over()) * 100, 2) as percentage'),
                 DB::raw('count(CASE WHEN b.od_validate_on IS NULL THEN 1 END) as pemeriksaan_belum_selesai'), 
                 DB::raw('count(CASE WHEN b.od_validate_on IS NOT NULL THEN 1 END) as pemeriksaan_selesai') 
             )
             ->whereBetween('a.oh_trx_dt', [$startDate, $endDate])
-            ->groupBy('c.ti_name')
-            ->orderByDesc(DB::raw('total')) 
-            ->take(10) 
+            ->groupBy('c.ti_name', 'b.od_testcode')
+            ->orderByDesc(DB::raw('count(*)')) 
+            ->take(8) 
             ->get();
-
-        return $permintaanPemeriksaan;
-
     }
 
-    private function permintaanPerwaktu($oracleConnection, $startDate, $endDate)
+    private function permintaanPerWaktu($oracle, $startDate, $endDate)
     {
-        $permintaanPerwaktu = $oracleConnection
+        return $oracle
             ->table('ord_hdr')
             ->selectRaw("
-                TO_CHAR(oh_trx_dt, 'HH24') || ':00' AS hour,  -- Format to HH24:00
+                TO_CHAR(oh_trx_dt, 'HH24') || ':00' AS hour,
                 COUNT(CASE WHEN oh_ptype = 'OP' THEN 1 END) AS rajal,
                 COUNT(CASE WHEN oh_ptype = 'IN' THEN 1 END) AS ranap,
                 COUNT(*) AS total_keseluruhan
@@ -285,33 +273,35 @@ class DashboardController extends Controller
             ->groupByRaw("TO_CHAR(oh_trx_dt, 'HH24') || ':00'")
             ->orderByRaw("TO_CHAR(oh_trx_dt, 'HH24') || ':00'")
             ->get();
-        
-        return $permintaanPerwaktu;
-    
     }
 
-    private function nilaiKritis($oracleConnection, $startDate, $endDate)
+    private function nilaiKritis($oracle, $startDate, $endDate)
     {
-        $nilaiKritis = $oracleConnection
-        ->table('ord_dtl as od')
-        ->join('ord_hdr as oh', 'od.od_tno', '=', 'oh.oh_tno')
-        ->leftJoin('hfclinic as hc', 'oh.oh_clinic_code', '=', 'hc.clinic_code')
-        ->leftJoin('test_item as ti', 'od.od_testcode', '=', 'ti.ti_code')
-        ->select(
-            'oh.oh_update_on',
-            'oh.oh_tno',
-            'oh.oh_pid',
-            'oh.oh_last_name',
-            'od.od_tr_val',
-            'od.od_tr_flag',
-            'ti.ti_name'
-        )
-        ->whereIn('od.od_tr_flag', ['LL', 'HH'])
-        ->whereBetween('oh.oh_trx_dt', [$startDate, $endDate])
-        ->orderBy('oh.oh_update_on', 'desc')
-        ->get();
+        $rows = $oracle
+            ->table('ord_dtl as od')
+            ->join('ord_hdr as oh', 'od.od_tno', '=', 'oh.oh_tno')
+            ->leftJoin('hfclinic as hc', 'oh.oh_clinic_code', '=', 'hc.clinic_code')
+            ->leftJoin('test_item as ti', 'od.od_testcode', '=', 'ti.ti_code')
+            ->select(
+                'oh.oh_update_on',
+                'oh.oh_tno',
+                'oh.oh_pid',
+                'oh.oh_last_name',
+                'od.od_tr_val',
+                'od.od_tr_flag',
+                'ti.ti_name',
+                'hc.clinic_desc'
+            )
+            ->whereIn('od.od_tr_flag', ['LL', 'HH'])
+            ->whereBetween('oh.oh_trx_dt', [$startDate, $endDate])
+            ->orderBy('oh.oh_update_on', 'desc')
+            ->take(30)
+            ->get();
 
-        return $nilaiKritis;
-    
+        foreach ($rows as $row) {
+            $row->detail_url = route('klinik.detail', ['labno' => Hashids::encode($row->oh_tno)]);
+        }
+
+        return $rows;
     }
 }

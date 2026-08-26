@@ -1,209 +1,316 @@
-<title>@yield('title', 'Laboratorium Patologi Klinik')</title>
+@section('title', 'Laboratorium Patologi Klinik')
 
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="text-lg font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-700 px-4 py-3 rounded-md shadow-md flex items-center gap-2 transition-all duration-300 hover:shadow-lg hover:brightness-110">
-            <svg class="w-6 h-6 text-white animate-pulse" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-6-8h6m4 12H5a2 2 0 01-2-2V5a2 2 0 012-2h9l5 5v12a2 2 0 01-2 2z" />
-            </svg>
-            {{ __('Hasil Pemeriksaan Laboratorium Patologi Klinik') }}
-        </h2>
-    </x-slot>
-    <div class="py-4">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="bg-white shadow-sm rounded-lg">
-                <div class="p-4 text-gray-900">
-                    <!-- Form Pencarian -->
-                    <form method="GET" action="#" class="space-y-4">
-                        <div>
-                            <label class="font-bold bg-gradient-to-r from-blue-500 to-blue-800 text-transparent bg-clip-text">
-                                <i class="fas fa-filter"></i> Pencarian Berdasarkan:
-                            </label>
-                            <hr class="my-2">
-                            <div class="flex gap-4 mt-1">
-                                <label class="flex items-center text-sm font-medium hover:text-blue-600 transition">
-                                    <input type="radio" name="search_type" value="rm" class="form-radio text-blue-600 focus:ring-blue-500" checked>
-                                    <span class="ml-2">
-                                        <i class="fas fa-id-card"></i> Nomor RM
-                                    </span>
+    <div class="py-5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+            
+            <!-- Page Header Card (Flat) -->
+            <div class="bg-white border border-slate-200 rounded p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-base font-bold text-slate-900">Hasil Pemeriksaan Patologi Klinik</h1>
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-100 text-slate-700 border border-slate-300">v2.0</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-0.5">Pencarian data order, status validasi hasil, dan pemantauan nilai kritis laboratorium.</p>
+                </div>
+
+                <div class="flex items-center gap-2 text-xs">
+                    <span class="px-2 py-1 rounded bg-emerald-50 text-emerald-800 font-bold border border-emerald-300">
+                        Online
+                    </span>
+                </div>
+            </div>
+
+            <!-- Filter & Search Panel (Flat) -->
+            <div class="bg-white border border-slate-200 rounded">
+                <div class="border-b border-slate-200 px-4 py-3 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
+                    <div class="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                        Parameter Pencarian
+                    </div>
+
+                    <!-- Segmented Control Switch (Flat) -->
+                    <div class="inline-flex border border-slate-300 rounded overflow-hidden text-xs font-semibold bg-slate-100">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="search_type" value="rm" class="sr-only peer" checked>
+                            <span class="inline-block px-3.5 py-1.5 text-slate-600 peer-checked:bg-blue-600 peer-checked:text-white transition-colors">
+                                Pasien (No. RM / Nama)
+                            </span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="search_type" value="ruangan" class="sr-only peer">
+                            <span class="inline-block px-3.5 py-1.5 text-slate-600 peer-checked:bg-blue-600 peer-checked:text-white transition-colors border-l border-slate-300">
+                                Ruangan & Tanggal
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="p-4">
+                    <form id="filterForm" onsubmit="return false;">
+                        
+                        <!-- Mode 1: Pencarian Pasien (Select2) -->
+                        <div id="rm_section" class="flex flex-col sm:flex-row items-stretch sm:items-end gap-2.5">
+                            <div class="flex-1">
+                                <label for="rm_number" class="block text-xs font-semibold text-slate-700 mb-1">
+                                    Pilih / Cari Pasien (Ketik No. RM atau Nama)
                                 </label>
-                                <label class="flex items-center text-sm font-medium hover:text-green-600 transition">
-                                    <input type="radio" name="search_type" value="ruangan" class="form-radio text-green-600 focus:ring-green-500">
-                                    <span class="ml-2">
-                                        <i class="fas fa-hospital"></i> Ruangan
-                                    </span>
-                                </label>
-                            </div>
-                        </div>
-
-
-                        <!-- Input Nomor RM dan Ruangan -->
-                        <div class="flex flex-wrap gap-4 items-end">
-                            <!-- Nomor RM -->
-                            <div id="rm_section" class="w-1/2">
-                                <label for="rm_number" class="block text-sm font-medium mb-1">Nomor RM</label>
-                                <input type="text" id="rm_number" name="rm_number" class="w-full p-2 border rounded text-sm" placeholder="Masukan Nomor RM Pasien...">
-                            </div>
-
-                            <!-- Ruangan -->
-                            <div id="ruangan_section" class="hidden w-1/4">
-                                <label for="ruangan" class="block text-sm font-medium mb-1 select2">Ruangan</label>
-                                <select id="ruangan" class="w-full border rounded text-sm">
-                                    <option selected>Pilih Ruangan</option>
-
-                                    @foreach ($ruangans as $r)
-                                    <option value="{{$r->clinic_code}}">{{$r->clinic_desc}}</option>
-                                    @endforeach
+                                <select id="rm_number" name="rm_number" class="w-full">
+                                    <option value="" selected>Ketik No. RM atau Nama Pasien untuk mencari...</option>
                                 </select>
                             </div>
-
-                            <!-- Tanggal Mulai & Tanggal Selesai -->
-                            <div id="date_range_section" class="hidden flex w-1/4 gap-2">
-                                <div class="w-1/2">
-                                    <label for="start_date" class="block text-sm font-medium mb-1">Tanggal Mulai</label>
-                                    <input type="date" id="start_date" class="w-full p-2 border rounded text-sm">
-                                </div>
-                                <div class="w-1/2">
-                                    <label for="end_date" class="block text-sm font-medium mb-1">Tanggal Selesai</label>
-                                    <input type="date" id="end_date" class="w-full p-2 border rounded text-sm">
-                                </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" id="search-button-rm" 
+                                        class="h-[38px] px-5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold rounded border border-blue-700 transition-colors whitespace-nowrap">
+                                    <span class="search-btn-text">Cari Hasil Pemeriksaan</span>
+                                </button>
+                                <button type="button" id="reset-button-rm" 
+                                        class="h-[38px] px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded border border-slate-300 transition-colors whitespace-nowrap">
+                                    Reset
+                                </button>
                             </div>
                         </div>
 
-                        <div>
-                            <button id="search-button" class="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white text-sm font-semibold px-3 py-2 rounded flex items-center gap-2 shadow-lg transition-all duration-300">
-                                <i id="search-icon" class="fas fa-search"></i>
-                                <span id="search-text">Cari Hasil Pemeriksaan</span>
-                            </button>
+                        <!-- Mode 2: Pencarian Ruangan & Tanggal -->
+                        <div id="ruangan_section" class="hidden space-y-3">
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end">
+                                <!-- Ruangan Select2 -->
+                                <div class="md:col-span-4">
+                                    <label for="ruangan" class="block text-xs font-semibold text-slate-700 mb-1">
+                                        Pilih Ruangan / Klinik
+                                    </label>
+                                    <select id="ruangan" name="ruangan" class="w-full">
+                                        <option value="" selected>Semua Ruangan</option>
+                                        @foreach ($ruangans as $r)
+                                        <option value="{{ $r->clinic_code }}">{{ $r->clinic_desc }} ({{ $r->clinic_code }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
+                                <!-- Tanggal Mulai -->
+                                <div class="md:col-span-2">
+                                    <label for="start_date" class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Mulai</label>
+                                    <input type="date" id="start_date" name="start_date" 
+                                           class="w-full h-[38px] px-2.5 bg-white border border-slate-300 rounded text-xs text-slate-800 outline-none focus:border-blue-600">
+                                </div>
+
+                                <!-- Tanggal Selesai -->
+                                <div class="md:col-span-2">
+                                    <label for="end_date" class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Selesai</label>
+                                    <input type="date" id="end_date" name="end_date" 
+                                           class="w-full h-[38px] px-2.5 bg-white border border-slate-300 rounded text-xs text-slate-800 outline-none focus:border-blue-600">
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="md:col-span-4 flex items-center gap-2">
+                                    <button type="button" id="search-button-ruangan" 
+                                            class="flex-1 h-[38px] px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold rounded border border-blue-700 transition-colors whitespace-nowrap">
+                                        <span class="search-btn-text">Cari Hasil Pemeriksaan</span>
+                                    </button>
+                                    <button type="button" id="reset-button-ruangan" 
+                                            class="h-[38px] px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded border border-slate-300 transition-colors whitespace-nowrap">
+                                        Reset
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Quick Date Presets -->
+                            <div class="flex items-center gap-2 text-xs pt-0.5">
+                                <span class="text-slate-500 font-medium text-[11px]">Rentang Cepat:</span>
+                                <button type="button" class="date-preset px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] border border-slate-300 font-medium" data-days="0">Hari Ini</button>
+                                <button type="button" class="date-preset px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] border border-slate-300 font-medium" data-days="7">7 Hari Terakhir</button>
+                                <button type="button" class="date-preset px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] border border-slate-300 font-medium" data-days="30">30 Hari Terakhir</button>
+                            </div>
                         </div>
+
                     </form>
                 </div>
             </div>
 
-            <!-- Informasi Order -->
-            <div class="grid grid-cols-12 gap-4 mt-4">
-                <!-- Card 1 (8 columns) -->
-                <div class="col-span-8 bg-white shadow-sm rounded-lg">
-                    <div class="p-4 text-gray-900 relative">
-                        <div id="loading-overlay-order" class="hidden absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 z-10">
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-spinner fa-spin text-2xl text-blue-600"></i>
-                                <span class="text-gray-700 font-semibold">Memuat Data...</span>
-                            </div>
+            <!-- Content Grid: Orders Table (8 cols) & Critical Values (4 cols) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                
+                <!-- Main Order Table Card (8 cols) -->
+                <div class="lg:col-span-8 bg-white border border-slate-200 rounded flex flex-col overflow-hidden">
+                    <div class="border-b border-slate-200 px-4 py-3 bg-slate-50 flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Daftar Pemeriksaan Laboratorium</h2>
+                            <p class="text-[11px] text-slate-500">Hasil query data order dari server LIS.</p>
                         </div>
-                        <div class="overflow-x-auto">
-                            <!-- <span id="criticalTableTitle" class="text-xl font-bold">Daftar Pemeriksaan Laboratorium</span> -->
-                            <span id="criticalTableTitle" class="text-xl font-bold bg-gradient-to-r from-blue-500 to-blue-800 text-transparent bg-clip-text">
-                                Daftar Pemeriksaan Laboratorium
-                            </span>
-                            <hr class="my-2">
+                    </div>
 
-                            <table id="orderTable" class="w-full border text-sm relative z-0 min-w-max">
+                    <div class="p-4 relative flex-1">
+                        <!-- Loading Overlay -->
+                        <div id="loading-overlay-order" class="hidden absolute inset-0 bg-white/90 flex flex-col items-center justify-center z-20">
+                            <span class="text-xs font-bold text-slate-800">Memuat Data Pemeriksaan...</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table id="orderTable" class="w-full text-left border-collapse text-xs">
                                 <thead>
-                                    <tr class="bg-grey-400">
-                                        <th class="border px-2 py-1">Status Pemeriksaan </th>
-                                        <th class="border px-2 py-1">Tanggal Permintaan</th>
-                                        <th class="border px-2 py-1">Nomor SIMRS</th>
-                                        <th class="border px-2 py-1">Nomor LAB</th>
-                                        <th class="border px-2 py-1">Nomor RM</th>
-                                        <th class="border px-2 py-1">Nama Pasien</th>
-                                        <th class="border px-2 py-1">Ruangan</th>
-                                        <th class="border px-2 py-1">Dokter Pengirim</th>
+                                    <tr class="bg-slate-100 border-b border-slate-300 text-slate-700 font-bold uppercase text-[11px]">
+                                        <th class="py-3 px-3 text-center whitespace-nowrap">Status</th>
+                                        <th class="py-3 px-3 whitespace-nowrap">Tanggal Order</th>
+                                        <th class="py-3 px-3 whitespace-nowrap">No. SIMRS</th>
+                                        <th class="py-3 px-3 whitespace-nowrap">No. LAB</th>
+                                        <th class="py-3 px-3 whitespace-nowrap">No. RM</th>
+                                        <th class="py-3 px-3 min-w-[140px]">Nama Pasien</th>
+                                        <th class="py-3 px-3 min-w-[120px]">Ruangan</th>
+                                        <th class="py-3 px-3 min-w-[120px]">Dokter Pengirim</th>
                                     </tr>
                                 </thead>
-                                <tbody></tbody>
+                                <tbody class="divide-y divide-slate-200 text-slate-700">
+                                    <!-- DataTables Output -->
+                                </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Card 2 (4 columns) -->
-                <div class="col-span-4 bg-white shadow-sm rounded-lg">
-                    <div class="p-4 text-gray-900 relative">
-                        <div id="loading-overlay-kritis" class="hidden absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 z-10">
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-spinner fa-spin text-2xl text-blue-600"></i>
-                                <span class="text-gray-700 font-semibold">Memuat Data...</span>
-                            </div>
+                <!-- Critical Values Card (4 cols) - HIGH FOCUS HIGHLIGHT -->
+                <div class="lg:col-span-4 bg-white border-2 border-rose-400 rounded flex flex-col overflow-hidden">
+                    <!-- Highlighted Danger Header -->
+                    <div class="bg-rose-600 px-4 py-3 text-white flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xs font-black uppercase tracking-wider text-white">NILAI KRITIS (CRITICAL)</h2>
+                            <p class="text-[11px] text-rose-100 font-medium">Hasil melewati batas kritis (HH / LL)</p>
                         </div>
-                        <div class="overflow-x-auto">
-                            <span id="criticalTableTitle" class="text-xl font-bold bg-gradient-to-r from-red-500 to-red-700 text-transparent bg-clip-text flex items-center gap-2 animate-pulse">
-                                <i class="fas fa-exclamation-triangle"></i> Nilai Kritis
-                            </span>
-                            <hr class="my-2">
+                        <span class="px-2 py-0.5 text-[10px] font-black rounded bg-white text-rose-700 border border-rose-200">
+                            Perlu Perhatian
+                        </span>
+                    </div>
 
+                    <div class="p-3 relative flex-1 flex flex-col bg-rose-50/30">
+                        <!-- Loading Overlay -->
+                        <div id="loading-overlay-kritis" class="hidden absolute inset-0 bg-white/90 flex flex-col items-center justify-center z-20">
+                            <span class="text-xs font-bold text-rose-800">Memeriksa Nilai Kritis...</span>
+                        </div>
 
-                            <table id="criticalTable" class="w-full relative z-0 min-w-max border">
+                        <div class="overflow-x-auto flex-1">
+                            <table id="criticalTable" class="w-full text-left border-collapse text-xs">
                                 <thead>
-                                    <tr class="bg-grey-500 font-bold">
-                                        <th class="border px-2 py-1">Nama Pasien</th>
-                                        <th class="border px-2 py-1">Pemeriksaan</th>
-                                        <th class="border px-2 py-1">Flag</th>
-                                        <th class="border px-2 py-1">Hasil</th>
+                                    <tr class="bg-rose-100 border-b border-rose-300 text-rose-950 font-bold text-[11px] uppercase">
+                                        <th class="py-2.5 px-2.5">Pasien</th>
+                                        <th class="py-2.5 px-2">Uji Lab</th>
+                                        <th class="py-2.5 px-2">Hasil</th>
+                                        <th class="py-2.5 px-2 text-center">Flag</th>
                                     </tr>
                                 </thead>
-                                <tbody></tbody>
+                                <tbody class="divide-y divide-rose-200 text-slate-800">
+                                    <!-- DataTables Output -->
+                                </tbody>
                             </table>
                         </div>
                     </div>
-
                 </div>
+
             </div>
-
 
         </div>
     </div>
 </x-app-layout>
 
-<!-- jQuery -->
-<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-<!-- DataTables JS -->
 <script src="https://cdn.datatables.net/2.2.2/js/dataTables.js"></script>
 <script src="https://cdn.datatables.net/2.2.2/js/dataTables.tailwindcss.js"></script>
 
-
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        // Date Presets Helper
+        function setDateRange(daysAgo) {
+            const today = new Date();
+            const fromDate = new Date();
+            fromDate.setDate(today.getDate() - daysAgo);
 
-        const now = new Date();
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setMonth(now.getMonth() - 1);
-        document.getElementById("start_date").valueAsDate = oneMonthAgo;
-        document.getElementById("end_date").valueAsDate = now;
+            document.getElementById("start_date").value = fromDate.toISOString().split('T')[0];
+            document.getElementById("end_date").value = today.toISOString().split('T')[0];
+        }
 
-        const searchTypeRadios = document.querySelectorAll("input[name='search_type']");
-        const rmSection = document.getElementById("rm_section");
-        const ruanganSection = document.getElementById("ruangan_section");
-        const dateRangeSection = document.getElementById("date_range_section");
+        // Initialize default dates (30 days ago)
+        setDateRange(30);
 
-        searchTypeRadios.forEach(radio => {
-            radio.addEventListener("change", function() {
-                if (this.value === "rm") {
-                    rmSection.classList.remove("hidden");
-                    ruanganSection.classList.add("hidden");
-                    dateRangeSection.classList.add("hidden");
-                } else {
-                    rmSection.classList.add("hidden");
-                    ruanganSection.classList.remove("hidden");
-                    dateRangeSection.classList.remove("hidden");
-                }
+        // Date preset buttons
+        document.querySelectorAll('.date-preset').forEach(button => {
+            button.addEventListener('click', function() {
+                const days = parseInt(this.getAttribute('data-days'), 10);
+                setDateRange(days);
             });
         });
 
-        $('#ruangan').select2({
+        // Initialize Select2 for Patient (AJAX Search + Tags support)
+        $('#rm_number').select2({
+            placeholder: 'Ketik No. RM atau Nama Pasien (contoh: 010497)...',
+            allowClear: true,
             width: '100%',
+            tags: true,
+            minimumInputLength: 1,
+            ajax: {
+                url: "{{ route('klinik.patient.search') }}",
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results
+                    };
+                },
+                cache: true
+            }
         });
 
-        
+        // Initialize Select2 for Ruangan
+        $('#ruangan').select2({
+            placeholder: 'Semua Ruangan / Klinik',
+            allowClear: true,
+            width: '100%'
+        });
 
+        // Search Type Toggle
+        const searchTypeRadios = document.querySelectorAll("input[name='search_type']");
+        const rmSection = document.getElementById("rm_section");
+        const ruanganSection = document.getElementById("ruangan_section");
+
+        function updateFilterView(type) {
+            if (type === "rm") {
+                rmSection.classList.remove("hidden");
+                ruanganSection.classList.add("hidden");
+            } else {
+                rmSection.classList.add("hidden");
+                ruanganSection.classList.remove("hidden");
+            }
+        }
+
+        searchTypeRadios.forEach(radio => {
+            radio.addEventListener("change", function() {
+                updateFilterView(this.value);
+            });
+        });
+
+        // Reset Buttons
+        $('#reset-button-rm, #reset-button-ruangan').on('click', function() {
+            $('#rm_number').val(null).trigger('change');
+            $('#ruangan').val(null).trigger('change');
+            setDateRange(30);
+            table.clear().draw();
+            criticalTable.clear().draw();
+        });
+
+        // Auto trigger search when patient selected from Select2
+        $('#rm_number').on('select2:select', function(e) {
+            triggerSearch();
+        });
+
+        // DataTables: Order Table
         let table = $('#orderTable').DataTable({
-            processing: true,
+            processing: false,
             serverSide: true,
             ajax: {
-                url: "/laboratorium/patologi-klinik/get-order",
+                url: "{{ route('klinik.order') }}",
                 data: function(d) {
                     d.search_type = $("input[name='search_type']:checked").val();
                     d.rm_number = $("#rm_number").val();
@@ -212,70 +319,87 @@
                     d.end_date = $("#end_date").val();
                 }
             },
-            columns: [{
+            columns: [
+                {
                     data: 'oh_ord_status',
                     name: 'oh_ord_status',
-                    className: 'text-center',
+                    className: 'text-center align-middle whitespace-nowrap'
                 },
                 {
                     data: 'oh_trx_dt',
                     name: 'oh_trx_dt',
-                    searchable: false
+                    className: 'text-slate-600 font-mono text-[11px] whitespace-nowrap align-middle'
                 },
                 {
                     data: 'oh_ono',
-                    name: 'oh_ono'
+                    name: 'oh_ono',
+                    className: 'text-slate-700 font-mono text-[11px] align-middle'
                 },
                 {
                     data: 'oh_tno',
-                    name: 'oh_tno'
+                    name: 'oh_tno',
+                    className: 'text-slate-700 font-mono text-[11px] align-middle'
                 },
                 {
                     data: 'oh_pid',
                     name: 'oh_pid',
-                    searchable: true,
+                    className: 'align-middle',
                     render: function(data, type, row) {
-                        return `<span class="font-bold">${data}</span>`;
+                        return `<span class="font-bold text-slate-900 font-mono text-xs">${data || '-'}</span>`;
                     }
                 },
                 {
                     data: 'oh_last_name',
                     name: 'oh_last_name',
-                    searchable: true,
+                    className: 'align-middle',
                     render: function(data, type, row) {
-                        return `<span class="font-bold">${data}</span>`;
+                        return `<span class="font-semibold text-slate-900">${data || '-'}</span>`;
                     }
                 },
                 {
                     data: 'clinic_desc',
                     name: 'clinic_desc',
-                    searchable: false
+                    className: 'text-slate-700 text-xs align-middle'
                 },
                 {
                     data: 'oh_dname',
                     name: 'oh_dname',
-                    searchable: false
-                },
-
+                    className: 'text-slate-700 text-xs align-middle'
+                }
             ],
             order: [],
             responsive: true,
             createdRow: function(row, data, dataIndex) {
-                $(row).addClass('hover:bg-gray-200 transition text-sm');
-                $('td', row).addClass('border px-2 py-1');
+                $(row).addClass('hover:bg-slate-50 transition-colors');
+                $('td', row).addClass('py-3 px-3 border-b border-slate-200 align-middle');
             },
             lengthChange: false,
             searching: true,
             paging: true,
+            pageLength: 10,
             deferLoading: 0,
-            ordering: false
+            ordering: false,
+            language: {
+                emptyTable: "Tidak ada data pemeriksaan ditemukan. Pilih pasien atau tentukan ruangan untuk memulai pencarian.",
+                info: "Menampilkan _START_ s/d _END_ dari total _TOTAL_ order",
+                infoEmpty: "Menampilkan 0 s/d 0 dari 0 order",
+                search: "Saring Hasil:",
+                searchPlaceholder: "Ketik teks...",
+                paginate: {
+                    first: 'Awal',
+                    last: 'Akhir',
+                    next: 'Berikutnya',
+                    previous: 'Sebelumnya'
+                }
+            }
         });
 
+        // DataTables: Critical Table
         let criticalTable = $('#criticalTable').DataTable({
-            processing: true,
+            processing: false,
             serverSide: true,
             ajax: {
-                url: "/laboratorium/patologi-klinik/get-order/flag",
+                url: "{{ route('klinik.order.flag') }}",
                 data: function(d) {
                     d.search_type = $("input[name='search_type']:checked").val();
                     d.rm_number = $("#rm_number").val();
@@ -284,43 +408,35 @@
                     d.end_date = $("#end_date").val();
                 }
             },
-            columns: [{
+            columns: [
+                {
                     data: 'patient_info',
                     name: 'patient_info',
-                    searchable: false
+                    className: 'align-top py-2.5 px-2.5'
                 },
                 {
                     data: 'test_name',
                     name: 'test_name',
-                    searchable: false
+                    className: 'align-top py-2.5 px-2'
                 },
                 {
                     data: 'result',
                     name: 'result',
-                    searchable: true
+                    className: 'align-top py-2.5 px-2'
                 },
                 {
                     data: 'critical_status',
                     name: 'critical_status',
-                    searchable: true
-                }
-            ],
-            columnDefs: [{
-                    targets: [0],
-                    className: "wrap-text"
-                }, // Terapkan ke Nama Pasien
-                {
-                    targets: "_all",
-                    className: "text-left"
+                    className: 'align-top text-center py-2.5 px-2'
                 }
             ],
             order: [],
             responsive: true,
             scrollY: '50vh',
-            scrollCollapse: true, // Aktifkan scroll jika data sedikit
+            scrollCollapse: true,
             createdRow: function(row, data, dataIndex) {
-                $(row).addClass('hover:bg-gray-200 transition text-sm');
-                $('td', row).addClass('border px-2 py-1');
+                $(row).addClass('hover:bg-rose-100/60 transition-colors bg-white');
+                $('td', row).addClass('border-b border-rose-200');
             },
             lengthChange: false,
             searching: false,
@@ -328,24 +444,23 @@
             deferLoading: 0,
             ordering: false,
             info: false,
+            language: {
+                emptyTable: '<div class="py-8 text-center text-slate-500 font-medium text-xs">Tidak ada nilai kritis ditemukan.</div>'
+            }
         });
 
-
-        $("#search-button").on("click", function() {
-            let button = $(this);
-            let icon = $("#search-icon");
-            let text = $("#search-text");
+        // Shared Search Function
+        function triggerSearch() {
             let overlay = $("#loading-overlay-order");
             let kritis = $("#loading-overlay-kritis");
+            let buttons = $("#search-button-rm, #search-button-ruangan");
+            let texts = $(".search-btn-text");
 
-            // Menampilkan overlay
-            overlay.removeClass("hidden").fadeIn(200);
-            kritis.removeClass("hidden").fadeIn(200);
+            overlay.removeClass("hidden");
+            kritis.removeClass("hidden");
 
-            // Mengubah ikon dan status tombol
-            icon.removeClass("fa-search").addClass("fa-spinner fa-spin");
-            text.text("Mencari...");
-            button.prop("disabled", true).addClass("opacity-50 cursor-not-allowed");
+            texts.text("Memuat Data...");
+            buttons.prop("disabled", true).addClass("opacity-60 cursor-not-allowed");
 
             let tableDeferred = $.Deferred();
             let criticalTableDeferred = $.Deferred();
@@ -359,15 +474,18 @@
             });
 
             $.when(tableDeferred, criticalTableDeferred).done(function() {
-                icon.removeClass("fa-spinner fa-spin").addClass("fa-search");
-                text.text("Cari Hasil Pemeriksaan");
-                button.prop("disabled", false).removeClass("opacity-50 cursor-not-allowed");
+                texts.text("Cari Hasil Pemeriksaan");
+                buttons.prop("disabled", false).removeClass("opacity-60 cursor-not-allowed");
 
-                overlay.fadeOut(200);
-                kritis.fadeOut(200);
+                overlay.addClass("hidden");
+                kritis.addClass("hidden");
             });
-        });
+        }
 
+        // Search Click Handlers
+        $("#search-button-rm, #search-button-ruangan").on("click", function() {
+            triggerSearch();
+        });
 
     });
 </script>

@@ -1,206 +1,276 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-slate-100">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Views Laboratory')</title>
+    <title>@yield('title', 'Views Laboratory') - SIM Lab RSUD</title>
 
     <link rel="icon" type="image/ico" href="{{ asset('img/logo.ico') }}">
     <link rel="shortcut icon" href="{{ asset('img/logo.ico') }}">
 
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <!-- Scripts -->
+    <!-- DataTables & Select2 Stylesheets -->
     <link rel="stylesheet" href="https://cdn.datatables.net/2.2.2/css/dataTables.tailwindcss.css">
     <link href="https://cdn.datatables.net/buttons/2.3.2/css/buttons.dataTables.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
+    <!-- Vite Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.tailwindcss.com/"></script>
-    
     <style>
-
-        .overflow-y-auto {
-            max-height: 200px; /* Set a fixed height */
-            overflow-y: auto;  /* Enable vertical scrolling */
+        /* Global Font & Flat Style Enforcement */
+        *, *::before, *::after {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
         }
 
-        
-        .table-container {
-            width: 100%;
-            overflow-x: auto;
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
         }
 
-        .dt-info {
-            font-size: 12px;
+        /* Custom Flat Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
 
-        #orderTable th,
-        #orderTable td {
-            font-size: 0.75rem !important;
+        /* Clean Flat DataTables Refinements */
+        .dt-container {
+            font-size: 0.8125rem;
         }
-
-        #criticalTable {
-            table-layout: fixed;
-            width: 100%;
+        .dt-layout-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
         }
-
-        #criticalTable th:first-child,
-        #criticalTable td:first-child {
-            width: 30%;
-            word-wrap: break-word;
-            white-space: normal;
-
-        }
-
-        #criticalTable th:nth-child(2),
-        #criticalTable td:nth-child(2) {
-            width: 20%;
-            word-wrap: break-word;
-            white-space: normal;
-        }
-
-        #criticalTable td,
-        th {
-            font-size: 0.75rem !important;
-        }
-
         .dt-search input {
-            width: 150px !important;
-            height: 30px;
-            font-size: 14px;
-            padding: 4px;
+            font-size: 0.8125rem !important;
+            padding: 0.4rem 0.75rem !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 0.375rem !important;
+            background-color: #ffffff !important;
+            outline: none !important;
+        }
+        .dt-search input:focus {
+            border-color: #2563eb !important;
+            outline: 1px solid #2563eb !important;
+        }
+        .dt-info {
+            font-size: 0.75rem !important;
+            color: #64748b !important;
+            padding-top: 0.5rem !important;
+        }
+        .dt-paging .dt-paging-button {
+            padding: 0.25rem 0.6rem !important;
+            font-size: 0.75rem !important;
+            border-radius: 0.25rem !important;
+            border: 1px solid #cbd5e1 !important;
+            margin: 0 2px !important;
+            background: #ffffff !important;
+            color: #334155 !important;
+        }
+        .dt-paging .dt-paging-button.current {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            border-color: #2563eb !important;
+            font-weight: 600 !important;
+        }
+        .dt-paging .dt-paging-button:hover:not(.current):not(.disabled) {
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
         }
 
+        /* Clean Flat Select2 Styling */
         .select2-container {
             width: 100% !important;
         }
-
-        .select2-selection--single {
+        .select2-container--default .select2-selection--single {
             height: 38px !important;
             display: flex !important;
             align-items: center !important;
-            border: 1px solid black !important;
-            border-radius: 0.3rem !important;
-            color: black !important;
-            font-weight: 600;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 0.375rem !important;
+            background-color: #ffffff !important;
+            padding: 0 0.5rem !important;
         }
-        .select2-container--default .select2-results__option {
-            padding: 8px;
-            font-size: 14px;
-            color: #1E3A8A; /* Warna teks biru tua */
-            font-weight: 500;
+        .select2-container--default.select2-container--open .select2-selection--single,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #2563eb !important;
+            outline: 1px solid #2563eb !important;
         }
-
-        /* Efek hover */
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #1e293b !important;
+            font-size: 0.8125rem !important;
+            font-weight: 500 !important;
+            line-height: normal !important;
+            padding-left: 0.25rem !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px !important;
+            right: 8px !important;
+        }
+        .select2-dropdown {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 0.375rem !important;
+            background: #ffffff !important;
+            z-index: 9999 !important;
+        }
+        .select2-search--dropdown .select2-search__field {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 0.25rem !important;
+            padding: 0.375rem 0.5rem !important;
+            font-size: 0.8125rem !important;
+            outline: none !important;
+        }
+        .select2-results__option {
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.8125rem !important;
+            font-weight: 500 !important;
+            color: #334155 !important;
+        }
         .select2-container--default .select2-results__option--highlighted[aria-selected] {
-            background: linear-gradient(135deg, #3B82F6, #2563EB); /* Gradasi lebih gelap saat hover */
-            color: white;
-            font-weight: 600;
-            border-radius: 5px;
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
         }
 
-        input[type="text"],
-        input[type="date"] {
-            color: black !important;
-            font-size: 14px;
-            font-weight: 600; 
+        /* Solid Status Badges */
+        .badge-status-selesai {
+            background-color: #059669 !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            font-size: 0.75rem !important;
+            padding: 0.25rem 0.75rem !important;
+            border-radius: 0.25rem !important;
+            display: inline-block !important;
+            text-decoration: none !important;
+            text-align: center !important;
+            white-space: nowrap !important;
         }
-        input::placeholder {
-            color: rgba(255, 255, 255, 0.7);
-            font-weight: 500;
+        .badge-status-selesai:hover {
+            background-color: #047857 !important;
         }
-        input:focus {
-            background: white !important;
-            color: black !important;
-            font-weight: 600;
-            border: 2px solid #3B82F6;
+        .badge-status-sebagian {
+            background-color: #d97706 !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            font-size: 0.75rem !important;
+            padding: 0.25rem 0.75rem !important;
+            border-radius: 0.25rem !important;
+            display: inline-block !important;
+            text-decoration: none !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+        }
+        .badge-status-sebagian:hover {
+            background-color: #b45309 !important;
+        }
+        .badge-status-belum {
+            background-color: #64748b !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            font-size: 0.75rem !important;
+            padding: 0.25rem 0.75rem !important;
+            border-radius: 0.25rem !important;
+            display: inline-block !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+        }
+        .badge-flag-hh {
+            background-color: #e11d48 !important;
+            color: #ffffff !important;
+            font-weight: 900 !important;
+            font-size: 0.6875rem !important;
+            padding: 0.15rem 0.5rem !important;
+            border-radius: 0.25rem !important;
+            display: inline-block !important;
+            text-align: center !important;
+            letter-spacing: 0.05em !important;
+        }
+        .badge-flag-ll {
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+            font-weight: 900 !important;
+            font-size: 0.6875rem !important;
+            padding: 0.15rem 0.5rem !important;
+            border-radius: 0.25rem !important;
+            display: inline-block !important;
+            text-align: center !important;
+            letter-spacing: 0.05em !important;
         }
 
-        /* Label styling */
-        label {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1E3A8A;
-        }
-
-
-    
-        .animate-pulse {
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% {
-                background-color: #E5E7EB;
+        /* Print Styling */
+        @media print {
+            nav, header, footer, .no-print, button, form, .dt-search, .dt-paging, .dt-info {
+                display: none !important;
             }
-
-            50% {
-                background-color: #D1D5DB;
+            body {
+                background: white !important;
+                color: black !important;
+                font-size: 10.5pt !important;
             }
-
-            100% {
-                background-color: #E5E7EB;
+            .print-only {
+                display: block !important;
             }
-        }
-
-        @keyframes pulse-fast {
-            0% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
-            100% {
-                opacity: 1;
+            .border {
+                border-color: #94a3b8 !important;
             }
         }
-
-        .animate-pulse-fast {
-            animation: pulse-fast 0.5s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @keyframes fadeIn {
-            0% { opacity: 0; }
-            100% { opacity: 1; }
-        }
-
-        
-
-        
     </style>
 </head>
 
-<body class="font-sans antialiased">
-    <div class="min-h-screen bg-gray-100">
+<body class="h-full font-sans antialiased text-slate-800 bg-slate-100">
+    <div class="min-h-screen flex flex-col">
         @include('layouts.navigation')
 
-        <!-- Page Heading -->
+        <!-- Page Heading (Optional) -->
         @isset($header)
-        <header class="bg-white shadow">
-            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <header class="bg-white border-b border-slate-200 no-print">
+            <div class="max-w-7xl mx-auto py-3 px-4 sm:px-6 lg:px-8">
                 {{ $header }}
             </div>
         </header>
         @endisset
 
         <!-- Page Content -->
-        <main>
+        <main class="flex-1">
             {{ $slot }}
         </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t border-slate-200 py-3 mt-8 text-center text-xs text-slate-500 no-print">
+            <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-700">Views Laboratory</span>
+                    <span class="px-1.5 py-0.2 text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-300 rounded">v2.0</span>
+                    <span class="text-slate-300">|</span>
+                    <span>Sistem Informasi Laboratorium RSUD</span>
+                </div>
+                <div class="text-slate-400">
+                    Terhubung ke Database LIS &bull; {{ date('Y') }}
+                </div>
+            </div>
+        </footer>
     </div>
 </body>
 
