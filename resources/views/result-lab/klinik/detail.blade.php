@@ -151,8 +151,8 @@
                             <thead>
                                 <tr class="bg-slate-100 border-y border-slate-300 text-slate-700 font-bold uppercase text-[11px]">
                                     <th class="py-2 px-2.5 w-2/5">Nama Pemeriksaan</th>
+                                    <th class="py-2 px-2 w-14 text-center">Flag</th>
                                     <th class="py-2 px-2.5 w-1/6">Hasil</th>
-                                    <th class="py-2 px-2 w-12 text-center">Flag</th>
                                     <th class="py-2 px-2.5 w-1/6">Satuan</th>
                                     <th class="py-2 px-2.5 w-1/6">Nilai Rujukan</th>
                                     <th class="py-2 px-2.5">Catatan</th>
@@ -177,24 +177,25 @@
                                             {{ $detail->test_name }}
                                         </td>
 
-                                        <!-- Test Value -->
+                                        <!-- Test Value / Content -->
                                         @if ($detail->od_data_type == 'W')
-                                        <td colspan="4" class="py-1.5 px-2.5 font-mono font-medium text-slate-800">
+                                        <td colspan="5" class="py-1.5 px-2.5 font-mono font-medium text-slate-800">
                                             {!! nl2br(e($detail->test_value)) !!}
                                         </td>
                                         @else
-                                        <td class="py-1.5 px-2.5 font-mono font-semibold {{ $detail->abnormal_flag !== 'N' ? 'text-rose-800 font-bold' : 'text-slate-900' }}">
-                                            @if ($detail->od_data_type !== "X" && $detail->od_data_type !== "P")
-                                                {{ $detail->test_value }}
-                                            @endif
-                                        </td>
-
                                         <!-- Flag (Abnormal indicator) -->
                                         <td class="py-1.5 px-2 text-center">
                                             @if ($detail->test_value !== 'Belum Tersedia' && $detail->abnormal_flag !== 'N' && !empty($detail->abnormal_flag))
                                                 <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold {{ in_array($detail->abnormal_flag, ['HH', 'H']) ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-blue-100 text-blue-800 border border-blue-300' }}">
                                                     {{ $detail->abnormal_flag }}
                                                 </span>
+                                            @endif
+                                        </td>
+
+                                        <!-- Hasil (Test Value) -->
+                                        <td class="py-1.5 px-2.5 font-mono font-semibold {{ $detail->abnormal_flag !== 'N' ? 'text-rose-800 font-bold' : 'text-slate-900' }}">
+                                            @if ($detail->od_data_type !== "X" && $detail->od_data_type !== "P")
+                                                {{ $detail->test_value }}
                                             @endif
                                         </td>
 
@@ -237,20 +238,6 @@
                                 @endforelse
                             </tbody>
                         </table>
-                    </div>
-                </div>
-
-                <!-- Report Footer / Signature Area -->
-                <div class="border-t border-slate-200 pt-5 mt-6 flex flex-col sm:flex-row justify-between items-end gap-4 text-xs text-slate-600">
-                    <div class="space-y-1 text-[11px]">
-                        <p class="font-bold text-slate-700">Catatan:</p>
-                        <p class="text-slate-400">* Hasil laboratorium ini dicetak secara otomatis dari Sistem Informasi Laboratorium (LIS).</p>
-                        <p class="text-slate-400">* Interpretasi hasil laboratorium harus disesuaikan dengan kondisi klinis pasien oleh dokter.</p>
-                    </div>
-
-                    <div class="text-center sm:text-right min-w-[180px]">
-                        <p class="text-slate-500 mb-10">Petugas Laboratorium / Validasi,</p>
-                        <p class="font-bold text-slate-900 border-t border-slate-300 pt-1">( Tim Patologi Klinik )</p>
                     </div>
                 </div>
 

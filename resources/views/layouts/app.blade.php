@@ -277,11 +277,6 @@
                 <div class="flex items-center gap-2">
                     <span class="font-bold text-slate-700">Views Laboratory</span>
                     <span class="px-1.5 py-0.2 text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-300 rounded">v2.0</span>
-                    <span class="text-slate-300">|</span>
-                    <span>Sistem Informasi Laboratorium RSUD</span>
-                </div>
-                <div class="text-slate-400">
-                    Terhubung ke Database LIS &bull; {{ date('Y') }}
                 </div>
             </div>
         </footer>

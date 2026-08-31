@@ -7,12 +7,9 @@
                 <div class="shrink-0 flex items-center gap-3">
                     <a href="{{ route('klinik.index') }}" class="flex items-center gap-2.5">
                         <img src="{{ asset('img/logo.png') }}" alt="RSUD Logo" class="h-9 w-auto object-contain" style="height: 36px; max-height: 36px; width: auto;">
-                        <div class="flex flex-col">
-                            <div class="flex items-center gap-1.5">
-                                <span class="font-bold text-slate-900 text-sm tracking-tight">Views Lab</span>
-                                <span class="px-1.5 py-0.2 text-[10px] font-bold rounded bg-slate-100 text-slate-700 border border-slate-300">v2.0</span>
-                            </div>
-                            <span class="text-[11px] text-slate-500 -mt-0.5">SIM Laboratorium</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-bold text-slate-900 text-sm tracking-tight">Views Lab</span>
+                            <span class="px-1.5 py-0.2 text-[10px] font-bold rounded bg-slate-100 text-slate-700 border border-slate-300">v2.0</span>
                         </div>
                     </a>
                 </div>

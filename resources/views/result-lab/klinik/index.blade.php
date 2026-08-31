@@ -81,7 +81,7 @@
                                     <select id="ruangan" name="ruangan" class="w-full">
                                         <option value="" selected>Semua Ruangan</option>
                                         @foreach ($ruangans as $r)
-                                        <option value="{{ $r->clinic_code }}">{{ $r->clinic_desc }} ({{ $r->clinic_code }})</option>
+                                        <option value="{{ $r->clinic_code }}">{{ $r->clinic_desc }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -191,8 +191,8 @@
                                     <tr class="bg-rose-100 border-b border-rose-300 text-rose-950 font-bold text-[11px] uppercase">
                                         <th class="py-2.5 px-2.5">Pasien</th>
                                         <th class="py-2.5 px-2">Uji Lab</th>
-                                        <th class="py-2.5 px-2">Hasil</th>
                                         <th class="py-2.5 px-2 text-center">Flag</th>
+                                        <th class="py-2.5 px-2">Hasil</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-rose-200 text-slate-800">
@@ -420,14 +420,14 @@
                     className: 'align-top py-2.5 px-2'
                 },
                 {
-                    data: 'result',
-                    name: 'result',
-                    className: 'align-top py-2.5 px-2'
-                },
-                {
                     data: 'critical_status',
                     name: 'critical_status',
                     className: 'align-top text-center py-2.5 px-2'
+                },
+                {
+                    data: 'result',
+                    name: 'result',
+                    className: 'align-top py-2.5 px-2'
                 }
             ],
             order: [],
