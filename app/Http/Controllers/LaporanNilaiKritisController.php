@@ -203,7 +203,7 @@ class LaporanNilaiKritisController extends Controller
         $headerCellStyle = ['valign' => 'center', 'bgColor' => 'DC2626'];
 
         $section->addText('RUMAH SAKIT UMUM DAERAH', ['bold' => true, 'size' => 12, 'name' => 'Plus Jakarta Sans'], ['align' => 'center']);
-        $section->addText('INSTALASI LABORATORIUM PATOLOGI KLINIK', ['bold' => true, 'size' => 11, 'name' => 'Plus Jakarta Sans'], ['align' => 'center']);
+        $section->addText('LABORATORIUM PATOLOGI KLINIK', ['bold' => true, 'size' => 11, 'name' => 'Plus Jakarta Sans'], ['align' => 'center']);
         $section->addText('LAPORAN HASIL NILAI KRITIS (CRITICAL VALUE REPORT)', ['bold' => true, 'size' => 10, 'name' => 'Plus Jakarta Sans'], ['align' => 'center']);
         $section->addText('Periode: ' . $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y') . ' | Total: ' . count($nilaiKritis) . ' Kasus', ['size' => 8, 'italic' => true], ['align' => 'center']);
         $section->addTextBreak(1);

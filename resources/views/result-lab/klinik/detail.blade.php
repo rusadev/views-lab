@@ -33,7 +33,7 @@
                     <div class="flex items-center gap-3">
                         <img src="{{ asset('img/logo.png') }}" alt="Logo" class="h-12 w-auto object-contain">
                         <div>
-                            <h2 class="text-base font-bold text-slate-900 tracking-tight">INSTALASI LABORATORIUM PATOLOGI KLINIK</h2>
+                            <h2 class="text-base font-bold text-slate-900 tracking-tight">LABORATORIUM PATOLOGI KLINIK</h2>
                             <p class="text-xs font-medium text-slate-500">RSUD - Hasil Pemeriksaan Terkomputerisasi</p>
                         </div>
                     </div>
@@ -171,7 +171,7 @@
                                 <!-- Details Rows -->
                                 @foreach ($details as $detail)
                                     @if ($detail->test_value !== '!' && $detail->test_value !== '.' && $detail->test_value !== '-')
-                                    <tr class="hover:bg-slate-50 {{ $detail->abnormal_flag !== 'N' ? 'bg-rose-50/40' : '' }}">
+                                    <tr class="hover:bg-slate-50 bg-white">
                                         <!-- Test Name with indentation -->
                                         <td class="py-1.5 px-2.5 {{ $detail->od_item_type === 'P' ? 'pl-6 font-bold text-slate-900' : '' }} {{ $detail->od_item_type === 'U' ? 'pl-10 text-slate-700' : '' }}">
                                             {{ $detail->test_name }}

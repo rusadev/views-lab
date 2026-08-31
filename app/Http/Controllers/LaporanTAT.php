@@ -277,7 +277,7 @@ class LaporanTAT extends Controller
         $sheet2 = $spreadsheet->createSheet();
         
         $sheet2->setCellValue('A1', 'RUMAH SAKIT UMUM DAERAH');
-        $sheet2->setCellValue('A2', 'INSTALASI LABORATORIUM PATOLOGI KLINIK');
+        $sheet2->setCellValue('A2', 'LABORATORIUM PATOLOGI KLINIK');
         $sheet2->setCellValue('A3', 'LAPORAN TURN AROUND TIME (TAT) NON-CITO (STANDAR KEMENKES ≤ 120 MENIT)');
         $sheet2->setCellValue('A4', 'Periode: ' . $periodStr);
         $sheet2->getStyle('A1:A3')->getFont()->setBold(true);
@@ -289,7 +289,7 @@ class LaporanTAT extends Controller
         $sheet3->setTitle('Daftar Pasien & Check-in');
 
         $sheet3->setCellValue('A1', 'RUMAH SAKIT UMUM DAERAH');
-        $sheet3->setCellValue('A2', 'INSTALASI LABORATORIUM PATOLOGI KLINIK');
+        $sheet3->setCellValue('A2', 'LABORATORIUM PATOLOGI KLINIK');
         $sheet3->setCellValue('A3', 'DAFTAR TRANSAKSI PEMERIKSAAN PASIEN (ORDER, SPESIMEN CHECK-IN, VALIDASI)');
         $sheet3->setCellValue('A4', 'Periode: ' . $periodStr . ' | Standar Kemenkes: CITO ≤ 60m, Non-CITO ≤ 120m');
         $sheet3->getStyle('A1:A3')->getFont()->setBold(true);

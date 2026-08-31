@@ -352,7 +352,7 @@ class LaporanController extends Controller
         $sheet2->setTitle('Per Ruangan');
         
         $sheet2->setCellValue('A1', 'RUMAH SAKIT UMUM DAERAH');
-        $sheet2->setCellValue('A2', 'INSTALASI LABORATORIUM PATOLOGI KLINIK');
+        $sheet2->setCellValue('A2', 'LABORATORIUM PATOLOGI KLINIK');
         $sheet2->setCellValue('A3', 'REKAPITULASI PASIEN PER RUANGAN');
         $sheet2->setCellValue('A4', 'Periode: ' . $periodStr);
         $sheet2->getStyle('A1:A3')->getFont()->setBold(true);
@@ -443,7 +443,7 @@ class LaporanController extends Controller
         $totalRowStyle = ['valign' => 'center', 'bgColor' => 'F1F5F9'];
 
         $section->addText('RUMAH SAKIT UMUM DAERAH', ['bold' => true, 'size' => 14, 'name' => 'Plus Jakarta Sans'], ['align' => 'center']);
-        $section->addText('INSTALASI LABORATORIUM PATOLOGI KLINIK', ['bold' => true, 'size' => 12, 'name' => 'Plus Jakarta Sans'], ['align' => 'center']);
+        $section->addText('LABORATORIUM PATOLOGI KLINIK', ['bold' => true, 'size' => 12, 'name' => 'Plus Jakarta Sans'], ['align' => 'center']);
         $section->addText('LAPORAN JUMLAH PASIEN', ['bold' => true, 'size' => 11, 'name' => 'Plus Jakarta Sans'], ['align' => 'center']);
         $section->addText('Periode: ' . $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y'), ['size' => 9, 'italic' => true], ['align' => 'center']);
         $section->addTextBreak(1);

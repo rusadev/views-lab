@@ -21,7 +21,7 @@ class ReportExcelService
 
         // Hospital Header
         $sheet->setCellValue('A1', 'RUMAH SAKIT UMUM DAERAH');
-        $sheet->setCellValue('A2', 'INSTALASI LABORATORIUM PATOLOGI KLINIK');
+        $sheet->setCellValue('A2', 'LABORATORIUM PATOLOGI KLINIK');
         $sheet->setCellValue('A3', strtoupper($reportTitle));
         $sheet->setCellValue('A4', 'Periode: ' . $periodStr . ' | Dicetak: ' . date('d/m/Y H:i:s'));
 
