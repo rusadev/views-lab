@@ -134,7 +134,6 @@
                     <div class="border-b border-slate-200 px-4 py-3 bg-slate-50 flex items-center justify-between">
                         <div>
                             <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Daftar Pemeriksaan Laboratorium</h2>
-                            <p class="text-[11px] text-slate-500">Hasil query data order dari server LIS.</p>
                         </div>
                     </div>
 
