@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class LaporanTAT extends Controller
 {
@@ -322,6 +323,8 @@ class LaporanTAT extends Controller
             $sheet->setCellValue("L{$rowIdx}", $overallSlaPct);
 
             ReportExcelService::formatTable($sheet, 6, $rowIdx, 'A', 'L', true);
+            $sheet->getStyle("A7:B{$rowIdx}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("D7:L{$rowIdx}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         };
 
         // Tab 1: CITO (Standar Kemenkes <= 60m)
