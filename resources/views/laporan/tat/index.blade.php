@@ -128,21 +128,24 @@
                     <table class="w-full border border-slate-200 text-xs border-collapse">
                         <thead class="bg-slate-100 text-slate-800 font-bold border-b border-slate-200 text-center">
                             <tr>
-                                <th class="p-2.5 border border-slate-200 w-12" rowspan="2">No</th>
-                                <th class="p-2.5 border border-slate-200 w-24 text-left" rowspan="2">Kode</th>
+                                <th class="p-2.5 border border-slate-200 w-10" rowspan="2">No</th>
+                                <th class="p-2.5 border border-slate-200 w-20 text-left" rowspan="2">Kode</th>
                                 <th class="p-2.5 border border-slate-200 text-left" rowspan="2">Nama Test</th>
                                 <th class="p-2 border border-slate-200 text-center" colspan="2">Rawat Jalan</th>
                                 <th class="p-2 border border-slate-200 text-center" colspan="2">Rawat Inap</th>
+                                <th class="p-2 border border-slate-200 text-center" colspan="2">Lainnya</th>
                                 <th class="p-2 border border-slate-200 text-center bg-slate-200" colspan="2">Total Keseluruhan</th>
                                 <th class="p-2.5 border border-slate-200 w-28 text-center" rowspan="2">Kepatuhan (&le; 60m)</th>
                             </tr>
                             <tr>
-                                <th class="p-2 border border-slate-200 w-24 text-center">TAT</th>
-                                <th class="p-2 border border-slate-200 w-20 text-center">Total</th>
-                                <th class="p-2 border border-slate-200 w-24 text-center">TAT</th>
-                                <th class="p-2 border border-slate-200 w-20 text-center">Total</th>
-                                <th class="p-2 border border-slate-200 w-28 text-center bg-slate-200">Rata-rata TAT</th>
-                                <th class="p-2 border border-slate-200 w-24 text-center bg-slate-200">Total Uji</th>
+                                <th class="p-2 border border-slate-200 w-20 text-center">TAT</th>
+                                <th class="p-2 border border-slate-200 w-16 text-center">Total</th>
+                                <th class="p-2 border border-slate-200 w-20 text-center">TAT</th>
+                                <th class="p-2 border border-slate-200 w-16 text-center">Total</th>
+                                <th class="p-2 border border-slate-200 w-20 text-center">TAT</th>
+                                <th class="p-2 border border-slate-200 w-16 text-center">Total</th>
+                                <th class="p-2 border border-slate-200 w-24 text-center bg-slate-200">Rata-rata TAT</th>
+                                <th class="p-2 border border-slate-200 w-20 text-center bg-slate-200">Total Uji</th>
                             </tr>
                         </thead>
                         <tbody id="body-cito" class="divide-y divide-slate-200 text-slate-800">
@@ -167,21 +170,24 @@
                     <table class="w-full border border-slate-200 text-xs border-collapse">
                         <thead class="bg-slate-100 text-slate-800 font-bold border-b border-slate-200 text-center">
                             <tr>
-                                <th class="p-2.5 border border-slate-200 w-12" rowspan="2">No</th>
-                                <th class="p-2.5 border border-slate-200 w-24 text-left" rowspan="2">Kode</th>
+                                <th class="p-2.5 border border-slate-200 w-10" rowspan="2">No</th>
+                                <th class="p-2.5 border border-slate-200 w-20 text-left" rowspan="2">Kode</th>
                                 <th class="p-2.5 border border-slate-200 text-left" rowspan="2">Nama Test</th>
                                 <th class="p-2 border border-slate-200 text-center" colspan="2">Rawat Jalan</th>
                                 <th class="p-2 border border-slate-200 text-center" colspan="2">Rawat Inap</th>
+                                <th class="p-2 border border-slate-200 text-center" colspan="2">Lainnya</th>
                                 <th class="p-2 border border-slate-200 text-center bg-slate-200" colspan="2">Total Keseluruhan</th>
                                 <th class="p-2.5 border border-slate-200 w-28 text-center" rowspan="2">Kepatuhan (&le; 120m)</th>
                             </tr>
                             <tr>
-                                <th class="p-2 border border-slate-200 w-24 text-center">TAT</th>
-                                <th class="p-2 border border-slate-200 w-20 text-center">Total</th>
-                                <th class="p-2 border border-slate-200 w-24 text-center">TAT</th>
-                                <th class="p-2 border border-slate-200 w-20 text-center">Total</th>
-                                <th class="p-2 border border-slate-200 w-28 text-center bg-slate-200">Rata-rata TAT</th>
-                                <th class="p-2 border border-slate-200 w-24 text-center bg-slate-200">Total Uji</th>
+                                <th class="p-2 border border-slate-200 w-20 text-center">TAT</th>
+                                <th class="p-2 border border-slate-200 w-16 text-center">Total</th>
+                                <th class="p-2 border border-slate-200 w-20 text-center">TAT</th>
+                                <th class="p-2 border border-slate-200 w-16 text-center">Total</th>
+                                <th class="p-2 border border-slate-200 w-20 text-center">TAT</th>
+                                <th class="p-2 border border-slate-200 w-16 text-center">Total</th>
+                                <th class="p-2 border border-slate-200 w-24 text-center bg-slate-200">Rata-rata TAT</th>
+                                <th class="p-2 border border-slate-200 w-20 text-center bg-slate-200">Total Uji</th>
                             </tr>
                         </thead>
                         <tbody id="body-noncito" class="divide-y divide-slate-200 text-slate-800">
@@ -248,10 +254,12 @@
                     <tr class="animate-pulse">
                         <td class="p-2 border border-slate-200 text-center"><div class="h-3 w-4 bg-slate-200 rounded mx-auto"></div></td>
                         <td class="p-2 border border-slate-200"><div class="h-3 w-12 bg-slate-200 rounded"></div></td>
-                        <td class="p-2 border border-slate-200"><div class="h-3 w-40 bg-slate-200 rounded"></div></td>
-                        <td class="p-2 border border-slate-200 text-center"><div class="h-3 w-12 bg-slate-200 rounded mx-auto"></div></td>
+                        <td class="p-2 border border-slate-200"><div class="h-3 w-36 bg-slate-200 rounded"></div></td>
+                        <td class="p-2 border border-slate-200 text-center"><div class="h-3 w-10 bg-slate-200 rounded mx-auto"></div></td>
                         <td class="p-2 border border-slate-200 text-center"><div class="h-3 w-8 bg-slate-200 rounded mx-auto"></div></td>
-                        <td class="p-2 border border-slate-200 text-center"><div class="h-3 w-12 bg-slate-200 rounded mx-auto"></div></td>
+                        <td class="p-2 border border-slate-200 text-center"><div class="h-3 w-10 bg-slate-200 rounded mx-auto"></div></td>
+                        <td class="p-2 border border-slate-200 text-center"><div class="h-3 w-8 bg-slate-200 rounded mx-auto"></div></td>
+                        <td class="p-2 border border-slate-200 text-center"><div class="h-3 w-10 bg-slate-200 rounded mx-auto"></div></td>
                         <td class="p-2 border border-slate-200 text-center"><div class="h-3 w-8 bg-slate-200 rounded mx-auto"></div></td>
                         <td class="p-2 border border-slate-200 text-center bg-slate-50"><div class="h-3 w-14 bg-slate-200 rounded mx-auto"></div></td>
                         <td class="p-2 border border-slate-200 text-center bg-slate-50"><div class="h-3 w-10 bg-slate-200 rounded mx-auto"></div></td>
@@ -271,17 +279,18 @@
             tfoot.empty();
 
             if (!items || items.length === 0) {
-                tbody.html('<tr><td colspan="10" class="p-6 text-center text-slate-400">Tidak ada data pemeriksaan pada periode ini.</td></tr>');
+                tbody.html('<tr><td colspan="12" class="p-6 text-center text-slate-400">Tidak ada data pemeriksaan pada periode ini.</td></tr>');
                 return;
             }
 
-            let sumRajal = 0, sumRanap = 0, sumTotal = 0, sumOnTime = 0;
+            let sumRajal = 0, sumRanap = 0, sumLainnya = 0, sumTotal = 0, sumOnTime = 0;
             let tbHtml = '';
 
             items.forEach((item, idx) => {
-                sumRajal += item.rajal_count;
-                sumRanap += item.ranap_count;
-                sumTotal += item.total_count;
+                sumRajal += (item.rajal_count || 0);
+                sumRanap += (item.ranap_count || 0);
+                sumLainnya += (item.lainnya_count || 0);
+                sumTotal += (item.total_count || 0);
                 sumOnTime += (item.on_time_count || 0);
 
                 const slaClass = item.sla_percent >= 90 ? 'text-emerald-700 bg-emerald-50' : (item.sla_percent >= 75 ? 'text-amber-700 bg-amber-50' : 'text-rose-700 bg-rose-50');
@@ -295,6 +304,8 @@
                         <td class="p-2 border border-slate-200 text-center font-mono">${item.rajal_count > 0 ? item.rajal_count.toLocaleString() : '-'}</td>
                         <td class="p-2 border border-slate-200 text-center font-mono font-semibold text-emerald-700">${item.ranap_tat_formatted}</td>
                         <td class="p-2 border border-slate-200 text-center font-mono">${item.ranap_count > 0 ? item.ranap_count.toLocaleString() : '-'}</td>
+                        <td class="p-2 border border-slate-200 text-center font-mono font-semibold text-amber-700">${item.lainnya_tat_formatted || '-'}</td>
+                        <td class="p-2 border border-slate-200 text-center font-mono">${item.lainnya_count > 0 ? item.lainnya_count.toLocaleString() : '-'}</td>
                         <td class="p-2 border border-slate-200 text-center font-mono font-bold bg-slate-50 text-slate-900">${item.overall_tat_formatted}</td>
                         <td class="p-2 border border-slate-200 text-center font-mono font-bold bg-slate-50">${item.total_count.toLocaleString()}</td>
                         <td class="p-2 border border-slate-200 text-center font-mono font-bold"><span class="px-1.5 py-0.5 rounded text-[11px] ${slaClass}">${item.sla_percent}%</span></td>
@@ -314,6 +325,8 @@
                     <td class="p-2 text-center font-mono font-bold">${sumRajal.toLocaleString()}</td>
                     <td class="p-2 text-center text-slate-500">-</td>
                     <td class="p-2 text-center font-mono font-bold">${sumRanap.toLocaleString()}</td>
+                    <td class="p-2 text-center text-slate-500">-</td>
+                    <td class="p-2 text-center font-mono font-bold">${sumLainnya.toLocaleString()}</td>
                     <td class="p-2 text-center text-slate-500 bg-slate-200">-</td>
                     <td class="p-2 text-center font-mono font-black bg-slate-200 text-slate-900">${sumTotal.toLocaleString()}</td>
                     <td class="p-2 text-center font-mono font-black ${footSlaClass}">${footSlaPct}%</td>
@@ -335,6 +348,7 @@
             $.ajax({
                 url: "{{ route('laporan.tat.data', [], false) }}",
                 type: "GET",
+                timeout: 180000, // 3 menit timeout untuk rentang data besar (1 tahun)
                 data: { 
                     start_date: startDate, 
                     end_date: endDate,
@@ -357,7 +371,11 @@
                 },
                 error: function(xhr, status, err) {
                     console.error("Laporan error:", err);
-                    $('#body-cito, #body-noncito').html('<tr><td colspan="10" class="p-6 text-center text-rose-500 font-semibold">Gagal memuat data laporan TAT.</td></tr>');
+                    let errMsg = 'Gagal memuat data laporan TAT.';
+                    if (status === 'timeout') {
+                        errMsg = 'Waktu permintaan habis karena memproses data 1 tahun. Silakan klik "Tampilkan" kembali.';
+                    }
+                    $('#body-cito, #body-noncito').html(`<tr><td colspan="10" class="p-6 text-center text-rose-500 font-semibold">${errMsg}</td></tr>`);
                 },
                 complete: function() {
                     btnText.text('Tampilkan');

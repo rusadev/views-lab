@@ -16,8 +16,11 @@ class LaporanJumlahPemeriksaanController extends Controller
 
     public function getData(Request $request)
     {
-        ini_set('max_execution_time', 300);
-        ini_set('memory_limit', '512M');
+        ini_set('max_execution_time', 600);
+        ini_set('memory_limit', '1024M');
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(600);
+        }
 
         $startDate = $request->input('start_date')
             ? Carbon::parse($request->input('start_date'))->startOfDay()
@@ -102,6 +105,12 @@ class LaporanJumlahPemeriksaanController extends Controller
 
     public function exportToExcel(Request $request)
     {
+        ini_set('max_execution_time', 600);
+        ini_set('memory_limit', '1024M');
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(600);
+        }
+
         $startDate = $request->input('start_date')
             ? Carbon::parse($request->input('start_date'))->startOfDay()
             : Carbon::now()->startOfMonth()->startOfDay();
@@ -127,6 +136,7 @@ class LaporanJumlahPemeriksaanController extends Controller
                 DB::raw("COALESCE(d.ti_name, b.od_testcode, 'Pemeriksaan') as test_name"),
                 DB::raw("COUNT(CASE WHEN a.oh_ptype = 'OP' THEN 1 END) as total_rajal"),
                 DB::raw("COUNT(CASE WHEN a.oh_ptype = 'IN' THEN 1 END) as total_ranap"),
+                DB::raw("COUNT(CASE WHEN a.oh_ptype NOT IN ('OP', 'IN') OR a.oh_ptype IS NULL THEN 1 END) as total_lainnya"),
                 DB::raw("COUNT(*) as total_keseluruhan")
             )
             ->whereBetween('a.oh_trx_dt', [$startDate, $endDate])
@@ -147,12 +157,14 @@ class LaporanJumlahPemeriksaanController extends Controller
         $sheet->setCellValue('D6', 'Nama Pemeriksaan');
         $sheet->setCellValue('E6', 'Rawat Jalan');
         $sheet->setCellValue('F6', 'Rawat Inap');
-        $sheet->setCellValue('G6', 'Total Jumlah');
+        $sheet->setCellValue('G6', 'Lainnya');
+        $sheet->setCellValue('H6', 'Total Jumlah');
 
         $rowIdx = 7;
         $no = 1;
         $sumRajal = 0;
         $sumRanap = 0;
+        $sumLainnya = 0;
         $sumTotal = 0;
 
         foreach ($rawData as $row) {
@@ -162,10 +174,12 @@ class LaporanJumlahPemeriksaanController extends Controller
             $sheet->setCellValue("D{$rowIdx}", $row->test_name);
             $sheet->setCellValue("E{$rowIdx}", (int)$row->total_rajal);
             $sheet->setCellValue("F{$rowIdx}", (int)$row->total_ranap);
-            $sheet->setCellValue("G{$rowIdx}", (int)$row->total_keseluruhan);
+            $sheet->setCellValue("G{$rowIdx}", (int)$row->total_lainnya);
+            $sheet->setCellValue("H{$rowIdx}", (int)$row->total_keseluruhan);
 
             $sumRajal += (int)$row->total_rajal;
             $sumRanap += (int)$row->total_ranap;
+            $sumLainnya += (int)$row->total_lainnya;
             $sumTotal += (int)$row->total_keseluruhan;
             $rowIdx++;
         }
@@ -177,9 +191,10 @@ class LaporanJumlahPemeriksaanController extends Controller
         $sheet->setCellValue("D{$rowIdx}", '');
         $sheet->setCellValue("E{$rowIdx}", $sumRajal);
         $sheet->setCellValue("F{$rowIdx}", $sumRanap);
-        $sheet->setCellValue("G{$rowIdx}", $sumTotal);
+        $sheet->setCellValue("G{$rowIdx}", $sumLainnya);
+        $sheet->setCellValue("H{$rowIdx}", $sumTotal);
 
-        ReportExcelService::formatTable($sheet, 6, $rowIdx, 'A', 'G', true);
+        ReportExcelService::formatTable($sheet, 6, $rowIdx, 'A', 'H', true);
 
         $filename = 'Laporan_Jumlah_Pemeriksaan_' . $startDate->format('Ymd') . '_' . $endDate->format('Ymd') . '.xlsx';
         return ReportExcelService::streamDownload($spreadsheet, $filename);

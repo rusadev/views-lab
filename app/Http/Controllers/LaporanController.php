@@ -24,8 +24,11 @@ class LaporanController extends Controller
 
     public function getData(Request $request)
     {
-        ini_set('max_execution_time', 300);
-        ini_set('memory_limit', '512M');
+        ini_set('max_execution_time', 600);
+        ini_set('memory_limit', '1024M');
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(600);
+        }
 
         $startDate = $request->input('start_date')
             ? Carbon::parse($request->input('start_date'))->startOfDay()

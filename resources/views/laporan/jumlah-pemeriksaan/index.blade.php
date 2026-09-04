@@ -61,8 +61,8 @@
                 </div>
             </div>
 
-            <!-- Summary KPI Grid (3 Cards) -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <!-- Summary KPI Grid (4 Cards) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div class="bg-white border border-slate-200 rounded p-4">
                     <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Pemeriksaan</span>
                     <div class="text-2xl font-black text-slate-900 font-mono mt-1" id="kpiTotalUji">-</div>
@@ -74,6 +74,10 @@
                 <div class="bg-white border border-slate-200 rounded p-4">
                     <span class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Rawat Inap</span>
                     <div class="text-2xl font-black text-emerald-700 font-mono mt-1" id="kpiTotalRanap">-</div>
+                </div>
+                <div class="bg-white border border-slate-200 rounded p-4">
+                    <span class="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Lainnya</span>
+                    <div class="text-2xl font-black text-amber-700 font-mono mt-1" id="kpiTotalLainnya">-</div>
                 </div>
             </div>
 
@@ -134,7 +138,7 @@
         });
 
         function showSkeletons() {
-            $('#kpiTotalUji, #kpiTotalRajal, #kpiTotalRanap').html(
+            $('#kpiTotalUji, #kpiTotalRajal, #kpiTotalRanap, #kpiTotalLainnya').html(
                 '<span class="inline-block h-6 w-24 bg-slate-200 animate-pulse rounded"></span>'
             );
 
@@ -170,6 +174,7 @@
             $.ajax({
                 url: "{{ route('laporan.jumlah-pemeriksaan.data', [], false) }}",
                 type: "GET",
+                timeout: 180000,
                 data: { 
                     start_date: startDate, 
                     end_date: endDate,
@@ -180,7 +185,7 @@
                     const raw = res.raw || [];
 
                     const grouped = {};
-                    let totalUji = 0, totalRajal = 0, totalRanap = 0;
+                    let totalUji = 0, totalRajal = 0, totalRanap = 0, totalLainnya = 0;
 
                     raw.forEach(r => {
                         const grp = r.test_group_name || 'Lain-lain';
@@ -191,21 +196,25 @@
 
                         totalUji += count;
                         if (type === 'Rawat Jalan') totalRajal += count;
-                        if (type === 'Rawat Inap') totalRanap += count;
+                        else if (type === 'Rawat Inap') totalRanap += count;
+                        else totalLainnya += count;
 
                         if (!grouped[grp]) grouped[grp] = {};
                         if (!grouped[grp][test]) {
-                            grouped[grp][test] = { code: code, rajal: 0, ranap: 0, total: 0 };
+                            grouped[grp][test] = { code: code, rajal: 0, ranap: 0, lainnya: 0, total: 0 };
                         }
 
                         if (type === 'Rawat Jalan') grouped[grp][test].rajal += count;
                         else if (type === 'Rawat Inap') grouped[grp][test].ranap += count;
+                        else grouped[grp][test].lainnya += count;
+
                         grouped[grp][test].total += count;
                     });
 
                     $('#kpiTotalUji').text(totalUji.toLocaleString());
                     $('#kpiTotalRajal').text(totalRajal.toLocaleString());
                     $('#kpiTotalRanap').text(totalRanap.toLocaleString());
+                    $('#kpiTotalLainnya').text(totalLainnya.toLocaleString());
 
                     renderTables(grouped);
                 },
@@ -234,7 +243,7 @@
                 const tests = grouped[grpName];
                 const testKeys = Object.keys(tests).sort();
 
-                let subRajal = 0, subRanap = 0, subTotal = 0;
+                let subRajal = 0, subRanap = 0, subLainnya = 0, subTotal = 0;
 
                 let html = `
                     <div class="border border-slate-200 rounded overflow-hidden group-box">
@@ -249,8 +258,9 @@
                                         <th class="py-2 px-3 w-12 text-center">No</th>
                                         <th class="py-2 px-3 w-28">Kode Uji</th>
                                         <th class="py-2 px-3">Nama Pemeriksaan</th>
-                                        <th class="py-2 px-3 w-28 text-right">Rawat Jalan</th>
-                                        <th class="py-2 px-3 w-28 text-right">Rawat Inap</th>
+                                        <th class="py-2 px-3 w-24 text-right">Rawat Jalan</th>
+                                        <th class="py-2 px-3 w-24 text-right">Rawat Inap</th>
+                                        <th class="py-2 px-3 w-24 text-right">Lainnya</th>
                                         <th class="py-2 px-3 w-28 text-right bg-slate-200">Total</th>
                                     </tr>
                                 </thead>
@@ -262,6 +272,7 @@
                     const item = tests[tName];
                     subRajal += item.rajal;
                     subRanap += item.ranap;
+                    subLainnya += item.lainnya;
                     subTotal += item.total;
 
                     html += `
@@ -271,6 +282,7 @@
                             <td class="py-2 px-3 font-semibold text-slate-900 search-target">${tName}</td>
                             <td class="py-2 px-3 text-right font-mono">${item.rajal.toLocaleString()}</td>
                             <td class="py-2 px-3 text-right font-mono">${item.ranap.toLocaleString()}</td>
+                            <td class="py-2 px-3 text-right font-mono text-amber-700">${item.lainnya.toLocaleString()}</td>
                             <td class="py-2 px-3 text-right font-mono font-bold bg-slate-50">${item.total.toLocaleString()}</td>
                         </tr>
                     `;
@@ -281,6 +293,7 @@
                             <td colspan="3" class="py-2 px-3 text-left">Subtotal ${grpName}</td>
                             <td class="py-2 px-3 text-right font-mono">${subRajal.toLocaleString()}</td>
                             <td class="py-2 px-3 text-right font-mono">${subRanap.toLocaleString()}</td>
+                            <td class="py-2 px-3 text-right font-mono">${subLainnya.toLocaleString()}</td>
                             <td class="py-2 px-3 text-right font-mono font-black bg-slate-200">${subTotal.toLocaleString()}</td>
                         </tr>
                     </tbody>

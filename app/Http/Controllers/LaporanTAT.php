@@ -17,8 +17,11 @@ class LaporanTAT extends Controller
 
     public function getData(Request $request)
     {
-        ini_set('max_execution_time', 300);
-        ini_set('memory_limit', '512M');
+        ini_set('max_execution_time', 600);
+        ini_set('memory_limit', '1024M');
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(600);
+        }
 
         $startDate = $request->input('start_date')
             ? Carbon::parse($request->input('start_date'))->startOfDay()
@@ -29,18 +32,32 @@ class LaporanTAT extends Controller
             : Carbon::now()->endOfDay();
 
         $forceRefresh = $request->boolean('refresh', false);
-        $cacheKey = 'laporan_tat_kemenkes_' . md5($startDate->format('Y-m-d') . '_' . $endDate->format('Y-m-d'));
+        $cacheKey = 'laporan_tat_kemenkes_v3_' . md5($startDate->format('Y-m-d') . '_' . $endDate->format('Y-m-d'));
 
         if ($forceRefresh) {
             Cache::forget($cacheKey);
         }
 
-        $result = Cache::remember($cacheKey, 600, function () use ($startDate, $endDate) {
+        // Dynamic Cache TTL:
+        // - Data masa lalu (tahun sebelumnya): cache 24 jam (86400 detik)
+        // - Rentang data > 90 hari (skala tahunan): cache 2 jam (7200 detik)
+        // - Rentang harian / bulanan: cache 15 menit (900 detik)
+        $diffDays = $startDate->diffInDays($endDate);
+        if ($endDate->lt(Carbon::now()->startOfYear())) {
+            $ttl = 86400; // 24 jam
+        } elseif ($diffDays >= 90) {
+            $ttl = 7200;  // 2 jam
+        } else {
+            $ttl = 900;   // 15 menit
+        }
+
+        $result = Cache::remember($cacheKey, $ttl, function () use ($startDate, $endDate) {
             $oracle = DB::connection('oracle');
 
             // Standar Indikator Nasional Mutu (INM) Kemenkes RI:
             // - CITO (UGD / Cepat / Urgent): <= 60 Menit
             // - Rutin / Non-CITO: <= 120 Menit
+            // Query Agregasi Cepat (Group by minimal kolom tanpa overhead join teks test_item pada ratusan ribu baris)
             $raw = $oracle
                 ->table('ord_hdr as a')
                 ->join('ord_dtl as b', function ($join) {
@@ -51,15 +68,15 @@ class LaporanTAT extends Controller
                     $join->on('b.od_tno', '=', 'c.os_tno')
                         ->on('b.od_spl_type', '=', 'c.os_spl_type');
                 })
-                ->leftJoin('test_item as e', 'b.od_testcode', '=', 'e.ti_code')
                 ->selectRaw("
                     a.oh_pri as priority,
                     b.od_testcode as code,
-                    COALESCE(e.ti_name, b.od_testcode) as name,
                     COUNT(CASE WHEN a.oh_ptype = 'OP' THEN 1 END) as rajal_count,
                     ROUND(AVG(CASE WHEN a.oh_ptype = 'OP' THEN (b.od_validate_on - c.os_spl_rcvdt) * 1440 END), 0) as rajal_avg_mins,
                     COUNT(CASE WHEN a.oh_ptype = 'IN' THEN 1 END) as ranap_count,
                     ROUND(AVG(CASE WHEN a.oh_ptype = 'IN' THEN (b.od_validate_on - c.os_spl_rcvdt) * 1440 END), 0) as ranap_avg_mins,
+                    COUNT(CASE WHEN a.oh_ptype NOT IN ('OP', 'IN') OR a.oh_ptype IS NULL THEN 1 END) as lainnya_count,
+                    ROUND(AVG(CASE WHEN a.oh_ptype NOT IN ('OP', 'IN') OR a.oh_ptype IS NULL THEN (b.od_validate_on - c.os_spl_rcvdt) * 1440 END), 0) as lainnya_avg_mins,
                     COUNT(*) as total_count,
                     ROUND(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440), 0) as overall_avg_mins,
                     COUNT(CASE 
@@ -70,9 +87,18 @@ class LaporanTAT extends Controller
                 ->whereBetween('a.oh_trx_dt', [$startDate, $endDate])
                 ->whereNotNull('b.od_validate_on')
                 ->whereNotNull('c.os_spl_rcvdt')
-                ->groupBy('a.oh_pri', 'b.od_testcode', 'e.ti_name')
-                ->orderBy('name')
+                ->groupBy('a.oh_pri', 'b.od_testcode')
                 ->get();
+
+            // Ambil mapping nama tes (test_item) sekaligus dari database
+            $testCodes = $raw->pluck('code')->unique()->filter()->values()->all();
+            $testNames = [];
+            if (!empty($testCodes)) {
+                $testNames = $oracle->table('test_item')
+                    ->whereIn('ti_code', $testCodes)
+                    ->pluck('ti_name', 'ti_code')
+                    ->toArray();
+            }
 
             $formatTime = function ($mins) {
                 if (!$mins || $mins <= 0) return '-';
@@ -101,16 +127,20 @@ class LaporanTAT extends Controller
                 $onTime = (int)$item->on_time_count;
                 $slaPct = $tot > 0 ? round(($onTime / $tot) * 100, 1) : 0;
                 $overallMins = (int)$item->overall_avg_mins;
+                $testName = $testNames[$item->code] ?? $item->code;
 
                 $formatted = [
                     'code' => $item->code,
-                    'name' => $item->name,
+                    'name' => $testName,
                     'rajal_count' => (int)$item->rajal_count,
                     'rajal_mins' => (int)$item->rajal_avg_mins,
                     'rajal_tat_formatted' => $formatTime($item->rajal_avg_mins),
                     'ranap_count' => (int)$item->ranap_count,
                     'ranap_mins' => (int)$item->ranap_avg_mins,
                     'ranap_tat_formatted' => $formatTime($item->ranap_avg_mins),
+                    'lainnya_count' => (int)$item->lainnya_count,
+                    'lainnya_mins' => (int)$item->lainnya_avg_mins,
+                    'lainnya_tat_formatted' => $formatTime($item->lainnya_avg_mins),
                     'total_count' => $tot,
                     'overall_mins' => $overallMins,
                     'overall_tat_formatted' => $formatTime($overallMins),
@@ -130,6 +160,10 @@ class LaporanTAT extends Controller
                     $nonCitoWeightedMins += ($overallMins * $tot);
                 }
             }
+
+            // Urutkan berdasarkan nama pemeriksaan alfabetis
+            usort($citoList, fn($a, $b) => strcmp($a['name'], $b['name']));
+            usort($nonCitoList, fn($a, $b) => strcmp($a['name'], $b['name']));
 
             $avgCitoMins = $citoTotalTests > 0 ? round($citoWeightedMins / $citoTotalTests) : 0;
             $avgNonCitoMins = $nonCitoTotalTests > 0 ? round($nonCitoWeightedMins / $nonCitoTotalTests) : 0;
@@ -181,15 +215,15 @@ class LaporanTAT extends Controller
                 $join->on('b.od_tno', '=', 'c.os_tno')
                     ->on('b.od_spl_type', '=', 'c.os_spl_type');
             })
-            ->leftJoin('test_item as e', 'b.od_testcode', '=', 'e.ti_code')
             ->selectRaw("
                 a.oh_pri as priority,
                 b.od_testcode as code,
-                COALESCE(e.ti_name, b.od_testcode) as name,
                 COUNT(CASE WHEN a.oh_ptype = 'OP' THEN 1 END) as rajal_count,
                 ROUND(AVG(CASE WHEN a.oh_ptype = 'OP' THEN (b.od_validate_on - c.os_spl_rcvdt) * 1440 END), 0) as rajal_avg_mins,
                 COUNT(CASE WHEN a.oh_ptype = 'IN' THEN 1 END) as ranap_count,
                 ROUND(AVG(CASE WHEN a.oh_ptype = 'IN' THEN (b.od_validate_on - c.os_spl_rcvdt) * 1440 END), 0) as ranap_avg_mins,
+                COUNT(CASE WHEN a.oh_ptype NOT IN ('OP', 'IN') OR a.oh_ptype IS NULL THEN 1 END) as lainnya_count,
+                ROUND(AVG(CASE WHEN a.oh_ptype NOT IN ('OP', 'IN') OR a.oh_ptype IS NULL THEN (b.od_validate_on - c.os_spl_rcvdt) * 1440 END), 0) as lainnya_avg_mins,
                 COUNT(*) as total_count,
                 ROUND(AVG((b.od_validate_on - c.os_spl_rcvdt) * 1440), 0) as overall_avg_mins,
                 COUNT(CASE 
@@ -200,9 +234,21 @@ class LaporanTAT extends Controller
             ->whereBetween('a.oh_trx_dt', [$startDate, $endDate])
             ->whereNotNull('b.od_validate_on')
             ->whereNotNull('c.os_spl_rcvdt')
-            ->groupBy('a.oh_pri', 'b.od_testcode', 'e.ti_name')
-            ->orderBy('name')
+            ->groupBy('a.oh_pri', 'b.od_testcode')
             ->get();
+
+        $testCodes = $raw->pluck('code')->unique()->filter()->values()->all();
+        $testNames = [];
+        if (!empty($testCodes)) {
+            $testNames = $oracle->table('test_item')
+                ->whereIn('ti_code', $testCodes)
+                ->pluck('ti_name', 'ti_code')
+                ->toArray();
+        }
+
+        foreach ($raw as $item) {
+            $item->name = $testNames[$item->code] ?? $item->code;
+        }
 
         $periodStr = $startDate->format('d/m/Y') . ' - ' . $endDate->format('d/m/Y');
         $spreadsheet = ReportExcelService::createSpreadsheet('Laporan Turn Around Time (TAT) Laboratorium', $periodStr);
@@ -217,18 +263,24 @@ class LaporanTAT extends Controller
             $sheet->setCellValue('E6', 'Total Rajal');
             $sheet->setCellValue('F6', 'TAT Ranap (Menit)');
             $sheet->setCellValue('G6', 'Total Ranap');
-            $sheet->setCellValue('H6', 'Rata-rata TAT (Menit)');
-            $sheet->setCellValue('I6', 'Total Keseluruhan');
-            $sheet->setCellValue('J6', 'Kepatuhan Standar Kemenkes (≤ ' . $slaTargetMins . 'm)');
+            $sheet->setCellValue('H6', 'TAT Lainnya (Menit)');
+            $sheet->setCellValue('I6', 'Total Lainnya');
+            $sheet->setCellValue('J6', 'Rata-rata TAT (Menit)');
+            $sheet->setCellValue('K6', 'Total Keseluruhan');
+            $sheet->setCellValue('L6', 'Kepatuhan Standar Kemenkes (≤ ' . $slaTargetMins . 'm)');
 
             $rowIdx = 7;
             $no = 1;
             $totRajal = 0;
             $totRanap = 0;
+            $totLainnya = 0;
             $totGrand = 0;
             $totOnTime = 0;
 
-            foreach ($items as $item) {
+            // Sort items by name
+            $sortedItems = $items->sortBy('name');
+
+            foreach ($sortedItems as $item) {
                 $tot = (int)$item->total_count;
                 $onTime = (int)$item->on_time_count;
                 $slaPct = $tot > 0 ? round(($onTime / $tot) * 100, 1) . '%' : '0%';
@@ -240,12 +292,15 @@ class LaporanTAT extends Controller
                 $sheet->setCellValue("E{$rowIdx}", (int)$item->rajal_count);
                 $sheet->setCellValue("F{$rowIdx}", (int)$item->ranap_avg_mins ?: '-');
                 $sheet->setCellValue("G{$rowIdx}", (int)$item->ranap_count);
-                $sheet->setCellValue("H{$rowIdx}", (int)$item->overall_avg_mins);
-                $sheet->setCellValue("I{$rowIdx}", $tot);
-                $sheet->setCellValue("J{$rowIdx}", $slaPct);
+                $sheet->setCellValue("H{$rowIdx}", (int)$item->lainnya_avg_mins ?: '-');
+                $sheet->setCellValue("I{$rowIdx}", (int)$item->lainnya_count);
+                $sheet->setCellValue("J{$rowIdx}", (int)$item->overall_avg_mins);
+                $sheet->setCellValue("K{$rowIdx}", $tot);
+                $sheet->setCellValue("L{$rowIdx}", $slaPct);
 
                 $totRajal += (int)$item->rajal_count;
                 $totRanap += (int)$item->ranap_count;
+                $totLainnya += (int)$item->lainnya_count;
                 $totGrand += $tot;
                 $totOnTime += $onTime;
                 $rowIdx++;
@@ -261,10 +316,12 @@ class LaporanTAT extends Controller
             $sheet->setCellValue("F{$rowIdx}", '');
             $sheet->setCellValue("G{$rowIdx}", $totRanap);
             $sheet->setCellValue("H{$rowIdx}", '');
-            $sheet->setCellValue("I{$rowIdx}", $totGrand);
-            $sheet->setCellValue("J{$rowIdx}", $overallSlaPct);
+            $sheet->setCellValue("I{$rowIdx}", $totLainnya);
+            $sheet->setCellValue("J{$rowIdx}", '');
+            $sheet->setCellValue("K{$rowIdx}", $totGrand);
+            $sheet->setCellValue("L{$rowIdx}", $overallSlaPct);
 
-            ReportExcelService::formatTable($sheet, 6, $rowIdx, 'A', 'J', true);
+            ReportExcelService::formatTable($sheet, 6, $rowIdx, 'A', 'L', true);
         };
 
         // Tab 1: CITO (Standar Kemenkes <= 60m)
