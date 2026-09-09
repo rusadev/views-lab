@@ -183,7 +183,6 @@
                             <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                                 <tr>
                                     <th class="py-2.5 px-3 w-12 text-center">No</th>
-                                    <th class="py-2.5 px-3 w-28 text-center">Kode Spesimen</th>
                                     <th class="py-2.5 px-3">Jenis Tabung / Spesimen</th>
                                     <th class="py-2.5 px-3 w-28 text-right text-blue-700">Rawat Jalan</th>
                                     <th class="py-2.5 px-3 w-28 text-right text-emerald-700">Rawat Inap</th>
@@ -240,6 +239,59 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
 <script>
+    // Standard Medical Vacuum Tube & Specimen Color Palette (ISO 6710 / BD Vacutainer)
+    function getTubeColor(name, code) {
+        const n = (name || '').toLowerCase();
+        const c = String(code || '').trim();
+
+        // 1. EDTA (Ungu / Lavender / Purple - Hematologi)
+        if (n.includes('edta') || c === '30') {
+            return { bg: '#8b5cf6', border: '#7c3aed', label: 'Tabung Ungu (EDTA - Hematologi)' };
+        }
+        // 2. Serum / Clot Activator (Merah / Red - Kimia Darah / Serologi)
+        if (n.includes('serum') || c === '10' || c === '16' || n.includes('clot')) {
+            return { bg: '#ef4444', border: '#dc2626', label: 'Tabung Merah (Serum / Clot Activator)' };
+        }
+        // 3. Sitrat / Citrate (Biru Muda / Light Blue - Koagulasi PT/APTT)
+        if (n.includes('sitrat') || n.includes('citrate') || c === '40') {
+            return { bg: '#0ea5e9', border: '#0284c7', label: 'Tabung Biru Muda (Sitrat - Koagulasi)' };
+        }
+        // 4. Arteri / Heparin (Hijau / Green - Analisa Gas Darah)
+        if (n.includes('arteri') || n.includes('heparin') || c === '73') {
+            return { bg: '#10b981', border: '#059669', label: 'Tabung Hijau (Heparin / AGD Arteri)' };
+        }
+        // 5. Urin / Urine (Kuning / Yellow - Wadah Urin)
+        if (n.includes('urin') || n.includes('urine') || c === '20' || c === '28' || c === '224') {
+            return { bg: '#f59e0b', border: '#d97706', label: 'Wadah Kuning (Urin)' };
+        }
+        // 6. Faeces / Feses (Cokelat / Brown - Wadah Faeces)
+        if (n.includes('faeces') || n.includes('feses') || n.includes('stool') || c === '85') {
+            return { bg: '#854d0e', border: '#713f12', label: 'Wadah Cokelat (Faeces)' };
+        }
+        // 7. Cairan Tubuh / Pleura / Ascites / Sendi (Cyan / Teal - Non-blood Body Fluids)
+        if (n.includes('cairan') || n.includes('c.') || c === '69' || c === '935' || c === '921' || c === '68') {
+            return { bg: '#06b6d4', border: '#0891b2', label: 'Tabung Cyan (Cairan Tubuh)' };
+        }
+        // 8. Darah Lengkap / Whole Blood (Merah Gelap)
+        if (n.includes('darah') || c === '901') {
+            return { bg: '#b91c1c', border: '#991b1b', label: 'Merah Tua (Darah)' };
+        }
+        // 9. Glukosa / Fluoride (Abu-abu / Gray)
+        if (n.includes('glukosa') || n.includes('fluoride') || n.includes('oxalate')) {
+            return { bg: '#6b7280', border: '#4b5563', label: 'Tabung Abu-abu (Glukosa / Fluoride)' };
+        }
+        // 10. LED / ESR (Hitam / Black)
+        if (n.includes('led') || n.includes('esr')) {
+            return { bg: '#1e293b', border: '#0f172a', label: 'Tabung Hitam (LED / ESR)' };
+        }
+        // 11. VTM / Swab (Pink)
+        if (n.includes('vtm') || n.includes('swab')) {
+            return { bg: '#ec4899', border: '#db2777', label: 'Tabung Pink (VTM / Swab)' };
+        }
+        // Default: Netral / Abu-abu
+        return { bg: '#94a3b8', border: '#64748b', label: name || 'Spesimen' };
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
         if (typeof ChartDataLabels !== 'undefined') {
             Chart.register(ChartDataLabels);
@@ -338,7 +390,6 @@
                 skelHtml += `
                     <tr class="animate-pulse">
                         <td class="p-2.5"><div class="h-3 w-6 bg-slate-200 rounded mx-auto"></div></td>
-                        <td class="p-2.5"><div class="h-3 w-16 bg-slate-200 rounded mx-auto"></div></td>
                         <td class="p-2.5"><div class="h-3 w-40 bg-slate-200 rounded"></div></td>
                         <td class="p-2.5"><div class="h-3 w-12 bg-slate-200 rounded ml-auto"></div></td>
                         <td class="p-2.5"><div class="h-3 w-12 bg-slate-200 rounded ml-auto"></div></td>
@@ -394,7 +445,7 @@
                 error: function(xhr, status, err) {
                     console.error("Laporan error:", err);
                     $('#tableBodyMonthlyTabung').html('<tr><td colspan="10" class="p-4 text-center text-rose-500 text-xs">Gagal memuat data laporan dari server.</td></tr>');
-                    $('#tableBodySummaryTabung').html('<tr><td colspan="7" class="p-4 text-center text-rose-500 text-xs">Gagal memuat data laporan dari server.</td></tr>');
+                    $('#tableBodySummaryTabung').html('<tr><td colspan="6" class="p-4 text-center text-rose-500 text-xs">Gagal memuat data laporan dari server.</td></tr>');
                 },
                 complete: function() {
                     btnText.text('Tampilkan');
@@ -410,17 +461,16 @@
             renderSummaryTable(res);
         }
 
-        // 1. Matriks Utama: Bulan sebagai Header Kolom & Tabung sebagai Baris
+        // 1. Matriks Utama: Bulan sebagai Header Kolom & Tabung sebagai Baris (Dengan Kotak Warna Standar)
         function renderMonthlyMatrixTable(res) {
             const tubeMatrix = res.monthly_matrix || [];
             const monthList = res.month_list || [];
 
-            // A. Table Header (Bulan Horizontal)
+            // A. Table Header (Bulan Horizontal, Tanpa Kode)
             let thHtml = `
                 <tr>
                     <th class="py-2.5 px-3 w-12 text-center">No</th>
-                    <th class="py-2.5 px-3 w-28 text-center">Kode</th>
-                    <th class="py-2.5 px-3 text-left min-w-[200px]">Jenis Tabung / Spesimen</th>
+                    <th class="py-2.5 px-3 text-left min-w-[220px]">Jenis Tabung / Spesimen</th>
             `;
             monthList.forEach(m => {
                 thHtml += `<th class="py-2.5 px-3 text-center min-w-[95px]">${m.label}</th>`;
@@ -444,13 +494,15 @@
             let grandRajal = 0, grandRanap = 0, grandLainnya = 0, grandTotal = 0;
 
             if (tubeMatrix.length === 0) {
-                tbHtml = `<tr><td colspan="${monthList.length + 7}" class="p-6 text-center text-slate-400">Tidak ada data penggunaan tabung pada periode ini.</td></tr>`;
+                tbHtml = `<tr><td colspan="${monthList.length + 6}" class="p-6 text-center text-slate-400">Tidak ada data penggunaan tabung pada periode ini.</td></tr>`;
             } else {
                 tubeMatrix.forEach(tube => {
                     grandRajal += tube.total_rajal;
                     grandRanap += tube.total_ranap;
                     grandLainnya += tube.total_lainnya;
                     grandTotal += tube.total_all;
+
+                    const tubeColor = getTubeColor(tube.name, tube.code);
 
                     // Build cells for each month
                     let rowMonthCells = '';
@@ -479,15 +531,19 @@
                         subLainnyaCells += `<td class="py-1 px-3 text-center font-mono ${mVal.lainnya === 0 ? 'text-slate-300' : 'text-amber-700 font-medium'}">${mVal.lainnya.toLocaleString()}</td>`;
                     });
 
-                    // Main Tube Row
+                    // Main Tube Row (Kotak Warna Tabung Standar)
                     tbHtml += `
                         <tr class="hover:bg-slate-50 cursor-pointer tube-main-row transition-colors" data-tube-code="${tube.code}">
                             <td class="py-2.5 px-3 text-center text-slate-400 font-mono">${no++}</td>
-                            <td class="py-2.5 px-3 text-center font-mono font-bold text-slate-700">${tube.code}</td>
                             <td class="py-2.5 px-3 text-left font-semibold text-slate-900 search-tube-target">
                                 <div class="flex items-center justify-between gap-2">
-                                    <span>${tube.name}</span>
-                                    <span class="inline-flex items-center justify-center w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] expand-indicator font-mono transition-transform" title="Klik untuk rincian unit">${allDetailsExpanded ? '▲' : '▼'}</span>
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <span class="w-3.5 h-3.5 rounded-sm shadow-xs border shrink-0" 
+                                              style="background-color: ${tubeColor.bg}; border-color: ${tubeColor.border};" 
+                                              title="${tubeColor.label}"></span>
+                                        <span class="truncate font-semibold text-slate-800">${tube.name}</span>
+                                    </div>
+                                    <span class="inline-flex items-center justify-center w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] expand-indicator font-mono transition-transform shrink-0" title="Klik untuk rincian unit">${allDetailsExpanded ? '▲' : '▼'}</span>
                                 </div>
                             </td>
                             ${rowMonthCells}
@@ -501,8 +557,8 @@
                     // Sub-rows: Rajal, Ranap, Lainnya
                     tbHtml += `
                         <tr class="tube-sub-row tube-sub-${tube.code} bg-blue-50/40 text-[11px] border-l-2 border-blue-500 ${allDetailsExpanded ? '' : 'hidden'}">
-                            <td colspan="2"></td>
-                            <td class="py-1 px-3 text-left pl-6 text-blue-700 font-semibold flex items-center gap-1.5">
+                            <td></td>
+                            <td class="py-1 px-3 text-left pl-8 text-blue-700 font-semibold flex items-center gap-1.5">
                                 <span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span>
                                 <span>Rawat Jalan</span>
                             </td>
@@ -511,8 +567,8 @@
                             <td colspan="3"></td>
                         </tr>
                         <tr class="tube-sub-row tube-sub-${tube.code} bg-emerald-50/40 text-[11px] border-l-2 border-emerald-500 ${allDetailsExpanded ? '' : 'hidden'}">
-                            <td colspan="2"></td>
-                            <td class="py-1 px-3 text-left pl-6 text-emerald-700 font-semibold flex items-center gap-1.5">
+                            <td></td>
+                            <td class="py-1 px-3 text-left pl-8 text-emerald-700 font-semibold flex items-center gap-1.5">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
                                 <span>Rawat Inap</span>
                             </td>
@@ -522,8 +578,8 @@
                             <td colspan="2"></td>
                         </tr>
                         <tr class="tube-sub-row tube-sub-${tube.code} bg-amber-50/40 text-[11px] border-l-2 border-amber-500 ${allDetailsExpanded ? '' : 'hidden'}">
-                            <td colspan="2"></td>
-                            <td class="py-1 px-3 text-left pl-6 text-amber-700 font-semibold flex items-center gap-1.5">
+                            <td></td>
+                            <td class="py-1 px-3 text-left pl-8 text-amber-700 font-semibold flex items-center gap-1.5">
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block"></span>
                                 <span>Lainnya (MCU / Luar)</span>
                             </td>
@@ -549,7 +605,7 @@
 
                 tbHtml += `
                     <tr class="bg-slate-100 font-black border-t-2 border-slate-300">
-                        <td colspan="3" class="py-2.5 px-3 text-left font-bold">TOTAL PENGGUNAAN</td>
+                        <td colspan="2" class="py-2.5 px-3 text-left font-bold">TOTAL PENGGUNAAN</td>
                         ${mSumCells}
                         <td class="py-2.5 px-3 text-right font-mono text-blue-700">${grandRajal.toLocaleString()}</td>
                         <td class="py-2.5 px-3 text-right font-mono text-emerald-700">${grandRanap.toLocaleString()}</td>
@@ -577,20 +633,24 @@
             });
         }
 
-        // 2. Grafik Tren Bulanan
+        // 2. Grafik Tren Bulanan (Dataset Mengikuti Warna Tabung Standar)
         function renderMonthlyChart(res) {
             const summaryList = res.summary_tabung || [];
             const monthlySummary = res.monthly_summary || [];
             const sampleNames = summaryList.map(s => s.sample_name);
             const chartLabels = monthlySummary.map(m => m.label);
-            const palette = ['#2563eb', '#059669', '#d97706', '#7c3aed', '#db2777', '#0891b2', '#4b5563', '#ea580c', '#14b8a6'];
 
-            const chartDatasets = sampleNames.map((sName, idx) => ({
-                label: sName,
-                data: monthlySummary.map(m => m.samples[sName] || 0),
-                backgroundColor: palette[idx % palette.length],
-                borderRadius: 4
-            }));
+            const chartDatasets = summaryList.map(s => {
+                const tColor = getTubeColor(s.sample_name, s.sample_code);
+                return {
+                    label: s.sample_name,
+                    data: monthlySummary.map(m => m.samples[s.sample_name] || 0),
+                    backgroundColor: tColor.bg,
+                    borderColor: tColor.border,
+                    borderWidth: 1,
+                    borderRadius: 4
+                };
+            });
 
             if (monthlyChart) {
                 monthlyChart.destroy();
@@ -630,7 +690,7 @@
             }
         }
 
-        // 3. Tabel Rekapitulasi Ringkas Layanan (Bawah Chart)
+        // 3. Tabel Rekapitulasi Ringkas Layanan (Bawah Chart, Tanpa Kode)
         function renderSummaryTable(res) {
             const summaryList = res.summary_tabung || [];
             let sumHtml = '';
@@ -638,13 +698,14 @@
             let no = 1;
 
             if (summaryList.length === 0) {
-                sumHtml = '<tr><td colspan="7" class="p-4 text-center text-slate-400">Tidak ada data penggunaan tabung pada periode ini.</td></tr>';
+                sumHtml = '<tr><td colspan="6" class="p-4 text-center text-slate-400">Tidak ada data penggunaan tabung pada periode ini.</td></tr>';
             } else {
                 summaryList.forEach(row => {
                     const r = parseInt(row.total_rajal || 0);
                     const inP = parseInt(row.total_ranap || 0);
                     const l = parseInt(row.total_lainnya || 0);
                     const tot = parseInt(row.total_keseluruhan || 0);
+                    const tubeColor = getTubeColor(row.sample_name, row.sample_code);
 
                     sumRajal += r;
                     sumRanap += inP;
@@ -654,8 +715,14 @@
                     sumHtml += `
                         <tr class="hover:bg-slate-50 summary-row-item">
                             <td class="py-2.5 px-3 text-center text-slate-400 font-mono">${no++}</td>
-                            <td class="py-2.5 px-3 text-center font-mono font-bold text-slate-600">${row.sample_code}</td>
-                            <td class="py-2.5 px-3 font-semibold text-slate-900 tabung-name-target">${row.sample_name}</td>
+                            <td class="py-2.5 px-3 text-left font-semibold text-slate-900 tabung-name-target">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="w-3.5 h-3.5 rounded-sm shadow-xs border shrink-0" 
+                                          style="background-color: ${tubeColor.bg}; border-color: ${tubeColor.border};" 
+                                          title="${tubeColor.label}"></span>
+                                    <span>${row.sample_name}</span>
+                                </div>
+                            </td>
                             <td class="py-2.5 px-3 text-right font-mono text-blue-700">${r.toLocaleString()}</td>
                             <td class="py-2.5 px-3 text-right font-mono text-emerald-700">${inP.toLocaleString()}</td>
                             <td class="py-2.5 px-3 text-right font-mono text-amber-700">${l.toLocaleString()}</td>
@@ -667,7 +734,7 @@
                 // Summary Total Row
                 sumHtml += `
                     <tr class="bg-slate-100 font-black border-t-2 border-slate-300">
-                        <td colspan="3" class="py-2.5 px-3 text-left">TOTAL KESELURUHAN</td>
+                        <td colspan="2" class="py-2.5 px-3 text-left">TOTAL KESELURUHAN</td>
                         <td class="py-2.5 px-3 text-right font-mono text-blue-700">${sumRajal.toLocaleString()}</td>
                         <td class="py-2.5 px-3 text-right font-mono text-emerald-700">${sumRanap.toLocaleString()}</td>
                         <td class="py-2.5 px-3 text-right font-mono text-amber-700">${sumLainnya.toLocaleString()}</td>
@@ -777,11 +844,10 @@
             const query = $(this).val().toLowerCase();
             $('.tube-main-row').each(function() {
                 const name = $(this).find('.search-tube-target').text().toLowerCase();
-                const code = $(this).find('td:nth-child(2)').text().toLowerCase();
                 const tubeCode = $(this).data('tube-code');
                 const subRows = $(`.tube-sub-${tubeCode}`);
 
-                if (name.includes(query) || code.includes(query)) {
+                if (name.includes(query)) {
                     $(this).show();
                     if (allDetailsExpanded) subRows.removeClass('hidden');
                 } else {
@@ -796,8 +862,7 @@
             const query = $(this).val().toLowerCase();
             $('.summary-row-item').each(function() {
                 const text = $(this).find('.tabung-name-target').text().toLowerCase();
-                const code = $(this).find('td:nth-child(2)').text().toLowerCase();
-                if (text.includes(query) || code.includes(query)) {
+                if (text.includes(query)) {
                     $(this).show();
                 } else {
                     $(this).hide();
