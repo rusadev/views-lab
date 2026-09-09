@@ -108,14 +108,74 @@
 
             <!-- ================= TAMPILAN BULANAN ================= -->
             <div id="section-view-bulanan" class="space-y-4">
-                <!-- 1. Rekapitulasi Jenis Tabung per Layanan -->
+                
+                <!-- 1. MATRIKS TREN KONSUMSI TABUNG PER BULAN (UTAMA & PALING ATAS) -->
+                <div class="bg-white border border-slate-200 rounded p-4 space-y-3">
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 border-b border-slate-200 pb-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-blue-100 text-blue-800 uppercase tracking-wider">Tabel Utama</span>
+                                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Matriks Tren Konsumsi Tabung per Bulan</h3>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Daftar jenis tabung & spesimen dengan distribusi kuantitas pemakaian per bulan sepanjang periode.</p>
+                        </div>
+
+                        <!-- Filter Controls & Actions Bar -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <!-- Service Type Segmented Filter -->
+                            <div class="inline-flex border border-slate-300 rounded overflow-hidden bg-slate-100 p-0.5 text-xs font-semibold">
+                                <button type="button" class="btn-service-filter px-2.5 py-1 rounded bg-white text-blue-700 shadow-sm transition-all" data-service="all">Semua Unit</button>
+                                <button type="button" class="btn-service-filter px-2.5 py-1 rounded text-slate-600 hover:text-slate-900 transition-all" data-service="rajal">Rawat Jalan</button>
+                                <button type="button" class="btn-service-filter px-2.5 py-1 rounded text-slate-600 hover:text-slate-900 transition-all" data-service="ranap">Rawat Inap</button>
+                                <button type="button" class="btn-service-filter px-2.5 py-1 rounded text-slate-600 hover:text-slate-900 transition-all" data-service="lainnya">Lainnya</button>
+                            </div>
+
+                            <!-- Expand/Collapse Details Toggle -->
+                            <button type="button" id="btn-toggle-all-details" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-colors flex items-center gap-1">
+                                <span id="toggle-details-text">Perluas Rincian (+)</span>
+                            </button>
+
+                            <!-- Live Search Input -->
+                            <input type="text" id="filter-monthly-tabung-input" placeholder="Cari tabung / spesimen..." class="h-8 px-3 text-xs border border-slate-300 rounded outline-none focus:border-blue-600 w-48 lg:w-56">
+                        </div>
+                    </div>
+
+                    <!-- Table with Months as Column Headers -->
+                    <div class="overflow-x-auto">
+                        <table id="tableMonthlyTabung" class="w-full text-xs text-center border-collapse border border-slate-200">
+                            <thead id="tableHeadMonthlyTabung" class="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
+                                <!-- Generated Dynamic Month Headers -->
+                            </thead>
+                            <tbody id="tableBodyMonthlyTabung" class="divide-y divide-slate-200 text-slate-800">
+                                <!-- Generated Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                        <span>* Tip: Klik baris tabung untuk melihat rincian per unit layanan (Rajal, Ranap, Lainnya) tiap bulan.</span>
+                        <span id="monthly-table-count" class="font-mono font-semibold text-slate-700"></span>
+                    </div>
+                </div>
+
+                <!-- 2. GRAFIK TREN PEMAKAIAN TABUNG PER BULAN -->
+                <div class="bg-white border border-slate-200 rounded p-4">
+                    <div class="border-b border-slate-200 pb-2 mb-3">
+                        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Grafik Tren Pemakaian Tabung per Bulan</h3>
+                        <p class="text-[11px] text-slate-500">Visualisasi komparasi dinamika konsumsi jenis tabung spesimen antar bulan.</p>
+                    </div>
+                    <div class="w-full min-h-[280px]">
+                        <canvas id="tabungMonthlyChart" style="width: 100%; height: 280px;"></canvas>
+                    </div>
+                </div>
+
+                <!-- 3. REKAPITULASI KONSUMSI PER JENIS TABUNG / SPESIMEN (AUDIT RINGKAS) -->
                 <div class="bg-white border border-slate-200 rounded p-4 space-y-3">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 pb-3">
                         <div>
-                            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Rekapitulasi Konsumsi per Jenis Tabung / Spesimen</h3>
-                            <p class="text-[11px] text-slate-500">Volume pemakaian tabung per kategori spesimen dan unit pelayanan (Rawat Jalan, Rawat Inap, Lainnya).</p>
+                            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Rekapitulasi Layanan per Jenis Tabung (Total Periode)</h3>
+                            <p class="text-[11px] text-slate-500">Ringkasan total tabung yang terpakai selama periode berdasarkan unit pelayanan (Rawat Jalan, Rawat Inap, Lainnya).</p>
                         </div>
-                        <input type="text" id="filter-tabung-input" placeholder="Cari jenis tabung/spesimen..." class="h-8 px-3 text-xs border border-slate-300 rounded outline-none focus:border-blue-600 w-full sm:w-64">
+                        <input type="text" id="filter-tabung-input" placeholder="Cari rekapitulasi..." class="h-8 px-3 text-xs border border-slate-300 rounded outline-none focus:border-blue-600 w-full sm:w-64">
                     </div>
 
                     <div class="overflow-x-auto">
@@ -125,9 +185,9 @@
                                     <th class="py-2.5 px-3 w-12 text-center">No</th>
                                     <th class="py-2.5 px-3 w-28 text-center">Kode Spesimen</th>
                                     <th class="py-2.5 px-3">Jenis Tabung / Spesimen</th>
-                                    <th class="py-2.5 px-3 w-28 text-right">Rawat Jalan</th>
-                                    <th class="py-2.5 px-3 w-28 text-right">Rawat Inap</th>
-                                    <th class="py-2.5 px-3 w-28 text-right">Lainnya</th>
+                                    <th class="py-2.5 px-3 w-28 text-right text-blue-700">Rawat Jalan</th>
+                                    <th class="py-2.5 px-3 w-28 text-right text-emerald-700">Rawat Inap</th>
+                                    <th class="py-2.5 px-3 w-28 text-right text-amber-700">Lainnya</th>
                                     <th class="py-2.5 px-3 w-32 text-right bg-slate-200">Total Tabung</th>
                                 </tr>
                             </thead>
@@ -138,35 +198,6 @@
                     </div>
                 </div>
 
-                <!-- 2. Rincian Konsumsi Tabung per Bulan -->
-                <div class="bg-white border border-slate-200 rounded p-4 space-y-3">
-                    <div class="border-b border-slate-200 pb-2">
-                        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Rincian Tren Konsumsi per Bulan</h3>
-                        <p class="text-[11px] text-slate-500">Distribusi volume penggunaan tabung dan spesimen per bulan sepanjang rentang waktu laporan.</p>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table id="tableMonthlyTabung" class="w-full text-xs text-center border-collapse border border-slate-200">
-                            <thead id="tableHeadMonthlyTabung" class="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
-                                <!-- Generated Dynamic Headers -->
-                            </thead>
-                            <tbody id="tableBodyMonthlyTabung" class="divide-y divide-slate-200 text-slate-800">
-                                <!-- Generated Dynamic Rows -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- 3. Grafik Tren Pemakaian Tabung per Bulan -->
-                <div class="bg-white border border-slate-200 rounded p-4">
-                    <div class="border-b border-slate-200 pb-2 mb-3">
-                        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Grafik Tren Pemakaian Tabung per Bulan</h3>
-                        <p class="text-[11px] text-slate-500">Perbandingan pergerakan volume konsumsi jenis tabung utama tiap bulan.</p>
-                    </div>
-                    <div class="w-full min-h-[280px]">
-                        <canvas id="tabungMonthlyChart" style="width: 100%; height: 280px;"></canvas>
-                    </div>
-                </div>
             </div>
 
             <!-- ================= TAMPILAN HARIAN ================= -->
@@ -222,6 +253,8 @@
         // Global State & Charts
         let currentReportData = null;
         let activeViewMode = 'bulanan'; // 'bulanan' or 'harian'
+        let monthlyServiceFilter = 'all'; // 'all', 'rajal', 'ranap', 'lainnya'
+        let allDetailsExpanded = false;
         let monthlyChart = null;
         let dailyChart = null;
 
@@ -244,6 +277,28 @@
             $('#section-view-harian').removeClass('hidden');
             $('#section-view-bulanan').addClass('hidden');
             if (currentReportData) renderDailyView(currentReportData);
+        });
+
+        // Service Filter Segmented Control Handler
+        $('.btn-service-filter').on('click', function() {
+            $('.btn-service-filter').removeClass('bg-white text-blue-700 shadow-sm').addClass('text-slate-600 hover:text-slate-900');
+            $(this).addClass('bg-white text-blue-700 shadow-sm').removeClass('text-slate-600 hover:text-slate-900');
+            monthlyServiceFilter = $(this).data('service');
+            if (currentReportData) renderMonthlyMatrixTable(currentReportData);
+        });
+
+        // Toggle Expand/Collapse All Details
+        $('#btn-toggle-all-details').on('click', function() {
+            allDetailsExpanded = !allDetailsExpanded;
+            if (allDetailsExpanded) {
+                $('#toggle-details-text').text('Ciutkan Rincian (-)');
+                $('.tube-sub-row').removeClass('hidden');
+                $('.expand-indicator').text('▲');
+            } else {
+                $('#toggle-details-text').text('Perluas Rincian (+)');
+                $('.tube-sub-row').addClass('hidden');
+                $('.expand-indicator').text('▼');
+            }
         });
 
         // Date Presets Handler
@@ -292,9 +347,9 @@
                     </tr>
                 `;
             }
-            $('#tableBodySummaryTabung').html(skelHtml);
-            $('#tableHeadMonthlyTabung').html('<tr><th class="p-2.5">Memuat header...</th></tr>');
+            $('#tableHeadMonthlyTabung').html('<tr><th class="p-2.5">Memuat header bulan...</th></tr>');
             $('#tableBodyMonthlyTabung').html(skelHtml);
+            $('#tableBodySummaryTabung').html(skelHtml);
             $('#tableHeadDailyTabung').html('<tr><th class="p-2">Tanggal</th><th class="p-2 bg-slate-200">Total</th></tr>');
             $('#tableBodyDailyTabung').html(skelHtml);
         }
@@ -338,6 +393,7 @@
                 },
                 error: function(xhr, status, err) {
                     console.error("Laporan error:", err);
+                    $('#tableBodyMonthlyTabung').html('<tr><td colspan="10" class="p-4 text-center text-rose-500 text-xs">Gagal memuat data laporan dari server.</td></tr>');
                     $('#tableBodySummaryTabung').html('<tr><td colspan="7" class="p-4 text-center text-rose-500 text-xs">Gagal memuat data laporan dari server.</td></tr>');
                 },
                 complete: function() {
@@ -349,122 +405,183 @@
 
         // ================= RENDERING: TAMPILAN BULANAN =================
         function renderMonthlyView(res) {
-            const summaryList = res.summary_tabung || [];
+            renderMonthlyMatrixTable(res);
+            renderMonthlyChart(res);
+            renderSummaryTable(res);
+        }
+
+        // 1. Matriks Utama: Bulan sebagai Header Kolom & Tabung sebagai Baris
+        function renderMonthlyMatrixTable(res) {
+            const tubeMatrix = res.monthly_matrix || [];
             const monthList = res.month_list || [];
-            const monthlySummary = res.monthly_summary || [];
 
-            // 1. Render Table Summary per Specimen (Sheet 1 equivalent)
-            let sumHtml = '';
-            let sumRajal = 0, sumRanap = 0, sumLainnya = 0, sumTotal = 0;
+            // A. Table Header (Bulan Horizontal)
+            let thHtml = `
+                <tr>
+                    <th class="py-2.5 px-3 w-12 text-center">No</th>
+                    <th class="py-2.5 px-3 w-28 text-center">Kode</th>
+                    <th class="py-2.5 px-3 text-left min-w-[200px]">Jenis Tabung / Spesimen</th>
+            `;
+            monthList.forEach(m => {
+                thHtml += `<th class="py-2.5 px-3 text-center min-w-[95px]">${m.label}</th>`;
+            });
+            thHtml += `
+                    <th class="py-2.5 px-3 text-right w-24 text-blue-700">Rajal</th>
+                    <th class="py-2.5 px-3 text-right w-24 text-emerald-700">Ranap</th>
+                    <th class="py-2.5 px-3 text-right w-24 text-amber-700">Lainnya</th>
+                    <th class="py-2.5 px-3 text-right w-28 bg-slate-200">Total Tabung</th>
+                </tr>
+            `;
+            $('#tableHeadMonthlyTabung').html(thHtml);
+
+            // B. Table Body (Rows per Tube + Sub-rows Accordion per Layanan)
+            let tbHtml = '';
             let no = 1;
+            const monthSums = {};
+            monthList.forEach(m => {
+                monthSums[m.key] = { rajal: 0, ranap: 0, lainnya: 0, total: 0 };
+            });
+            let grandRajal = 0, grandRanap = 0, grandLainnya = 0, grandTotal = 0;
 
-            if (summaryList.length === 0) {
-                sumHtml = '<tr><td colspan="7" class="p-4 text-center text-slate-400">Tidak ada data penggunaan tabung pada periode ini.</td></tr>';
+            if (tubeMatrix.length === 0) {
+                tbHtml = `<tr><td colspan="${monthList.length + 7}" class="p-6 text-center text-slate-400">Tidak ada data penggunaan tabung pada periode ini.</td></tr>`;
             } else {
-                summaryList.forEach(row => {
-                    const r = parseInt(row.total_rajal || 0);
-                    const inP = parseInt(row.total_ranap || 0);
-                    const l = parseInt(row.total_lainnya || 0);
-                    const tot = parseInt(row.total_keseluruhan || 0);
+                tubeMatrix.forEach(tube => {
+                    grandRajal += tube.total_rajal;
+                    grandRanap += tube.total_ranap;
+                    grandLainnya += tube.total_lainnya;
+                    grandTotal += tube.total_all;
 
-                    sumRajal += r;
-                    sumRanap += inP;
-                    sumLainnya += l;
-                    sumTotal += tot;
+                    // Build cells for each month
+                    let rowMonthCells = '';
+                    let subRajalCells = '';
+                    let subRanapCells = '';
+                    let subLainnyaCells = '';
 
-                    sumHtml += `
-                        <tr class="hover:bg-slate-50 summary-row-item">
-                            <td class="py-2.5 px-3 text-center text-slate-400">${no++}</td>
-                            <td class="py-2.5 px-3 text-center font-mono font-semibold text-slate-600">${row.sample_code}</td>
-                            <td class="py-2.5 px-3 font-semibold text-slate-900 tabung-name-target">${row.sample_name}</td>
-                            <td class="py-2.5 px-3 text-right font-mono">${r.toLocaleString()}</td>
-                            <td class="py-2.5 px-3 text-right font-mono">${inP.toLocaleString()}</td>
-                            <td class="py-2.5 px-3 text-right font-mono text-amber-700">${l.toLocaleString()}</td>
-                            <td class="py-2.5 px-3 text-right font-mono font-bold bg-slate-50">${tot.toLocaleString()}</td>
+                    monthList.forEach(m => {
+                        const mVal = tube.months[m.key] || { rajal: 0, ranap: 0, lainnya: 0, total: 0 };
+                        monthSums[m.key].rajal += mVal.rajal;
+                        monthSums[m.key].ranap += mVal.ranap;
+                        monthSums[m.key].lainnya += mVal.lainnya;
+                        monthSums[m.key].total += mVal.total;
+
+                        let dispVal = 0;
+                        if (monthlyServiceFilter === 'all') dispVal = mVal.total;
+                        else if (monthlyServiceFilter === 'rajal') dispVal = mVal.rajal;
+                        else if (monthlyServiceFilter === 'ranap') dispVal = mVal.ranap;
+                        else if (monthlyServiceFilter === 'lainnya') dispVal = mVal.lainnya;
+
+                        rowMonthCells += `<td class="py-2 px-3 text-center font-mono ${dispVal === 0 ? 'text-slate-300' : 'font-semibold text-slate-800'}">${dispVal.toLocaleString()}</td>`;
+
+                        // Sub-row cells
+                        subRajalCells += `<td class="py-1 px-3 text-center font-mono ${mVal.rajal === 0 ? 'text-slate-300' : 'text-blue-700 font-medium'}">${mVal.rajal.toLocaleString()}</td>`;
+                        subRanapCells += `<td class="py-1 px-3 text-center font-mono ${mVal.ranap === 0 ? 'text-slate-300' : 'text-emerald-700 font-medium'}">${mVal.ranap.toLocaleString()}</td>`;
+                        subLainnyaCells += `<td class="py-1 px-3 text-center font-mono ${mVal.lainnya === 0 ? 'text-slate-300' : 'text-amber-700 font-medium'}">${mVal.lainnya.toLocaleString()}</td>`;
+                    });
+
+                    // Main Tube Row
+                    tbHtml += `
+                        <tr class="hover:bg-slate-50 cursor-pointer tube-main-row transition-colors" data-tube-code="${tube.code}">
+                            <td class="py-2.5 px-3 text-center text-slate-400 font-mono">${no++}</td>
+                            <td class="py-2.5 px-3 text-center font-mono font-bold text-slate-700">${tube.code}</td>
+                            <td class="py-2.5 px-3 text-left font-semibold text-slate-900 search-tube-target">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span>${tube.name}</span>
+                                    <span class="inline-flex items-center justify-center w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] expand-indicator font-mono transition-transform" title="Klik untuk rincian unit">${allDetailsExpanded ? '▲' : '▼'}</span>
+                                </div>
+                            </td>
+                            ${rowMonthCells}
+                            <td class="py-2.5 px-3 text-right font-mono text-blue-700 font-medium">${tube.total_rajal.toLocaleString()}</td>
+                            <td class="py-2.5 px-3 text-right font-mono text-emerald-700 font-medium">${tube.total_ranap.toLocaleString()}</td>
+                            <td class="py-2.5 px-3 text-right font-mono text-amber-700 font-medium">${tube.total_lainnya.toLocaleString()}</td>
+                            <td class="py-2.5 px-3 text-right font-mono font-black bg-slate-50">${tube.total_all.toLocaleString()}</td>
+                        </tr>
+                    `;
+
+                    // Sub-rows: Rajal, Ranap, Lainnya
+                    tbHtml += `
+                        <tr class="tube-sub-row tube-sub-${tube.code} bg-blue-50/40 text-[11px] border-l-2 border-blue-500 ${allDetailsExpanded ? '' : 'hidden'}">
+                            <td colspan="2"></td>
+                            <td class="py-1 px-3 text-left pl-6 text-blue-700 font-semibold flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span>
+                                <span>Rawat Jalan</span>
+                            </td>
+                            ${subRajalCells}
+                            <td class="py-1 px-3 text-right font-mono text-blue-700 font-bold">${tube.total_rajal.toLocaleString()}</td>
+                            <td colspan="3"></td>
+                        </tr>
+                        <tr class="tube-sub-row tube-sub-${tube.code} bg-emerald-50/40 text-[11px] border-l-2 border-emerald-500 ${allDetailsExpanded ? '' : 'hidden'}">
+                            <td colspan="2"></td>
+                            <td class="py-1 px-3 text-left pl-6 text-emerald-700 font-semibold flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                                <span>Rawat Inap</span>
+                            </td>
+                            ${subRanapCells}
+                            <td></td>
+                            <td class="py-1 px-3 text-right font-mono text-emerald-700 font-bold">${tube.total_ranap.toLocaleString()}</td>
+                            <td colspan="2"></td>
+                        </tr>
+                        <tr class="tube-sub-row tube-sub-${tube.code} bg-amber-50/40 text-[11px] border-l-2 border-amber-500 ${allDetailsExpanded ? '' : 'hidden'}">
+                            <td colspan="2"></td>
+                            <td class="py-1 px-3 text-left pl-6 text-amber-700 font-semibold flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block"></span>
+                                <span>Lainnya (MCU / Luar)</span>
+                            </td>
+                            ${subLainnyaCells}
+                            <td colspan="2"></td>
+                            <td class="py-1 px-3 text-right font-mono text-amber-700 font-bold">${tube.total_lainnya.toLocaleString()}</td>
+                            <td></td>
                         </tr>
                     `;
                 });
 
-                // Summary Total Row
-                sumHtml += `
+                // Total Summary Row
+                let mSumCells = '';
+                monthList.forEach(m => {
+                    let sVal = 0;
+                    if (monthlyServiceFilter === 'all') sVal = monthSums[m.key].total;
+                    else if (monthlyServiceFilter === 'rajal') sVal = monthSums[m.key].rajal;
+                    else if (monthlyServiceFilter === 'ranap') sVal = monthSums[m.key].ranap;
+                    else if (monthlyServiceFilter === 'lainnya') sVal = monthSums[m.key].lainnya;
+
+                    mSumCells += `<td class="py-2.5 px-3 text-center font-mono font-black">${sVal.toLocaleString()}</td>`;
+                });
+
+                tbHtml += `
                     <tr class="bg-slate-100 font-black border-t-2 border-slate-300">
-                        <td colspan="3" class="py-2.5 px-3 text-left">TOTAL PENGGUNAAN</td>
-                        <td class="py-2.5 px-3 text-right font-mono">${sumRajal.toLocaleString()}</td>
-                        <td class="py-2.5 px-3 text-right font-mono">${sumRanap.toLocaleString()}</td>
-                        <td class="py-2.5 px-3 text-right font-mono text-amber-700">${sumLainnya.toLocaleString()}</td>
-                        <td class="py-2.5 px-3 text-right font-mono font-black bg-slate-200">${sumTotal.toLocaleString()}</td>
+                        <td colspan="3" class="py-2.5 px-3 text-left font-bold">TOTAL PENGGUNAAN</td>
+                        ${mSumCells}
+                        <td class="py-2.5 px-3 text-right font-mono text-blue-700">${grandRajal.toLocaleString()}</td>
+                        <td class="py-2.5 px-3 text-right font-mono text-emerald-700">${grandRanap.toLocaleString()}</td>
+                        <td class="py-2.5 px-3 text-right font-mono text-amber-700">${grandLainnya.toLocaleString()}</td>
+                        <td class="py-2.5 px-3 text-right font-mono font-black bg-slate-200">${grandTotal.toLocaleString()}</td>
                     </tr>
                 `;
             }
-            $('#tableBodySummaryTabung').html(sumHtml);
 
-            // 2. Render Table Monthly Breakdown Matrix
-            const sampleNames = summaryList.map(s => s.sample_name);
-            let mHeadHtml = `
-                <tr>
-                    <th class="py-2 px-3 text-left w-36">Bulan</th>
-            `;
-            sampleNames.forEach(s => {
-                mHeadHtml += `<th class="py-2 px-3">${s}</th>`;
+            $('#tableBodyMonthlyTabung').html(tbHtml);
+            $('#monthly-table-count').text(`${tubeMatrix.length} Jenis Spesimen`);
+
+            // Row click handler to toggle sub-rows
+            $('.tube-main-row').off('click').on('click', function() {
+                const code = $(this).data('tube-code');
+                const subRows = $(`.tube-sub-${code}`);
+                const indicator = $(this).find('.expand-indicator');
+                if (subRows.hasClass('hidden')) {
+                    subRows.removeClass('hidden');
+                    indicator.text('▲');
+                } else {
+                    subRows.addClass('hidden');
+                    indicator.text('▼');
+                }
             });
-            mHeadHtml += `
-                    <th class="py-2 px-3 text-right w-24">Rajal</th>
-                    <th class="py-2 px-3 text-right w-24">Ranap</th>
-                    <th class="py-2 px-3 text-right w-24">Lainnya</th>
-                    <th class="py-2 px-3 text-right w-28 bg-slate-200">Total</th>
-                </tr>
-            `;
-            $('#tableHeadMonthlyTabung').html(mHeadHtml);
+        }
 
-            let mBodyHtml = '';
-            const sampleColSums = {};
-            sampleNames.forEach(s => sampleColSums[s] = 0);
-            let mSumRajal = 0, mSumRanap = 0, mSumLainnya = 0, mSumTotal = 0;
-
-            if (monthlySummary.length === 0) {
-                mBodyHtml = `<tr><td colspan="${sampleNames.length + 5}" class="p-4 text-center text-slate-400">Tidak ada data bulanan.</td></tr>`;
-            } else {
-                monthlySummary.forEach(mRow => {
-                    mSumRajal += mRow.rajal;
-                    mSumRanap += mRow.ranap;
-                    mSumLainnya += mRow.lainnya;
-                    mSumTotal += mRow.total;
-
-                    mBodyHtml += `<tr class="hover:bg-slate-50">`;
-                    mBodyHtml += `<td class="py-2 px-3 text-left font-bold text-slate-800">${mRow.label}</td>`;
-
-                    sampleNames.forEach(s => {
-                        const val = mRow.samples[s] || 0;
-                        sampleColSums[s] += val;
-                        mBodyHtml += `<td class="py-2 px-3 font-mono ${val === 0 ? 'text-slate-300' : 'text-slate-800'}">${val.toLocaleString()}</td>`;
-                    });
-
-                    mBodyHtml += `<td class="py-2 px-3 text-right font-mono">${mRow.rajal.toLocaleString()}</td>`;
-                    mBodyHtml += `<td class="py-2 px-3 text-right font-mono">${mRow.ranap.toLocaleString()}</td>`;
-                    mBodyHtml += `<td class="py-2 px-3 text-right font-mono text-amber-700">${mRow.lainnya.toLocaleString()}</td>`;
-                    mBodyHtml += `<td class="py-2 px-3 text-right font-mono font-bold bg-slate-50">${mRow.total.toLocaleString()}</td>`;
-                    mBodyHtml += `</tr>`;
-                });
-
-                // Monthly Total Row
-                mBodyHtml += `
-                    <tr class="bg-slate-100 font-black border-t-2 border-slate-300">
-                        <td class="py-2 px-3 text-left">TOTAL</td>
-                `;
-                sampleNames.forEach(s => {
-                    mBodyHtml += `<td class="py-2 px-3 font-mono">${sampleColSums[s].toLocaleString()}</td>`;
-                });
-                mBodyHtml += `
-                        <td class="py-2 px-3 text-right font-mono">${mSumRajal.toLocaleString()}</td>
-                        <td class="py-2 px-3 text-right font-mono">${mSumRanap.toLocaleString()}</td>
-                        <td class="py-2 px-3 text-right font-mono text-amber-700">${mSumLainnya.toLocaleString()}</td>
-                        <td class="py-2 px-3 text-right font-mono font-black bg-slate-200">${mSumTotal.toLocaleString()}</td>
-                    </tr>
-                `;
-            }
-            $('#tableBodyMonthlyTabung').html(mBodyHtml);
-
-            // 3. Render Monthly Chart
+        // 2. Grafik Tren Bulanan
+        function renderMonthlyChart(res) {
+            const summaryList = res.summary_tabung || [];
+            const monthlySummary = res.monthly_summary || [];
+            const sampleNames = summaryList.map(s => s.sample_name);
             const chartLabels = monthlySummary.map(m => m.label);
             const palette = ['#2563eb', '#059669', '#d97706', '#7c3aed', '#db2777', '#0891b2', '#4b5563', '#ea580c', '#14b8a6'];
 
@@ -511,6 +628,54 @@
                     }
                 });
             }
+        }
+
+        // 3. Tabel Rekapitulasi Ringkas Layanan (Bawah Chart)
+        function renderSummaryTable(res) {
+            const summaryList = res.summary_tabung || [];
+            let sumHtml = '';
+            let sumRajal = 0, sumRanap = 0, sumLainnya = 0, sumTotal = 0;
+            let no = 1;
+
+            if (summaryList.length === 0) {
+                sumHtml = '<tr><td colspan="7" class="p-4 text-center text-slate-400">Tidak ada data penggunaan tabung pada periode ini.</td></tr>';
+            } else {
+                summaryList.forEach(row => {
+                    const r = parseInt(row.total_rajal || 0);
+                    const inP = parseInt(row.total_ranap || 0);
+                    const l = parseInt(row.total_lainnya || 0);
+                    const tot = parseInt(row.total_keseluruhan || 0);
+
+                    sumRajal += r;
+                    sumRanap += inP;
+                    sumLainnya += l;
+                    sumTotal += tot;
+
+                    sumHtml += `
+                        <tr class="hover:bg-slate-50 summary-row-item">
+                            <td class="py-2.5 px-3 text-center text-slate-400 font-mono">${no++}</td>
+                            <td class="py-2.5 px-3 text-center font-mono font-bold text-slate-600">${row.sample_code}</td>
+                            <td class="py-2.5 px-3 font-semibold text-slate-900 tabung-name-target">${row.sample_name}</td>
+                            <td class="py-2.5 px-3 text-right font-mono text-blue-700">${r.toLocaleString()}</td>
+                            <td class="py-2.5 px-3 text-right font-mono text-emerald-700">${inP.toLocaleString()}</td>
+                            <td class="py-2.5 px-3 text-right font-mono text-amber-700">${l.toLocaleString()}</td>
+                            <td class="py-2.5 px-3 text-right font-mono font-bold bg-slate-50">${tot.toLocaleString()}</td>
+                        </tr>
+                    `;
+                });
+
+                // Summary Total Row
+                sumHtml += `
+                    <tr class="bg-slate-100 font-black border-t-2 border-slate-300">
+                        <td colspan="3" class="py-2.5 px-3 text-left">TOTAL KESELURUHAN</td>
+                        <td class="py-2.5 px-3 text-right font-mono text-blue-700">${sumRajal.toLocaleString()}</td>
+                        <td class="py-2.5 px-3 text-right font-mono text-emerald-700">${sumRanap.toLocaleString()}</td>
+                        <td class="py-2.5 px-3 text-right font-mono text-amber-700">${sumLainnya.toLocaleString()}</td>
+                        <td class="py-2.5 px-3 text-right font-mono font-black bg-slate-200">${sumTotal.toLocaleString()}</td>
+                    </tr>
+                `;
+            }
+            $('#tableBodySummaryTabung').html(sumHtml);
         }
 
         // ================= RENDERING: TAMPILAN HARIAN =================
@@ -607,7 +772,26 @@
             }
         }
 
-        // Live table search for summary table
+        // Live search on Main Monthly Matrix Table
+        $('#filter-monthly-tabung-input').on('keyup', function() {
+            const query = $(this).val().toLowerCase();
+            $('.tube-main-row').each(function() {
+                const name = $(this).find('.search-tube-target').text().toLowerCase();
+                const code = $(this).find('td:nth-child(2)').text().toLowerCase();
+                const tubeCode = $(this).data('tube-code');
+                const subRows = $(`.tube-sub-${tubeCode}`);
+
+                if (name.includes(query) || code.includes(query)) {
+                    $(this).show();
+                    if (allDetailsExpanded) subRows.removeClass('hidden');
+                } else {
+                    $(this).hide();
+                    subRows.addClass('hidden');
+                }
+            });
+        });
+
+        // Live search on Summary Reference Table
         $('#filter-tabung-input').on('keyup', function() {
             const query = $(this).val().toLowerCase();
             $('.summary-row-item').each(function() {
