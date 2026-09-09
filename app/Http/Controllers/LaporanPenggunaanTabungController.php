@@ -46,62 +46,8 @@ class LaporanPenggunaanTabungController extends Controller
         $result = Cache::remember($cacheKey, 600, function () use ($startDate, $endDate) {
             $oracle = DB::connection('oracle');
 
-            // 1. Data Rekapitulasi per Tabung & Spesimen (Rajal, Ranap, Lainnya, Total)
-            $summaryRaw = $oracle
-                ->table('ord_hdr as a')
-                ->leftJoin('ord_dtl as b', function ($join) {
-                    $join->on('a.oh_tno', '=', 'b.od_tno')
-                        ->where('b.od_order_item', '=', 'Y');
-                })
-                ->join('ord_spl as d', function ($join) {
-                    $join->on('b.od_tno', '=', 'd.os_tno')
-                        ->on('b.od_spl_type', '=', 'd.os_spl_type');
-                })
-                ->leftJoin('sample_type as e', 'd.os_spl_type', '=', 'e.st_code')
-                ->select(
-                    'd.os_spl_type as sample_code',
-                    DB::raw("COALESCE(e.st_name, d.os_spl_type) as sample_name"),
-                    DB::raw("COUNT(DISTINCT CASE WHEN a.oh_ptype = 'OP' THEN d.os_tno END) as total_rajal"),
-                    DB::raw("COUNT(DISTINCT CASE WHEN a.oh_ptype = 'IN' THEN d.os_tno END) as total_ranap"),
-                    DB::raw("COUNT(DISTINCT CASE WHEN a.oh_ptype NOT IN ('OP', 'IN') OR a.oh_ptype IS NULL THEN d.os_tno END) as total_lainnya"),
-                    DB::raw("COUNT(DISTINCT d.os_tno) as total_keseluruhan")
-                )
-                ->whereBetween('a.oh_trx_dt', [$startDate, $endDate])
-                ->whereNotNull('d.os_spl_type')
-                ->groupBy('d.os_spl_type', 'e.st_name')
-                ->orderBy('sample_name', 'ASC')
-                ->get();
-
-            // 2. Data Rincian Bulanan per Spesimen
-            $monthlyRaw = $oracle
-                ->table('ord_hdr as a')
-                ->leftJoin('ord_dtl as b', function ($join) {
-                    $join->on('a.oh_tno', '=', 'b.od_tno')
-                        ->where('b.od_order_item', '=', 'Y');
-                })
-                ->join('ord_spl as d', function ($join) {
-                    $join->on('b.od_tno', '=', 'd.os_tno')
-                        ->on('b.od_spl_type', '=', 'd.os_spl_type');
-                })
-                ->leftJoin('sample_type as e', 'd.os_spl_type', '=', 'e.st_code')
-                ->select(
-                    'd.os_spl_type as sample_code',
-                    DB::raw("COALESCE(e.st_name, d.os_spl_type) as sample_name"),
-                    DB::raw("TO_CHAR(a.oh_trx_dt, 'YYYY-MM') as year_month"),
-                    DB::raw("COUNT(DISTINCT CASE WHEN a.oh_ptype = 'OP' THEN d.os_tno END) as rajal"),
-                    DB::raw("COUNT(DISTINCT CASE WHEN a.oh_ptype = 'IN' THEN d.os_tno END) as ranap"),
-                    DB::raw("COUNT(DISTINCT CASE WHEN a.oh_ptype NOT IN ('OP', 'IN') OR a.oh_ptype IS NULL THEN d.os_tno END) as lainnya"),
-                    DB::raw("COUNT(DISTINCT d.os_tno) as total")
-                )
-                ->whereBetween('a.oh_trx_dt', [$startDate, $endDate])
-                ->whereNotNull('d.os_spl_type')
-                ->groupBy('d.os_spl_type', 'e.st_name', DB::raw("TO_CHAR(a.oh_trx_dt, 'YYYY-MM')"))
-                ->orderBy(DB::raw("TO_CHAR(a.oh_trx_dt, 'YYYY-MM')"), 'ASC')
-                ->orderBy('sample_name', 'ASC')
-                ->get();
-
-            // 3. Data Harian (untuk mode Tampilan Harian)
-            $dailyRaw = $oracle
+            // 1 Query Terpadu Cepat (Tingkat Harian per Spesimen & Layanan)
+            $rawRows = $oracle
                 ->table('ord_hdr as a')
                 ->leftJoin('ord_dtl as b', function ($join) {
                     $join->on('a.oh_tno', '=', 'b.od_tno')
@@ -113,10 +59,13 @@ class LaporanPenggunaanTabungController extends Controller
                 })
                 ->leftJoin('sample_type as e', 'd.os_spl_type', '=', 'e.st_code')
                 ->selectRaw("
-                    TO_CHAR(a.oh_trx_dt, 'YYYY-MM-DD') as trx_date, 
+                    TO_CHAR(a.oh_trx_dt, 'YYYY-MM-DD') as trx_date,
                     d.os_spl_type as sample_code,
-                    COALESCE(e.st_name, d.os_spl_type) as sample, 
-                    COUNT(DISTINCT d.os_tno) as total_usage
+                    COALESCE(e.st_name, d.os_spl_type) as sample_name,
+                    COUNT(DISTINCT CASE WHEN a.oh_ptype = 'OP' THEN d.os_tno END) as rajal,
+                    COUNT(DISTINCT CASE WHEN a.oh_ptype = 'IN' THEN d.os_tno END) as ranap,
+                    COUNT(DISTINCT CASE WHEN a.oh_ptype NOT IN ('OP', 'IN') OR a.oh_ptype IS NULL THEN d.os_tno END) as lainnya,
+                    COUNT(DISTINCT d.os_tno) as total
                 ")
                 ->whereBetween('a.oh_trx_dt', [$startDate, $endDate])
                 ->whereNotNull('d.os_spl_type')
@@ -136,52 +85,7 @@ class LaporanPenggunaanTabungController extends Controller
                 $cursor->addMonth();
             }
 
-            // Hitung akumulasi KPI
-            $kpiTotal = 0;
-            $kpiRajal = 0;
-            $kpiRanap = 0;
-            $kpiLainnya = 0;
-            foreach ($summaryRaw as $s) {
-                $kpiTotal += (int)$s->total_keseluruhan;
-                $kpiRajal += (int)$s->total_rajal;
-                $kpiRanap += (int)$s->total_ranap;
-                $kpiLainnya += (int)$s->total_lainnya;
-            }
-
-            // Struktur Matriks Bulanan untuk Tabung
-            // rows: specimens, cols: months (with rajal, ranap, lainnya, total)
-            $tubeMatrix = [];
-            foreach ($monthlyRaw as $mRow) {
-                $code = $mRow->sample_code;
-                if (!isset($tubeMatrix[$code])) {
-                    $tubeMatrix[$code] = [
-                        'code' => $code,
-                        'name' => $mRow->sample_name,
-                        'months' => [],
-                        'total_rajal' => 0,
-                        'total_ranap' => 0,
-                        'total_lainnya' => 0,
-                        'total_all' => 0,
-                    ];
-                }
-                $r = (int)$mRow->rajal;
-                $in = (int)$mRow->ranap;
-                $l = (int)$mRow->lainnya;
-                $tot = (int)$mRow->total;
-
-                $tubeMatrix[$code]['months'][$mRow->year_month] = [
-                    'rajal' => $r,
-                    'ranap' => $in,
-                    'lainnya' => $l,
-                    'total' => $tot,
-                ];
-                $tubeMatrix[$code]['total_rajal'] += $r;
-                $tubeMatrix[$code]['total_ranap'] += $in;
-                $tubeMatrix[$code]['total_lainnya'] += $l;
-                $tubeMatrix[$code]['total_all'] += $tot;
-            }
-
-            // Struktur Ringkasan Bulanan (per bulan: total, rajal, ranap, lainnya, per_sample)
+            // Inisialisasi struktur ringkasan bulanan
             $monthlySummary = [];
             foreach ($monthList as $mItem) {
                 $ym = $mItem['key'];
@@ -195,34 +99,146 @@ class LaporanPenggunaanTabungController extends Controller
                     'samples' => [],
                 ];
             }
-            foreach ($monthlyRaw as $mRow) {
-                $ym = $mRow->year_month;
-                if (isset($monthlySummary[$ym])) {
-                    $monthlySummary[$ym]['rajal'] += (int)$mRow->rajal;
-                    $monthlySummary[$ym]['ranap'] += (int)$mRow->ranap;
-                    $monthlySummary[$ym]['lainnya'] += (int)$mRow->lainnya;
-                    $monthlySummary[$ym]['total'] += (int)$mRow->total;
-                    $monthlySummary[$ym]['samples'][$mRow->sample_name] = (int)$mRow->total;
+
+            $summaryMap = [];
+            $tubeMatrix = [];
+            $monthlyRawMap = [];
+            $dailyDates = [];
+            $dailySamplesMap = [];
+            $formattedDaily = [];
+
+            $kpiTotal = 0;
+            $kpiRajal = 0;
+            $kpiRanap = 0;
+            $kpiLainnya = 0;
+
+            foreach ($rawRows as $row) {
+                $date = $row->trx_date;
+                $ym = substr($date, 0, 7);
+                $code = $row->sample_code;
+                $name = $row->sample_name;
+                $r = (int)$row->rajal;
+                $in = (int)$row->ranap;
+                $l = (int)$row->lainnya;
+                $tot = (int)$row->total;
+
+                // 1. KPI Akumulasi
+                $kpiTotal += $tot;
+                $kpiRajal += $r;
+                $kpiRanap += $in;
+                $kpiLainnya += $l;
+
+                // 2. Summary per Sampel (untuk Rekapitulasi Layanan)
+                if (!isset($summaryMap[$code])) {
+                    $summaryMap[$code] = [
+                        'sample_code' => $code,
+                        'sample_name' => $name,
+                        'total_rajal' => 0,
+                        'total_ranap' => 0,
+                        'total_lainnya' => 0,
+                        'total_keseluruhan' => 0,
+                    ];
                 }
+                $summaryMap[$code]['total_rajal'] += $r;
+                $summaryMap[$code]['total_ranap'] += $in;
+                $summaryMap[$code]['total_lainnya'] += $l;
+                $summaryMap[$code]['total_keseluruhan'] += $tot;
+
+                // 3. Matriks Bulanan Tabung
+                if (!isset($tubeMatrix[$code])) {
+                    $tubeMatrix[$code] = [
+                        'code' => $code,
+                        'name' => $name,
+                        'months' => [],
+                        'total_rajal' => 0,
+                        'total_ranap' => 0,
+                        'total_lainnya' => 0,
+                        'total_all' => 0,
+                    ];
+                }
+                if (!isset($tubeMatrix[$code]['months'][$ym])) {
+                    $tubeMatrix[$code]['months'][$ym] = [
+                        'rajal' => 0,
+                        'ranap' => 0,
+                        'lainnya' => 0,
+                        'total' => 0,
+                    ];
+                }
+                $tubeMatrix[$code]['months'][$ym]['rajal'] += $r;
+                $tubeMatrix[$code]['months'][$ym]['ranap'] += $in;
+                $tubeMatrix[$code]['months'][$ym]['lainnya'] += $l;
+                $tubeMatrix[$code]['months'][$ym]['total'] += $tot;
+
+                $tubeMatrix[$code]['total_rajal'] += $r;
+                $tubeMatrix[$code]['total_ranap'] += $in;
+                $tubeMatrix[$code]['total_lainnya'] += $l;
+                $tubeMatrix[$code]['total_all'] += $tot;
+
+                // 4. Ringkasan Tren Bulanan (Grafik)
+                if (isset($monthlySummary[$ym])) {
+                    $monthlySummary[$ym]['rajal'] += $r;
+                    $monthlySummary[$ym]['ranap'] += $in;
+                    $monthlySummary[$ym]['lainnya'] += $l;
+                    $monthlySummary[$ym]['total'] += $tot;
+                    if (!isset($monthlySummary[$ym]['samples'][$name])) {
+                        $monthlySummary[$ym]['samples'][$name] = 0;
+                    }
+                    $monthlySummary[$ym]['samples'][$name] += $tot;
+                }
+
+                // 5. Monthly Raw Map (untuk kesesuaian data)
+                $mRawKey = "{$code}|{$ym}";
+                if (!isset($monthlyRawMap[$mRawKey])) {
+                    $monthlyRawMap[$mRawKey] = (object)[
+                        'sample_code' => $code,
+                        'sample_name' => $name,
+                        'year_month' => $ym,
+                        'rajal' => 0,
+                        'ranap' => 0,
+                        'lainnya' => 0,
+                        'total' => 0,
+                    ];
+                }
+                $monthlyRawMap[$mRawKey]->rajal += $r;
+                $monthlyRawMap[$mRawKey]->ranap += $in;
+                $monthlyRawMap[$mRawKey]->lainnya += $l;
+                $monthlyRawMap[$mRawKey]->total += $tot;
+
+                // 6. Data Harian
+                $dailyDates[$date] = true;
+                $dailySamplesMap[$name] = true;
+                if (!isset($formattedDaily[$date])) {
+                    $formattedDaily[$date] = [
+                        'tanggal' => $date,
+                        'total' => 0,
+                    ];
+                }
+                if (!isset($formattedDaily[$date][$name])) {
+                    $formattedDaily[$date][$name] = 0;
+                }
+                $formattedDaily[$date][$name] += $tot;
+                $formattedDaily[$date]['total'] += $tot;
             }
 
-            // Daily formatting
-            $dailyDates = $dailyRaw->pluck('trx_date')->unique()->sort()->values()->all();
-            $dailySamples = $dailyRaw->pluck('sample')->unique()->sort()->values()->all();
-            $formattedDaily = [];
-            foreach ($dailyDates as $date) {
-                $formattedDaily[$date] = [
-                    'tanggal' => $date,
-                    'total' => 0,
-                ];
-                foreach ($dailySamples as $sample) {
-                    $formattedDaily[$date][$sample] = 0;
+            // Urutkan summary & matriks berdasarkan nama tabung/spesimen
+            uasort($summaryMap, fn($a, $b) => strcmp($a['sample_name'], $b['sample_name']));
+            uasort($tubeMatrix, fn($a, $b) => strcmp($a['name'], $b['name']));
+
+            // Konversi summaryMap menjadi array of objects agar kompatibel
+            $summaryRaw = array_map(fn($item) => (object)$item, array_values($summaryMap));
+
+            // Format daily samples
+            $dailySamples = array_keys($dailySamplesMap);
+            sort($dailySamples);
+            ksort($formattedDaily);
+            foreach ($formattedDaily as $dKey => &$dVal) {
+                foreach ($dailySamples as $sName) {
+                    if (!isset($dVal[$sName])) {
+                        $dVal[$sName] = 0;
+                    }
                 }
             }
-            foreach ($dailyRaw as $item) {
-                $formattedDaily[$item->trx_date][$item->sample] = (int)$item->total_usage;
-                $formattedDaily[$item->trx_date]['total'] += (int)$item->total_usage;
-            }
+            unset($dVal);
 
             return [
                 'kpi' => [
@@ -232,7 +248,7 @@ class LaporanPenggunaanTabungController extends Controller
                     'lainnya' => $kpiLainnya,
                 ],
                 'summary_tabung' => $summaryRaw,
-                'monthly_raw' => $monthlyRaw,
+                'monthly_raw' => array_values($monthlyRawMap),
                 'monthly_matrix' => array_values($tubeMatrix),
                 'monthly_summary' => array_values($monthlySummary),
                 'month_list' => $monthList,

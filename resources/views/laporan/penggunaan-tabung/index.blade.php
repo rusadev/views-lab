@@ -293,14 +293,32 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        if (typeof ChartDataLabels !== 'undefined') {
-            Chart.register(ChartDataLabels);
+        if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+            try {
+                Chart.register(ChartDataLabels);
+            } catch (e) {
+                console.warn('Gagal mendaftarkan ChartDataLabels:', e);
+            }
+        }
+
+        function formatDateLocal(d) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
 
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        document.getElementById('start_date').value = startOfMonth.toISOString().split('T')[0];
-        document.getElementById('end_date').value = now.toISOString().split('T')[0];
+        const startDateInput = document.getElementById('start_date');
+        const endDateInput = document.getElementById('end_date');
+        
+        if (startDateInput && !startDateInput.value) {
+            startDateInput.value = formatDateLocal(startOfMonth);
+        }
+        if (endDateInput && !endDateInput.value) {
+            endDateInput.value = formatDateLocal(now);
+        }
 
         // Global State & Charts
         let currentReportData = null;
@@ -374,8 +392,8 @@
                     fromDate = new Date(toDate.getFullYear(), 0, 1);
                 }
 
-                document.getElementById('start_date').value = fromDate.toISOString().split('T')[0];
-                document.getElementById('end_date').value = toDate.toISOString().split('T')[0];
+                if (startDateInput) startDateInput.value = formatDateLocal(fromDate);
+                if (endDateInput) endDateInput.value = formatDateLocal(toDate);
                 fetchReportData(false);
             });
         });
@@ -406,8 +424,8 @@
         }
 
         function fetchReportData(forceRefresh = false) {
-            const startDate = document.getElementById('start_date').value;
-            const endDate = document.getElementById('end_date').value;
+            const startDate = document.getElementById('start_date')?.value || '';
+            const endDate = document.getElementById('end_date')?.value || '';
             const btn = $('#search-button');
             const btnText = $('#search-text');
 
@@ -425,27 +443,36 @@
                     refresh: forceRefresh ? 1 : 0
                 },
                 success: function(res) {
-                    currentReportData = res;
-                    $('#cache-time').text(res.cached_at || 'Baru saja');
+                    try {
+                        currentReportData = res;
+                        $('#cache-time').text(res.cached_at || 'Baru saja');
 
-                    // Update KPI Cards
-                    const kpi = res.kpi || { total: res.total_keseluruhan || 0, rajal: 0, ranap: 0, lainnya: 0 };
-                    $('#kpiTotalTabung').text(kpi.total.toLocaleString());
-                    $('#kpiTotalRajal').text(kpi.rajal.toLocaleString());
-                    $('#kpiTotalRanap').text(kpi.ranap.toLocaleString());
-                    $('#kpiTotalLainnya').text(kpi.lainnya.toLocaleString());
+                        // Update KPI Cards
+                        const kpi = res.kpi || { total: res.total_keseluruhan || 0, rajal: 0, ranap: 0, lainnya: 0 };
+                        $('#kpiTotalTabung').text((kpi.total || 0).toLocaleString());
+                        $('#kpiTotalRajal').text((kpi.rajal || 0).toLocaleString());
+                        $('#kpiTotalRanap').text((kpi.ranap || 0).toLocaleString());
+                        $('#kpiTotalLainnya').text((kpi.lainnya || 0).toLocaleString());
 
-                    // Render based on active view
-                    if (activeViewMode === 'bulanan') {
-                        renderMonthlyView(res);
-                    } else {
-                        renderDailyView(res);
+                        // Render based on active view
+                        if (activeViewMode === 'bulanan') {
+                            renderMonthlyView(res);
+                        } else {
+                            renderDailyView(res);
+                        }
+                    } catch (renderErr) {
+                        console.error("Gagal memproses data laporan:", renderErr);
+                        $('#tableBodyMonthlyTabung').html(`<tr><td colspan="10" class="p-4 text-center text-rose-500 text-xs font-semibold">Terjadi kesalahan visualisasi tabel: ${renderErr.message}</td></tr>`);
                     }
                 },
                 error: function(xhr, status, err) {
-                    console.error("Laporan error:", err);
-                    $('#tableBodyMonthlyTabung').html('<tr><td colspan="10" class="p-4 text-center text-rose-500 text-xs">Gagal memuat data laporan dari server.</td></tr>');
-                    $('#tableBodySummaryTabung').html('<tr><td colspan="6" class="p-4 text-center text-rose-500 text-xs">Gagal memuat data laporan dari server.</td></tr>');
+                    console.error("Laporan error:", status, err, xhr.responseText);
+                    const errorMsg = (xhr.status === 0) 
+                        ? 'Koneksi ke server terputus atau timeout. Pastikan koneksi aktif.' 
+                        : (xhr.responseJSON?.message || 'Gagal memuat data laporan dari server. Silakan klik Perbarui Data.');
+                    $('#tableBodyMonthlyTabung').html(`<tr><td colspan="10" class="p-4 text-center text-rose-500 text-xs font-semibold">${errorMsg}</td></tr>`);
+                    $('#tableBodySummaryTabung').html(`<tr><td colspan="6" class="p-4 text-center text-rose-500 text-xs font-semibold">${errorMsg}</td></tr>`);
+                    $('#kpiTotalTabung, #kpiTotalRajal, #kpiTotalRanap, #kpiTotalLainnya').text('-');
                 },
                 complete: function() {
                     btnText.text('Tampilkan');
@@ -656,15 +683,19 @@
                 monthlyChart.destroy();
             }
 
+            if (typeof Chart === 'undefined') return;
+            const chartPlugins = (typeof ChartDataLabels !== 'undefined') ? [ChartDataLabels] : [];
+
             const ctxMonthly = document.getElementById('tabungMonthlyChart');
             if (ctxMonthly) {
-                monthlyChart = new Chart(ctxMonthly, {
-                    type: 'bar',
-                    plugins: [ChartDataLabels],
-                    data: {
-                        labels: chartLabels,
-                        datasets: chartDatasets
-                    },
+                try {
+                    monthlyChart = new Chart(ctxMonthly, {
+                        type: 'bar',
+                        plugins: chartPlugins,
+                        data: {
+                            labels: chartLabels,
+                            datasets: chartDatasets
+                        },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
@@ -687,6 +718,9 @@
                         }
                     }
                 });
+                } catch (e) {
+                    console.warn('Gagal merender grafik bulanan:', e);
+                }
             }
         }
 
@@ -759,34 +793,23 @@
 
             // 2. Table Body
             let tbHtml = '';
-            const sampleSums = {};
-            samples.forEach(s => sampleSums[s] = 0);
-            let sumTotal = 0;
-
             if (data.length === 0) {
                 tbHtml = `<tr><td colspan="${samples.length + 2}" class="p-4 text-center text-slate-400">Tidak ada data harian pada periode ini.</td></tr>`;
             } else {
                 data.forEach(row => {
-                    tbHtml += `<tr class="hover:bg-slate-50">`;
-                    tbHtml += `<td class="p-2 text-left font-semibold text-slate-800 font-mono">${row.tanggal}</td>`;
+                    let cells = '';
                     samples.forEach(s => {
                         const val = row[s] || 0;
-                        sampleSums[s] += val;
-                        tbHtml += `<td class="p-2 font-mono ${val === 0 ? 'text-slate-300' : ''}">${val.toLocaleString()}</td>`;
+                        cells += `<td class="p-2 text-center font-mono ${val === 0 ? 'text-slate-300' : 'text-slate-800 font-medium'}">${val.toLocaleString()}</td>`;
                     });
-                    tbHtml += `<td class="p-2 font-bold bg-slate-50 font-mono">${row.total.toLocaleString()}</td>`;
-                    tbHtml += `</tr>`;
-                    sumTotal += row.total;
+                    tbHtml += `
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-2 font-mono text-slate-700 font-medium">${row.tanggal}</td>
+                            ${cells}
+                            <td class="p-2 text-center font-mono font-bold bg-slate-50">${row.total.toLocaleString()}</td>
+                        </tr>
+                    `;
                 });
-
-                // Summary Row
-                tbHtml += `<tr class="bg-slate-100 font-black border-t-2 border-slate-300">`;
-                tbHtml += `<td class="p-2 text-left">TOTAL</td>`;
-                samples.forEach(s => {
-                    tbHtml += `<td class="p-2 font-mono">${sampleSums[s].toLocaleString()}</td>`;
-                });
-                tbHtml += `<td class="p-2 bg-slate-200 font-mono">${sumTotal.toLocaleString()}</td>`;
-                tbHtml += `</tr>`;
             }
             $('#tableBodyDailyTabung').html(tbHtml);
 
@@ -805,37 +828,44 @@
                 dailyChart.destroy();
             }
 
+            if (typeof Chart === 'undefined') return;
+            const chartPlugins = (typeof ChartDataLabels !== 'undefined') ? [ChartDataLabels] : [];
+
             const ctxDaily = document.getElementById('tabungDailyChart');
             if (ctxDaily) {
-                dailyChart = new Chart(ctxDaily, {
-                    type: 'bar',
-                    plugins: [ChartDataLabels],
-                    data: {
-                        labels: dates,
-                        datasets: datasets
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        layout: { padding: { top: 20 } },
-                        plugins: {
-                            legend: { position: 'top', labels: { boxWidth: 12, font: { family: 'Plus Jakarta Sans', size: 10 } } },
-                            datalabels: {
-                                display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
-                                color: '#0f172a',
-                                anchor: 'end',
-                                align: 'top',
-                                offset: 2,
-                                font: { family: 'Plus Jakarta Sans', weight: 'bold', size: 10 },
-                                formatter: (v) => v
-                            }
+                try {
+                    dailyChart = new Chart(ctxDaily, {
+                        type: 'bar',
+                        plugins: chartPlugins,
+                        data: {
+                            labels: dates,
+                            datasets: datasets
                         },
-                        scales: {
-                            x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } } },
-                            y: { beginAtZero: true, grace: '15%', grid: { color: '#f1f5f9' }, ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } } }
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            layout: { padding: { top: 20 } },
+                            plugins: {
+                                legend: { position: 'top', labels: { boxWidth: 12, font: { family: 'Plus Jakarta Sans', size: 10 } } },
+                                datalabels: {
+                                    display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+                                    color: '#0f172a',
+                                    anchor: 'end',
+                                    align: 'top',
+                                    offset: 2,
+                                    font: { family: 'Plus Jakarta Sans', weight: 'bold', size: 10 },
+                                    formatter: (v) => v
+                                }
+                            },
+                            scales: {
+                                x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } } },
+                                y: { beginAtZero: true, grace: '15%', grid: { color: '#f1f5f9' }, ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } } }
+                            }
                         }
-                    }
-                });
+                    });
+                } catch (e) {
+                    console.warn('Gagal merender grafik harian:', e);
+                }
             }
         }
 
