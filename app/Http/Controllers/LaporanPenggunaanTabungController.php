@@ -267,6 +267,62 @@ class LaporanPenggunaanTabungController extends Controller
         return response()->json($result);
     }
 
+    /**
+     * Palet Warna Standar Tabung Spesimen Medis (ISO 6710 / BD Vacutainer)
+     */
+    private function getTubeColorInfo($name, $code): array
+    {
+        $n = strtolower(trim((string)$name));
+        $c = trim((string)$code);
+
+        // 1. EDTA (Ungu / Lavender / Purple - Hematologi)
+        if (str_contains($n, 'edta') || $c === '30') {
+            return ['bg' => '8B5CF6', 'font' => 'FFFFFF', 'label' => 'Ungu'];
+        }
+        // 2. Serum / Clot Activator (Merah / Red - Kimia Darah / Serologi)
+        if (str_contains($n, 'serum') || $c === '10' || $c === '16' || str_contains($n, 'clot')) {
+            return ['bg' => 'EF4444', 'font' => 'FFFFFF', 'label' => 'Merah'];
+        }
+        // 3. Sitrat / Citrate (Biru Muda / Light Blue - Koagulasi PT/APTT)
+        if (str_contains($n, 'sitrat') || str_contains($n, 'citrate') || $c === '40') {
+            return ['bg' => '0EA5E9', 'font' => 'FFFFFF', 'label' => 'Biru Muda'];
+        }
+        // 4. Arteri / Heparin (Hijau / Green - Analisa Gas Darah)
+        if (str_contains($n, 'arteri') || str_contains($n, 'heparin') || $c === '73') {
+            return ['bg' => '10B981', 'font' => 'FFFFFF', 'label' => 'Hijau'];
+        }
+        // 5. Urin / Urine (Kuning / Yellow - Wadah Urin)
+        if (str_contains($n, 'urin') || str_contains($n, 'urine') || in_array($c, ['20', '28', '224'])) {
+            return ['bg' => 'F59E0B', 'font' => '000000', 'label' => 'Kuning'];
+        }
+        // 6. Faeces / Feses (Cokelat / Brown - Wadah Faeces)
+        if (str_contains($n, 'faeces') || str_contains($n, 'feses') || str_contains($n, 'stool') || $c === '85') {
+            return ['bg' => '854D0E', 'font' => 'FFFFFF', 'label' => 'Cokelat'];
+        }
+        // 7. Cairan Tubuh / Pleura / Ascites / Sendi (Cyan / Teal - Non-blood Body Fluids)
+        if (str_contains($n, 'cairan') || str_contains($n, 'c.') || in_array($c, ['69', '935', '921', '68'])) {
+            return ['bg' => '06B6D4', 'font' => 'FFFFFF', 'label' => 'Cyan'];
+        }
+        // 8. Darah Lengkap / Whole Blood (Merah Gelap)
+        if (str_contains($n, 'darah') || $c === '901') {
+            return ['bg' => 'B91C1C', 'font' => 'FFFFFF', 'label' => 'Merah Tua'];
+        }
+        // 9. Glukosa / Fluoride (Abu-abu / Gray)
+        if (str_contains($n, 'glukosa') || str_contains($n, 'fluoride') || str_contains($n, 'oxalate')) {
+            return ['bg' => '6B7280', 'font' => 'FFFFFF', 'label' => 'Abu-abu'];
+        }
+        // 10. LED / ESR (Hitam / Black)
+        if (str_contains($n, 'led') || str_contains($n, 'esr')) {
+            return ['bg' => '1E293B', 'font' => 'FFFFFF', 'label' => 'Hitam'];
+        }
+        // 11. VTM / Swab (Pink)
+        if (str_contains($n, 'vtm') || str_contains($n, 'swab')) {
+            return ['bg' => 'EC4899', 'font' => 'FFFFFF', 'label' => 'Pink'];
+        }
+
+        return ['bg' => '94A3B8', 'font' => 'FFFFFF', 'label' => 'Standar'];
+    }
+
     public function exportToExcel(Request $request)
     {
         ini_set('max_execution_time', 600);
@@ -285,8 +341,8 @@ class LaporanPenggunaanTabungController extends Controller
 
         $oracle = DB::connection('oracle');
 
-        // ================= 1. REKAPITULASI LAYANAN (SHEET 1) =================
-        $rawData = $oracle
+        // Query Terpadu Cepat
+        $rawRows = $oracle
             ->table('ord_hdr as a')
             ->leftJoin('ord_dtl as b', function ($join) {
                 $join->on('a.oh_tno', '=', 'b.od_tno')
@@ -297,28 +353,102 @@ class LaporanPenggunaanTabungController extends Controller
                     ->on('b.od_spl_type', '=', 'd.os_spl_type');
             })
             ->leftJoin('sample_type as e', 'd.os_spl_type', '=', 'e.st_code')
-            ->select(
-                'd.os_spl_type as sample_code',
-                DB::raw("COALESCE(e.st_name, d.os_spl_type) as sample_name"),
-                DB::raw("COUNT(DISTINCT CASE WHEN a.oh_ptype = 'OP' THEN d.os_tno END) as total_rajal"),
-                DB::raw("COUNT(DISTINCT CASE WHEN a.oh_ptype = 'IN' THEN d.os_tno END) as total_ranap"),
-                DB::raw("COUNT(DISTINCT CASE WHEN a.oh_ptype NOT IN ('OP', 'IN') OR a.oh_ptype IS NULL THEN d.os_tno END) as total_lainnya"),
-                DB::raw("COUNT(DISTINCT d.os_tno) as total_keseluruhan")
-            )
+            ->selectRaw("
+                TO_CHAR(a.oh_trx_dt, 'YYYY-MM-DD') as trx_date,
+                d.os_spl_type as sample_code,
+                COALESCE(e.st_name, d.os_spl_type) as sample_name,
+                COUNT(DISTINCT CASE WHEN a.oh_ptype = 'OP' THEN d.os_tno END) as rajal,
+                COUNT(DISTINCT CASE WHEN a.oh_ptype = 'IN' THEN d.os_tno END) as ranap,
+                COUNT(DISTINCT CASE WHEN a.oh_ptype NOT IN ('OP', 'IN') OR a.oh_ptype IS NULL THEN d.os_tno END) as lainnya,
+                COUNT(DISTINCT d.os_tno) as total
+            ")
             ->whereBetween('a.oh_trx_dt', [$startDate, $endDate])
             ->whereNotNull('d.os_spl_type')
-            ->groupBy('d.os_spl_type', 'e.st_name')
-            ->orderBy('sample_name', 'ASC')
+            ->groupByRaw("TO_CHAR(a.oh_trx_dt, 'YYYY-MM-DD'), d.os_spl_type, COALESCE(e.st_name, d.os_spl_type)")
+            ->orderBy('trx_date', 'asc')
             ->get();
+
+        // Bangun daftar semua bulan dalam rentang tanggal
+        $monthList = [];
+        $cursor = $startDate->copy()->startOfMonth();
+        $endCursor = $endDate->copy()->startOfMonth();
+        while ($cursor->lte($endCursor)) {
+            $monthList[] = $cursor->format('Y-m');
+            $cursor->addMonth();
+        }
+
+        // Susun Agregasi untuk Sheet 1 (Summary) & Sheet 2 (Matriks Bulanan)
+        $summaryData = [];
+        $tubeMatrix = [];
+
+        foreach ($rawRows as $row) {
+            $ym = substr($row->trx_date, 0, 7);
+            $code = $row->sample_code;
+            $name = $row->sample_name;
+            $r = (int)$row->rajal;
+            $in = (int)$row->ranap;
+            $l = (int)$row->lainnya;
+            $tot = (int)$row->total;
+
+            // Sheet 1 Data
+            if (!isset($summaryData[$code])) {
+                $summaryData[$code] = [
+                    'sample_code' => $code,
+                    'sample_name' => $name,
+                    'total_rajal' => 0,
+                    'total_ranap' => 0,
+                    'total_lainnya' => 0,
+                    'total_keseluruhan' => 0,
+                ];
+            }
+            $summaryData[$code]['total_rajal'] += $r;
+            $summaryData[$code]['total_ranap'] += $in;
+            $summaryData[$code]['total_lainnya'] += $l;
+            $summaryData[$code]['total_keseluruhan'] += $tot;
+
+            // Sheet 2 Data
+            if (!isset($tubeMatrix[$code])) {
+                $tubeMatrix[$code] = [
+                    'code' => $code,
+                    'name' => $name,
+                    'months' => [],
+                    'total_rajal' => 0,
+                    'total_ranap' => 0,
+                    'total_lainnya' => 0,
+                    'total_all' => 0,
+                ];
+            }
+            if (!isset($tubeMatrix[$code]['months'][$ym])) {
+                $tubeMatrix[$code]['months'][$ym] = [
+                    'rajal' => 0,
+                    'ranap' => 0,
+                    'lainnya' => 0,
+                    'total' => 0,
+                ];
+            }
+            $tubeMatrix[$code]['months'][$ym]['rajal'] += $r;
+            $tubeMatrix[$code]['months'][$ym]['ranap'] += $in;
+            $tubeMatrix[$code]['months'][$ym]['lainnya'] += $l;
+            $tubeMatrix[$code]['months'][$ym]['total'] += $tot;
+
+            $tubeMatrix[$code]['total_rajal'] += $r;
+            $tubeMatrix[$code]['total_ranap'] += $in;
+            $tubeMatrix[$code]['total_lainnya'] += $l;
+            $tubeMatrix[$code]['total_all'] += $tot;
+        }
+
+        uasort($summaryData, fn($a, $b) => strcmp($a['sample_name'], $b['sample_name']));
+        uasort($tubeMatrix, fn($a, $b) => strcmp($a['name'], $b['name']));
 
         $periodStr = $startDate->format('d/m/Y') . ' - ' . $endDate->format('d/m/Y');
         $spreadsheet = ReportExcelService::createSpreadsheet('Laporan Penggunaan Tabung & Spesimen Laboratorium', $periodStr);
         
+        // ================= 1. REKAPITULASI LAYANAN (SHEET 1) =================
         $sheet1 = $spreadsheet->getActiveSheet();
         $sheet1->setTitle('Rekapitulasi Layanan');
 
         $sheet1->setCellValue('A6', 'No');
-        $sheet1->setCellValue('B6', 'Kode Spesimen');
+        $sheet1->setCellValue('B6', 'Warna Tabung');
         $sheet1->setCellValue('C6', 'Jenis Tabung / Spesimen');
         $sheet1->setCellValue('D6', 'Rawat Jalan');
         $sheet1->setCellValue('E6', 'Rawat Inap');
@@ -332,26 +462,36 @@ class LaporanPenggunaanTabungController extends Controller
         $sumLainnya = 0;
         $sumTotal = 0;
 
-        foreach ($rawData as $row) {
-            $sheet1->setCellValue("A{$rowIdx}", $no++);
-            $sheet1->setCellValue("B{$rowIdx}", $row->sample_code);
-            $sheet1->setCellValue("C{$rowIdx}", $row->sample_name);
-            $sheet1->setCellValue("D{$rowIdx}", (int)$row->total_rajal);
-            $sheet1->setCellValue("E{$rowIdx}", (int)$row->total_ranap);
-            $sheet1->setCellValue("F{$rowIdx}", (int)$row->total_lainnya);
-            $sheet1->setCellValue("G{$rowIdx}", (int)$row->total_keseluruhan);
+        foreach ($summaryData as $row) {
+            $colorInfo = $this->getTubeColorInfo($row['sample_name'], $row['sample_code']);
 
-            $sumRajal += (int)$row->total_rajal;
-            $sumRanap += (int)$row->total_ranap;
-            $sumLainnya += (int)$row->total_lainnya;
-            $sumTotal += (int)$row->total_keseluruhan;
+            $sheet1->setCellValue("A{$rowIdx}", $no++);
+            $sheet1->setCellValue("B{$rowIdx}", $colorInfo['label']);
+            $sheet1->setCellValue("C{$rowIdx}", $row['sample_name']);
+            $sheet1->setCellValue("D{$rowIdx}", (int)$row['total_rajal']);
+            $sheet1->setCellValue("E{$rowIdx}", (int)$row['total_ranap']);
+            $sheet1->setCellValue("F{$rowIdx}", (int)$row['total_lainnya']);
+            $sheet1->setCellValue("G{$rowIdx}", (int)$row['total_keseluruhan']);
+
+            // Beri warna latar belakang pada sel Warna Tabung
+            $sheet1->getStyle("B{$rowIdx}")->getFill()
+                ->setFillType(Fill::FILL_SOLID)
+                ->getStartColor()->setRGB($colorInfo['bg']);
+            $sheet1->getStyle("B{$rowIdx}")->getFont()
+                ->setBold(true)
+                ->getColor()->setRGB($colorInfo['font']);
+
+            $sumRajal += (int)$row['total_rajal'];
+            $sumRanap += (int)$row['total_ranap'];
+            $sumLainnya += (int)$row['total_lainnya'];
+            $sumTotal += (int)$row['total_keseluruhan'];
             $rowIdx++;
         }
 
         // Summary row Sheet 1
         $sheet1->setCellValue("A{$rowIdx}", '');
+        $sheet1->mergeCells("B{$rowIdx}:C{$rowIdx}");
         $sheet1->setCellValue("B{$rowIdx}", 'TOTAL KESELURUHAN');
-        $sheet1->setCellValue("C{$rowIdx}", '');
         $sheet1->setCellValue("D{$rowIdx}", $sumRajal);
         $sheet1->setCellValue("E{$rowIdx}", $sumRanap);
         $sheet1->setCellValue("F{$rowIdx}", $sumLainnya);
@@ -377,81 +517,13 @@ class LaporanPenggunaanTabungController extends Controller
         $sheet2->getStyle('A3')->getFont()->setSize(11);
         $sheet2->getStyle('A4')->getFont()->setSize(9)->setItalic(true);
 
-        // Query Data Bulanan dengan rincian Rajal, Ranap, Lainnya
-        $monthlyRaw = $oracle
-            ->table('ord_hdr as a')
-            ->leftJoin('ord_dtl as b', function ($join) {
-                $join->on('a.oh_tno', '=', 'b.od_tno')
-                    ->where('b.od_order_item', '=', 'Y');
-            })
-            ->join('ord_spl as d', function ($join) {
-                $join->on('b.od_tno', '=', 'd.os_tno')
-                    ->on('b.od_spl_type', '=', 'd.os_spl_type');
-            })
-            ->leftJoin('sample_type as e', 'd.os_spl_type', '=', 'e.st_code')
-            ->select(
-                'd.os_spl_type as sample_code',
-                DB::raw("COALESCE(e.st_name, d.os_spl_type) as sample_name"),
-                DB::raw("TO_CHAR(a.oh_trx_dt, 'YYYY-MM') as year_month"),
-                DB::raw("COUNT(DISTINCT CASE WHEN a.oh_ptype = 'OP' THEN d.os_tno END) as rajal"),
-                DB::raw("COUNT(DISTINCT CASE WHEN a.oh_ptype = 'IN' THEN d.os_tno END) as ranap"),
-                DB::raw("COUNT(DISTINCT CASE WHEN a.oh_ptype NOT IN ('OP', 'IN') OR a.oh_ptype IS NULL THEN d.os_tno END) as lainnya"),
-                DB::raw("COUNT(DISTINCT d.os_tno) as total")
-            )
-            ->whereBetween('a.oh_trx_dt', [$startDate, $endDate])
-            ->whereNotNull('d.os_spl_type')
-            ->groupBy('d.os_spl_type', 'e.st_name', DB::raw("TO_CHAR(a.oh_trx_dt, 'YYYY-MM')"))
-            ->orderBy('sample_name', 'ASC')
-            ->get();
-
-        // Bangun daftar semua bulan dalam rentang tanggal
-        $monthList = [];
-        $cursor = $startDate->copy()->startOfMonth();
-        $endCursor = $endDate->copy()->startOfMonth();
-        while ($cursor->lte($endCursor)) {
-            $monthList[] = $cursor->format('Y-m');
-            $cursor->addMonth();
-        }
-
-        // Susun matriks tabung per bulan & per layanan
-        $tubeMatrix = [];
-        foreach ($monthlyRaw as $mRow) {
-            $code = $mRow->sample_code;
-            if (!isset($tubeMatrix[$code])) {
-                $tubeMatrix[$code] = [
-                    'code' => $code,
-                    'name' => $mRow->sample_name,
-                    'months' => [],
-                    'total_rajal' => 0,
-                    'total_ranap' => 0,
-                    'total_lainnya' => 0,
-                    'total_all' => 0,
-                ];
-            }
-            $r = (int)$mRow->rajal;
-            $in = (int)$mRow->ranap;
-            $l = (int)$mRow->lainnya;
-            $tot = (int)$mRow->total;
-
-            $tubeMatrix[$code]['months'][$mRow->year_month] = [
-                'rajal' => $r,
-                'ranap' => $in,
-                'lainnya' => $l,
-                'total' => $tot,
-            ];
-            $tubeMatrix[$code]['total_rajal'] += $r;
-            $tubeMatrix[$code]['total_ranap'] += $in;
-            $tubeMatrix[$code]['total_lainnya'] += $l;
-            $tubeMatrix[$code]['total_all'] += $tot;
-        }
-
         // Susun Header 2 Baris (Baris 6 & 7)
         $sheet2->mergeCells('A6:A7');
         $sheet2->mergeCells('B6:B7');
         $sheet2->mergeCells('C6:C7');
 
         $sheet2->setCellValue('A6', 'No');
-        $sheet2->setCellValue('B6', 'Kode Spesimen');
+        $sheet2->setCellValue('B6', 'Warna Tabung');
         $sheet2->setCellValue('C6', 'Jenis Tabung / Spesimen');
 
         $colIdx = 4;
@@ -502,9 +574,19 @@ class LaporanPenggunaanTabungController extends Controller
         $grandTotalSums = ['rajal' => 0, 'ranap' => 0, 'lainnya' => 0, 'total' => 0];
 
         foreach ($tubeMatrix as $tData) {
+            $colorInfo = $this->getTubeColorInfo($tData['name'], $tData['code']);
+
             $sheet2->setCellValue("A{$s2RowIdx}", $s2No++);
-            $sheet2->setCellValue("B{$s2RowIdx}", $tData['code']);
+            $sheet2->setCellValue("B{$s2RowIdx}", $colorInfo['label']);
             $sheet2->setCellValue("C{$s2RowIdx}", $tData['name']);
+
+            // Beri warna latar belakang pada sel Warna Tabung
+            $sheet2->getStyle("B{$s2RowIdx}")->getFill()
+                ->setFillType(Fill::FILL_SOLID)
+                ->getStartColor()->setRGB($colorInfo['bg']);
+            $sheet2->getStyle("B{$s2RowIdx}")->getFont()
+                ->setBold(true)
+                ->getColor()->setRGB($colorInfo['font']);
 
             foreach ($monthList as $ym) {
                 $cols = $monthColMap[$ym];
@@ -536,8 +618,8 @@ class LaporanPenggunaanTabungController extends Controller
 
         // Summary Row Sheet 2
         $sheet2->setCellValue("A{$s2RowIdx}", '');
+        $sheet2->mergeCells("B{$s2RowIdx}:C{$s2RowIdx}");
         $sheet2->setCellValue("B{$s2RowIdx}", 'TOTAL PENGGUNAAN');
-        $sheet2->setCellValue("C{$s2RowIdx}", '');
 
         foreach ($monthList as $ym) {
             $cols = $monthColMap[$ym];
