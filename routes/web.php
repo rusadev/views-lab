@@ -85,6 +85,7 @@ Route::middleware('auth')->group(function () {
             // 6. TAT
             Route::get('/tat', [LaporanTAT::class, 'index'])->name('laporan.tat.index');
             Route::get('/tat/data', [LaporanTAT::class, 'getData'])->name('laporan.tat.data');
+            Route::post('/tat/settings', [LaporanTAT::class, 'updateSettings'])->name('laporan.tat.settings');
             Route::get('/tat/export-excel', [LaporanTAT::class, 'exportToExcel'])->name('laporan.tat.export-excel');
         });
 
